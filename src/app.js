@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import swaggerUi from "swagger-ui-express";
+import path from "path";
+import swaggerUiDist from "swagger-ui-dist";
 import swaggerSpec from "./swagger/swagger.js";
 
 import authRoutes from "./routes/auth.routes.js";
@@ -11,15 +12,18 @@ dotenv.config();
 
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Serverless-safe Swagger setup
-// Use serveFiles() instead of serve
-app.use("/api/docs", swaggerUi.serveFiles(swaggerSpec), swaggerUi.setup(swaggerSpec));
+// Serve Swagger UI static files directly (Vercel-safe)
+const swaggerDistPath = swaggerUiDist.getAbsoluteFSPath();
+app.use("/api/docs", express.static(swaggerDistPath));
 
-// Routes
+// Serve Swagger spec JSON
+app.get("/api/docs/swagger.json", (req, res) => {
+  res.json(swaggerSpec);
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api", healthRoutes);
 
