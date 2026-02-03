@@ -2,7 +2,10 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
-import swaggerUiDist from "swagger-ui-dist";
+// import swaggerUiDist from "swagger-ui-dist";
+// import swaggerSpec from "./swagger/swagger.js";
+
+import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger/swagger.js";
 
 import authRoutes from "./routes/auth.routes.js";
@@ -21,8 +24,8 @@ app.use(express.json());
 // ---------------------------
 
 // 1️⃣ Serve static Swagger UI files
-const swaggerDistPath = swaggerUiDist.getAbsoluteFSPath();
-app.use("/api/docs", express.static(swaggerDistPath));
+// const swaggerDistPath = swaggerUiDist.getAbsoluteFSPath();
+// app.use("/api/docs", express.static(swaggerDistPath));
 
 // 2️⃣ Serve Swagger spec JSON
 app.get("/api/docs/swagger.json", (req, res) => {
@@ -30,9 +33,12 @@ app.get("/api/docs/swagger.json", (req, res) => {
 });
 
 // Optional: redirect /api/docs to index.html
-app.get("/api/docs", (req, res) => {
-  res.sendFile(path.join(swaggerDistPath, "index.html"));
-});
+// app.get("/api/docs", (req, res) => {
+//   res.sendFile(path.join(swaggerDistPath, "index.html"));
+// });
+
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 
 // ---------------------------
 // API Routes
