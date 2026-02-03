@@ -12,19 +12,35 @@ dotenv.config();
 
 const app = express();
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Serve Swagger UI static files directly (Vercel-safe)
+// ---------------------------
+// Serverless-safe Swagger UI
+// ---------------------------
+
+// 1️⃣ Serve static Swagger UI files
 const swaggerDistPath = swaggerUiDist.getAbsoluteFSPath();
 app.use("/api/docs", express.static(swaggerDistPath));
 
-// Serve Swagger spec JSON
+// 2️⃣ Serve Swagger spec JSON
 app.get("/api/docs/swagger.json", (req, res) => {
   res.json(swaggerSpec);
 });
 
+// Optional: redirect /api/docs to index.html
+app.get("/api/docs", (req, res) => {
+  res.sendFile(path.join(swaggerDistPath, "index.html"));
+});
+
+// ---------------------------
+// API Routes
+// ---------------------------
 app.use("/api/auth", authRoutes);
 app.use("/api", healthRoutes);
 
+// ---------------------------
+// Export app for serverless (Vercel)
+// ---------------------------
 export default app;
