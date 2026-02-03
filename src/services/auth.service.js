@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { signToken } from "../utils/jwt.js";
-import { prisma } from "../utils/prisma.js";
+import prisma from "../utils/prisma.js";
 
 
 
