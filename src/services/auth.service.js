@@ -107,12 +107,6 @@ export const verifyOtp = async (userId, otp) => {
     data: { used: true },
   });
 
-  // mark user verified
-  await prisma.user.update({
-    where: { id: userId },
-    data: { isVerified: true },
-  });
-
   return true;
 };
 
