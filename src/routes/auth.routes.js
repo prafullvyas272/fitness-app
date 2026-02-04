@@ -1,5 +1,10 @@
 import { Router } from "express";
 import { register, login } from "../controllers/auth.controller.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import {
+  registerSchema,
+  loginSchema,
+} from "../validations/auth.validation.js";
 
 const router = Router();
 
@@ -37,10 +42,16 @@ const router = Router();
  *     responses:
  *       201:
  *         description: User registered
+ *       422:
+ *         description: Validation error
  *       400:
  *         description: Registration error
  */
-router.post("/register", register);
+router.post(
+  "/register",
+  validate(registerSchema),
+  register
+);
 
 /**
  * @swagger
@@ -66,9 +77,15 @@ router.post("/register", register);
  *     responses:
  *       200:
  *         description: Login successful
+ *       422:
+ *         description: Validation error
  *       401:
  *         description: Invalid credentials
  */
-router.post("/login", login);
+router.post(
+  "/login",
+  validate(loginSchema),
+  login
+);
 
 export default router;

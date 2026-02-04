@@ -44,3 +44,10 @@ export const loginUser = async (email, password) => {
 
   return { user, token };
 };
+
+export const findUserByEmail = async (email) => {
+  return prisma.user.findUnique({
+    where: { email },
+  });
+};
+
