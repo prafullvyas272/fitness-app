@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import { signToken } from "../utils/jwt.js";
 import prisma from "../utils/prisma.js";
 import crypto from "crypto";
+import { sendOtpEmail } from "../utils/node-mailer.js";
 
 const OTP_EXPIRY_MINUTES = 5;
 
@@ -74,8 +75,14 @@ export const sendOtp = async (userId) => {
     },
   });
 
-  // TODO: send email / sms
-  console.log("OTP:", code);
+  // Send OTP to user's email
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (user && user.email) {
+    await sendOtpEmail(user.email, code);
+  } else {
+    console.log("OTP (no email found):", code);
+  }
+
 
   return true;
 };
