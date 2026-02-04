@@ -45,3 +45,18 @@ export const loginSchema = z.object({
     .string()
     .min(1, "Password is required"),
 });
+
+export const sendOtpSchema = z
+  .object({
+    userId: z.string(),
+  })
+  .strict();
+
+export const verifyOtpSchema = z
+  .object({
+    userId: z.string(),
+    otp: z.string().length(6, "OTP must be 6 digits"),
+  })
+  .strict();
+
+export const resendOtpSchema = sendOtpSchema;
