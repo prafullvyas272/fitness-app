@@ -122,9 +122,4 @@ model TrainerTimeSlot {
   @@index([date])
 }
 
-// Opposite relations for User model (add in User, not here):
-// trainerWeeklyAvailabilities TrainerWeeklyAvailability[] @relation("Trainer_Weekly")
-// trainerDailyAvailabilities TrainerDailyAvailability[] @relation("Trainer_Daily")
-// trainerTimeSlots           TrainerTimeSlot[]           @relation("Trainer_Slot")
-
 

@@ -11,6 +11,7 @@ import swaggerSpec from "./swagger/swagger.js";
 import authRoutes from "./routes/auth.routes.js";
 import healthRoutes from "./routes/health.routes.js";
 import userSpecialityRoutes from "./routes/user-speciality.routes.js";
+import userAvailabilityRoutes from "./routes/user-availability.routes.js";
 
 
 dotenv.config();
@@ -48,5 +49,6 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth", authRoutes);
 app.use("/api", healthRoutes);
 app.use("/api/users", userSpecialityRoutes);
+app.use("/api/users", userAvailabilityRoutes);
 
 export default app;
