@@ -7,6 +7,12 @@ const options = {
       title: "Node Prisma Mongo API",
       version: "1.0.0",
     },
+    tags: [
+      {
+        name: "Authentication",
+        description: "Auth, OTP, and social login APIs",
+      },
+    ],
   },
   apis: ["./src/routes/*.js"],
 };

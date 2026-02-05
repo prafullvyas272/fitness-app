@@ -11,6 +11,8 @@ const router = Router();
  * @swagger
  * /api/users/specialities:
  *   post:
+ *     tags:
+ *       - User Speciality
  *     summary: Update user specialities (external IDs)
  *     security:
  *       - bearerAuth: []
@@ -37,6 +39,8 @@ router.post("/specialities", authMiddleware, updateSpecialities);
  * @swagger
  * /api/users/specialities:
  *   get:
+ *     tags:
+ *       - User Speciality
  *     summary: Get user specialities
  *     security:
  *       - bearerAuth: []
