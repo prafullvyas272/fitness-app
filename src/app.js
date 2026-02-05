@@ -48,7 +48,7 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // ---------------------------
 app.use("/api/auth", authRoutes);
 app.use("/api", healthRoutes);
-app.use("/api/users", userSpecialityRoutes);
-app.use("/api/users", userAvailabilityRoutes);
+app.use("/api/user", userSpecialityRoutes);
+app.use("/api/user", userAvailabilityRoutes);
 
 export default app;

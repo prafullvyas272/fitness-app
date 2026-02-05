@@ -1,5 +1,8 @@
 import {
     getUserAvailabilityDataByDate,
+    setUserAvailabilityForDate,
+    canTrainerApplyLeave,
+    applyLeave,
 } from "../services/user-availability.service.js";
 
 /**
@@ -37,3 +40,49 @@ export const getUserAvailability = async (req, res) => {
         });
     }
 };
+
+/**
+ * Set a trainer's daily availability for a specific date
+ */
+
+export const setUserAvailability = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { date, isAvailable, peakSlots, alternativeSlots } = req.body;
+
+        if (!isAvailable) {
+            const canApply = await canTrainerApplyLeave(userId, date)
+            if (!canApply) {
+                res.status(200).json({
+                    success: false,
+                    message: 'You already have applied 1 leave this month. Please contact admin.',
+                });
+            }
+            await applyLeave(userId, date);
+            res.status(200).json({
+                success: true,
+                message: 'Leave applied successfully.',
+            });
+        }
+
+        const availability = {
+            date,
+            isAvailable,
+            peakSlots: Array.isArray(peakSlots) ? peakSlots : [],
+            alternativeSlots: Array.isArray(alternativeSlots) ? alternativeSlots : [],
+        };
+
+        const data = await setUserAvailabilityForDate(userId, availability);
+
+        res.status(200).json({
+            success: true,
+            data,
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
+

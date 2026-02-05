@@ -9,7 +9,7 @@ const router = Router();
 
 /**
  * @swagger
- * /api/users/specialities:
+ * /api/user/specialities:
  *   post:
  *     tags:
  *       - User Speciality
@@ -37,7 +37,7 @@ router.post("/specialities", authMiddleware, updateSpecialities);
 
 /**
  * @swagger
- * /api/users/specialities:
+ * /api/user/specialities:
  *   get:
  *     tags:
  *       - User Speciality
