@@ -70,7 +70,7 @@ export const loginUser = async (email, password) => {
   // // Optional: clean response
   // delete user.password;
 
-  sendOtp(user.id)
+  await sendOtp(user.id)
 
   return { user };
 };
