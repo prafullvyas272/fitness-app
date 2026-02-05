@@ -44,3 +44,19 @@ export function getMonthStartAndEndDates(inputDate) {
 
   return { monthStartDate, monthEndDate };
 }
+
+
+/**
+ * Given a date (Date object or string), return the start and end dates of that year.
+ * @param inputDate - The reference date (Date object or string)
+ * @returns {{ yearStartDate: Date, yearEndDate: Date }}
+ */
+export function getYearStartAndEndDates(inputDate) {
+  const date = inputDate instanceof Date ? new Date(inputDate) : new Date(inputDate);
+
+  const yearStartDate = new Date(date.getFullYear(), 0, 1, 0, 0, 0, 0);
+
+  const yearEndDate = new Date(date.getFullYear(), 11, 31, 23, 59, 59, 999);
+
+  return { yearStartDate, yearEndDate };
+}
