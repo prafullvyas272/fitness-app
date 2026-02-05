@@ -4,6 +4,7 @@ import prisma from "../utils/prisma.js";
 import crypto from "crypto";
 import { sendOtpEmail } from "../utils/node-mailer.js";
 import { OAuth2Client } from "google-auth-library";
+import axios from "axios";
 
 const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 const OTP_EXPIRY_MINUTES = 5;
@@ -201,3 +202,57 @@ export const findUserByEmail = async (email) => {
   });
 };
 
+export const facebookLogin = async (accessToken) => {
+  // 1. Verify token & get user info from Facebook
+  const fbResponse = await axios.get(
+    process.env.FACEBOOK_API_URL,
+    {
+      params: {
+        fields: "id,email,first_name,last_name",
+        access_token: accessToken,
+      },
+    }
+  );
+
+  const {
+    id: facebookId,
+    email,
+    first_name,
+    last_name,
+  } = fbResponse.data;
+
+  if (!email) {
+    throw new Error("Facebook account does not have an email");
+  }
+
+  // 3. Find existing user
+  let user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  // 4. Create user if not exists
+  if (!user) {
+    const trainerRole = await prisma.role.findUnique({
+      where: { name: "Trainer" },
+    });
+
+    if (!trainerRole) {
+      throw new Error("Trainer role not found");
+    }
+
+    user = await prisma.user.create({
+      data: {
+        email,
+        firstName: first_name,
+        lastName: last_name,
+        provider: "FACEBOOK",
+        providerId: facebookId,
+        roleId: trainerRole.id,
+      },
+    });
+  }
+
+  const token = signToken({ userId: user.id });
+
+  return { user, token };
+};

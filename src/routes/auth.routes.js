@@ -13,6 +13,7 @@ import {
   verifyOtpHandler,
   resendOtpHandler,
   googleLoginHandler,
+  facebookLoginHandler
 } from "../controllers/auth.controller.js";
 
 const router = Router();
@@ -261,5 +262,33 @@ router.post("/resend-otp", validate(resendOtpSchema), resendOtpHandler);
  *                   type: object
  */
 router.post("/google", googleLoginHandler);
+
+
+/**
+ * @swagger
+ * /api/auth/facebook:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Login with Facebook
+ *     description: Login user using Facebook access token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - accessToken
+ *             properties:
+ *               accessToken:
+ *                 type: string
+ *                 example: "EAAGm0PX4ZCpsBA..."
+ *     responses:
+ *       200:
+ *         description: Facebook login successful
+ */
+router.post("/facebook", facebookLoginHandler);
+
 
 export default router;
