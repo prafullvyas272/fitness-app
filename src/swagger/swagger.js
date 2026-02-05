@@ -7,13 +7,29 @@ const options = {
       title: "Node Prisma Mongo API",
       version: "1.0.0",
     },
+
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+
     tags: [
       {
         name: "Authentication",
         description: "Auth, OTP, and social login APIs",
       },
+      {
+        name: "User Speciality",
+        description: "User speciality management APIs",
+      },
     ],
   },
+
   apis: ["./src/routes/*.js"],
 };
 

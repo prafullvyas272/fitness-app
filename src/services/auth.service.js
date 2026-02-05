@@ -32,9 +32,7 @@ export const registerUser = async (firstName, lastName, email, phone, password) 
     },
   });
 
-  const token = signToken({ userId: user.id });
-
-  return { user, token };
+  return { user };
 };
 
 export const loginUser = async (email, password) => {
@@ -64,12 +62,15 @@ export const loginUser = async (email, password) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Invalid credentials");
 
-  const token = signToken({ userId: user.id });
+  const access_token = signToken({ userId: user.id });
+  // Generate refresh token, store it in DB (or in-memory/redis/etc.), return it to user
+  // For simplicity, just issue a JWT refresh token with a longer expiry
+  const refresh_token = signToken({ userId: user.id }, { expiresIn: "30d", type: "refresh" });
 
   // Optional: clean response
   delete user.password;
 
-  return { user, token };
+  return { user, access_token, refresh_token };
 };
 
 
