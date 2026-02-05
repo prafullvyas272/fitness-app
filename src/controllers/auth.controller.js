@@ -4,6 +4,7 @@ import {
   verifyOtp,
   resendOtp,
 } from "../services/auth.service.js";
+import { googleLogin } from "../services/auth.service.js";
 
 export const register = async (req, res) => {
   try {
@@ -80,6 +81,25 @@ export const resendOtpHandler = async (req, res) => {
     });
   } catch (err) {
     res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const googleLoginHandler = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    const data = await googleLogin(idToken);
+
+    res.status(200).json({
+      success: true,
+      message: "Google login successful",
+      data,
+    });
+  } catch (err) {
+    res.status(401).json({
       success: false,
       message: err.message,
     });

@@ -3,7 +3,9 @@ import { signToken } from "../utils/jwt.js";
 import prisma from "../utils/prisma.js";
 import crypto from "crypto";
 import { sendOtpEmail } from "../utils/node-mailer.js";
+import { OAuth2Client } from "google-auth-library";
 
+const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 const OTP_EXPIRY_MINUTES = 5;
 
 
@@ -113,4 +115,50 @@ export const verifyOtp = async (userId, otp) => {
 /* RESEND OTP */
 export const resendOtp = async (userId) => {
   return sendOtp(userId);
+};
+
+
+export const googleLogin = async (idToken) => {
+  // 1. Verify token
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_WEB_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+
+  const {
+    sub,        // Google user ID
+    email,
+    given_name,
+    family_name,
+  } = payload;
+
+  // 2. Find existing user
+  let user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  // 3. If not exists, create user
+  if (!user) {
+    const trainerRole = await prisma.role.findUnique({
+      where: { name: "Trainer" },
+    });
+
+    user = await prisma.user.create({
+      data: {
+        email,
+        firstName: given_name,
+        lastName: family_name,
+        provider: "GOOGLE",
+        providerId: sub,
+        roleId: trainerRole.id,
+      },
+    });
+  }
+
+  // 4. Issue your JWT
+  const token = signToken({ userId: user.id });
+
+  return { user, token };
 };

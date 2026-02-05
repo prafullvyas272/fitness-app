@@ -6,6 +6,7 @@ import {
   sendOtpHandler,
   verifyOtpHandler,
   resendOtpHandler,
+  googleLoginHandler,
 } from "../controllers/auth.controller.js";
 import {
   sendOtpSchema,
@@ -180,5 +181,28 @@ router.post("/verify-otp", validate(verifyOtpSchema), verifyOtpHandler);
  *         description: Validation error
  */
 router.post("/resend-otp", validate(resendOtpSchema), resendOtpHandler);
+
+
+/**
+ * @swagger
+ * /api/auth/google:
+ *   post:
+ *     summary: Login with Google
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - idToken
+ *             properties:
+ *               idToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Google login successful
+ */
+router.post("/google", googleLoginHandler);
 
 export default router;
