@@ -5,6 +5,8 @@ import crypto from "crypto";
 import { sendOtpEmail } from "../utils/node-mailer.js";
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
+import jwt from "jsonwebtoken";
+import jwksClient from "jwks-rsa";
 
 const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 const OTP_EXPIRY_MINUTES = 5;
@@ -252,6 +254,73 @@ export const facebookLogin = async (accessToken) => {
     });
   }
 
+  const token = signToken({ userId: user.id });
+
+  return { user, token };
+};
+
+
+const appleJwksClient = jwksClient({
+  jwksUri: process.env.APPLE_API_URL,
+});
+
+const getAppleKey = (header, callback) => {
+  appleJwksClient.getSigningKey(header.kid, (err, key) => {
+    const signingKey = key.getPublicKey();
+    callback(null, signingKey);
+  });
+};
+
+export const appleLogin = async (identityToken, fullName) => {
+  // 1. Verify Apple identity token
+  const decoded = await new Promise((resolve, reject) => {
+    jwt.verify(
+      identityToken,
+      getAppleKey,
+      {
+        audience: process.env.APPLE_CLIENT_ID,
+        issuer: process.env.APPLE_ISSUER_URL,
+      },
+      (err, decodedToken) => {
+        if (err) return reject(err);
+        resolve(decodedToken);
+      }
+    );
+  });
+
+  const {
+    sub: appleId,
+    email,
+  } = decoded;
+
+  if (!email) {
+    throw new Error("Apple account email not available");
+  }
+
+  // 2. Find existing user
+  let user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  // 3. Create user if not exists
+  if (!user) {
+    const trainerRole = await prisma.role.findUnique({
+      where: { name: "Trainer" },
+    });
+
+    user = await prisma.user.create({
+      data: {
+        email,
+        firstName: fullName?.givenName || "",
+        lastName: fullName?.familyName || "",
+        provider: "APPLE",
+        providerId: appleId,
+        roleId: trainerRole.id,
+      },
+    });
+  }
+
+  // 4. Issue JWT
   const token = signToken({ userId: user.id });
 
   return { user, token };

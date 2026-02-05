@@ -4,6 +4,7 @@ import {
   verifyOtp,
   resendOtp,
   facebookLogin,
+  appleLogin,
 } from "../services/auth.service.js";
 import { googleLogin } from "../services/auth.service.js";
 
@@ -117,6 +118,25 @@ export const facebookLoginHandler = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Facebook login successful",
+      data,
+    });
+  } catch (err) {
+    res.status(401).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const appleLoginHandler = async (req, res) => {
+  try {
+    const { identityToken, fullName } = req.body;
+
+    const data = await appleLogin(identityToken, fullName);
+
+    res.status(200).json({
+      success: true,
+      message: "Apple login successful",
       data,
     });
   } catch (err) {

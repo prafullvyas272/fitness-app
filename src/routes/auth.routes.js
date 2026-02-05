@@ -13,7 +13,8 @@ import {
   verifyOtpHandler,
   resendOtpHandler,
   googleLoginHandler,
-  facebookLoginHandler
+  facebookLoginHandler,
+  appleLoginHandler,
 } from "../controllers/auth.controller.js";
 
 const router = Router();
@@ -289,6 +290,31 @@ router.post("/google", googleLoginHandler);
  *         description: Facebook login successful
  */
 router.post("/facebook", facebookLoginHandler);
+
+
+/**
+ * @swagger
+ * /api/auth/apple:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Login with Apple
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - identityToken
+ *             properties:
+ *               identityToken:
+ *                 type: string
+ *               fullName:
+ *                 type: object
+ */
+router.post("/apple", appleLoginHandler);
+
 
 
 export default router;

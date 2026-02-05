@@ -22,6 +22,7 @@
     "express": "^5.2.1",
     "google-auth-library": "^10.5.0",
     "jsonwebtoken": "^9.0.3",
+    "jwks-rsa": "^3.2.2",
     "nodemailer": "^7.0.13",
     "prisma": "^6.19.2",
     "swagger-jsdoc": "^6.2.8",
