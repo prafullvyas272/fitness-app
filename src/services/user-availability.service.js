@@ -1,5 +1,5 @@
 import prisma from "../utils/prisma.js";
-import { getWeekStartAndEndDates, getMonthStartAndEndDates } from "../utils/date.ts";
+import { getWeekStartAndEndDates, getMonthStartAndEndDates } from "../utils/date.js";
 
 /**
  * Get user's daily availability
