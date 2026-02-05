@@ -24,6 +24,7 @@ const router = Router();
  *     tags:
  *       - Authentication
  *     summary: Register user
+ *     description: Register a new user with first name, last name, email, phone, and password.
  *     requestBody:
  *       required: true
  *       content:
@@ -36,9 +37,38 @@ const router = Router();
  *               - email
  *               - phone
  *               - password
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 example: John
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@example.com
+ *               phone:
+ *                 type: string
+ *                 example: "+1234567890"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: mypassword123
  *     responses:
  *       201:
  *         description: User registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
  */
 router.post("/register", validate(registerSchema), register);
 
@@ -49,6 +79,7 @@ router.post("/register", validate(registerSchema), register);
  *     tags:
  *       - Authentication
  *     summary: Login user
+ *     description: Login an existing user using email and password.
  *     requestBody:
  *       required: true
  *       content:
@@ -58,9 +89,29 @@ router.post("/register", validate(registerSchema), register);
  *             required:
  *               - email
  *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: mypassword123
  *     responses:
  *       200:
  *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
  */
 router.post("/login", validate(loginSchema), login);
 
@@ -71,6 +122,31 @@ router.post("/login", validate(loginSchema), login);
  *     tags:
  *       - Authentication
  *     summary: Send OTP to user
+ *     description: Send an OTP to the user by userId.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 example: 123
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
 router.post("/send-otp", validate(sendOtpSchema), sendOtpHandler);
 
@@ -81,6 +157,35 @@ router.post("/send-otp", validate(sendOtpSchema), sendOtpHandler);
  *     tags:
  *       - Authentication
  *     summary: Verify OTP
+ *     description: Verify a user's OTP using userId and otp code.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - otp
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 example: 123
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
 router.post("/verify-otp", validate(verifyOtpSchema), verifyOtpHandler);
 
@@ -91,6 +196,31 @@ router.post("/verify-otp", validate(verifyOtpSchema), verifyOtpHandler);
  *     tags:
  *       - Authentication
  *     summary: Resend OTP
+ *     description: Resend an OTP to a user by userId.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 example: 123
+ *     responses:
+ *       200:
+ *         description: OTP resent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
 router.post("/resend-otp", validate(resendOtpSchema), resendOtpHandler);
 
@@ -101,6 +231,34 @@ router.post("/resend-otp", validate(resendOtpSchema), resendOtpHandler);
  *     tags:
  *       - Authentication
  *     summary: Login with Google
+ *     description: Login user using Google ID token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - idToken
+ *             properties:
+ *               idToken:
+ *                 type: string
+ *                 description: Google ID token
+ *                 example: "eyJhbGciOiJSUzI1NiIsImtpZCI..."
+ *     responses:
+ *       200:
+ *         description: Google login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
  */
 router.post("/google", googleLoginHandler);
 

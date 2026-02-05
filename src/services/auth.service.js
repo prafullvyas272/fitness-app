@@ -62,15 +62,17 @@ export const loginUser = async (email, password) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Invalid credentials");
 
-  const access_token = signToken({ userId: user.id });
-  // Generate refresh token, store it in DB (or in-memory/redis/etc.), return it to user
-  // For simplicity, just issue a JWT refresh token with a longer expiry
-  const refresh_token = signToken({ userId: user.id }, { expiresIn: "30d", type: "refresh" });
+  // const access_token = signToken({ userId: user.id });
+  // // Generate refresh token, store it in DB (or in-memory/redis/etc.), return it to user
+  // // For simplicity, just issue a JWT refresh token with a longer expiry
+  // const refresh_token = signToken({ userId: user.id }, { expiresIn: "30d", type: "refresh" });
 
-  // Optional: clean response
-  delete user.password;
+  // // Optional: clean response
+  // delete user.password;
 
-  return { user, access_token, refresh_token };
+  await sendOtp(user.id)
+
+  return { user };
 };
 
 
@@ -118,6 +120,8 @@ export const verifyOtp = async (userId, otp) => {
     },
   });
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
   if (!record) {
     throw new Error("Invalid or expired OTP");
   }
@@ -127,7 +131,17 @@ export const verifyOtp = async (userId, otp) => {
     data: { used: true },
   });
 
-  return true;
+  const access_token = signToken({ userId: userId });
+  const refresh_token = signToken({ userId: userId }, { expiresIn: "30d", type: "refresh" });
+
+  // Optional: clean response
+  // delete user.password; // 'user' is not defined in this context
+
+  return {
+    user,
+    access_token,
+    refresh_token,
+  };
 };
 
 /* RESEND OTP */
