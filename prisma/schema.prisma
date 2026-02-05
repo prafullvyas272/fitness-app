@@ -33,6 +33,9 @@ model User {
   role       Role     @relation(fields: [roleId], references: [id])
   otps       Otp[]    // Added back-relation to Otp
   specialities UserSpeciality[]
+  trainerWeeklyAvailabilities TrainerWeeklyAvailability[] @relation("Trainer_Weekly")
+  trainerDailyAvailabilities TrainerDailyAvailability[] @relation("Trainer_Daily")
+  trainerTimeSlots           TrainerTimeSlot[]           @relation("Trainer_Slot")
 
   createdAt  DateTime @default(now())
 }
@@ -59,5 +62,69 @@ model UserSpeciality {
 
   @@unique([userId, specialityId])
 }
+
+
+model TrainerWeeklyAvailability {
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId            String   @db.ObjectId
+  weekStartDate        DateTime
+  weekEndDate          DateTime
+  requiredMinutes      Int      @default(2700)   //45 * 60
+  totalBookedMinutes   Int      @default(0)
+  isCompleted          Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  trainer              User     @relation("Trainer_Weekly", fields: [trainerId], references: [id])
+  dailyAvailabilities  TrainerDailyAvailability[] @relation("Week_Daily")
+}
+
+model TrainerDailyAvailability {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  trainerWeekId     String   @db.ObjectId
+  trainerId         String   @db.ObjectId
+  date              DateTime
+  dayOfWeek         String
+
+  isAvailable       Boolean   @default(false)
+  totalDayMinutes   Int
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  trainer           User                        @relation("Trainer_Daily", fields: [trainerId], references: [id])
+  trainerWeek       TrainerWeeklyAvailability   @relation("Week_Daily", fields: [trainerWeekId], references: [id])
+  timeSlots         TrainerTimeSlot[]           @relation("Daily_TimeSlot")
+}
+
+enum SlotType {
+  ALTERNATIVE
+  PEAK
+}
+
+model TrainerTimeSlot {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  dailyAvailabilityId String   @db.ObjectId
+  trainerId           String   @db.ObjectId
+  date                DateTime
+  startTime           DateTime
+  endTime             DateTime
+  slotType            SlotType
+  durationMinutes     Int
+  isBooked            Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  dailyAvailability   TrainerDailyAvailability @relation("Daily_TimeSlot", fields: [dailyAvailabilityId], references: [id])
+  trainer             User                    @relation("Trainer_Slot", fields: [trainerId], references: [id])
+
+  @@index([trainerId])
+  @@index([date])
+}
+
+// Opposite relations for User model (add in User, not here):
+// trainerWeeklyAvailabilities TrainerWeeklyAvailability[] @relation("Trainer_Weekly")
+// trainerDailyAvailabilities TrainerDailyAvailability[] @relation("Trainer_Daily")
+// trainerTimeSlots           TrainerTimeSlot[]           @relation("Trainer_Slot")
 
 
