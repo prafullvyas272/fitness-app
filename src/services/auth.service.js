@@ -38,23 +38,40 @@ export const registerUser = async (firstName, lastName, email, phone, password) 
 };
 
 export const loginUser = async (email, password) => {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: {
+      role: true,
+      specialities: {
+        select: {
+          specialityId: true,
+        },
+      },
+    },
+  });
 
   if (!user) throw new Error("Invalid credentials");
+
+  // Block Google users from password login
+  if (user.provider !== "LOCAL") {
+    throw new Error("Please login using Google");
+  }
+
+  if (!user.password) {
+    throw new Error("Invalid credentials");
+  }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Invalid credentials");
 
   const token = signToken({ userId: user.id });
 
+  // Optional: clean response
+  delete user.password;
+
   return { user, token };
 };
 
-export const findUserByEmail = async (email) => {
-  return prisma.user.findUnique({
-    where: { email },
-  });
-};
 
 const generateOtp = () =>
   crypto.randomInt(100000, 999999).toString();
@@ -162,3 +179,10 @@ export const googleLogin = async (idToken) => {
 
   return { user, token };
 };
+
+export const findUserByEmail = async (email) => {
+  return prisma.user.findUnique({
+    where: { email },
+  });
+};
+

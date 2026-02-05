@@ -32,6 +32,8 @@ model User {
 
   role       Role     @relation(fields: [roleId], references: [id])
   otps       Otp[]    // Added back-relation to Otp
+  specialities UserSpeciality[]
+
   createdAt  DateTime @default(now())
 }
 
@@ -46,4 +48,16 @@ model Otp {
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model UserSpeciality {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  specialityId  Int      
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, specialityId])
+}
+
 
