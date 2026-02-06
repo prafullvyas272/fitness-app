@@ -59,7 +59,14 @@ export const sendOtpSchema = z
 export const verifyOtpSchema = z
   .object({
     userId: z.string(),
-    otp: z.string().length(6, "OTP must be 6 digits"),
+    otp: z
+      .number({
+        required_error: "OTP is required",
+        invalid_type_error: "OTP must be a 6-digit number",
+      })
+      .int("OTP must be an integer")
+      .gte(100000, "OTP must be a 6-digit number")
+      .lte(999999, "OTP must be a 6-digit number"),
   })
   .strict();
 

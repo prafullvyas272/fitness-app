@@ -118,6 +118,11 @@ export const sendOtp = async (userId) => {
 
 /* VERIFY OTP */
 export const verifyOtp = async (userId, otp) => {
+  // If otp is sent as number convert it to string  TODO : 
+  // TODO: need to chagne datatype to number
+  if (typeof otp === "number") {
+    otp = otp.toString();
+  }
   const record = await prisma.otp.findFirst({
     where: {
       userId,
