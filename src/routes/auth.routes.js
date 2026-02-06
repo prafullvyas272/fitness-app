@@ -200,11 +200,11 @@ router.post("/send-otp", validate(sendOtpSchema), sendOtpHandler);
  *               - otp
  *             properties:
  *               userId:
- *                 type: integer
- *                 example: 123
- *               otp:
  *                 type: string
- *                 example: "123456"
+ *                 example: "123"
+ *               otp:
+ *                 type: integer
+ *                 example: 123456
  *     responses:
  *       200:
  *         description: OTP verified successfully

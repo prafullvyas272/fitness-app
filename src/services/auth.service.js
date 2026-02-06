@@ -73,7 +73,11 @@ export const loginUser = async (email, password) => {
   // // Optional: clean response
   // delete user.password;
 
-  await sendOtp(user.id)
+  setImmediate(() => {
+    sendOtp(user.id).catch(err => {
+      console.error("OTP sending failed:", err);
+    });
+  });
 
   return { user };
 };
