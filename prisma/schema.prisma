@@ -36,6 +36,8 @@ model User {
   trainerWeeklyAvailabilities TrainerWeeklyAvailability[] @relation("Trainer_Weekly")
   trainerDailyAvailabilities TrainerDailyAvailability[] @relation("Trainer_Daily")
   trainerTimeSlots           TrainerTimeSlot[]           @relation("Trainer_Slot")
+  trainerBookings            TrainerBooking[]            @relation("Trainer_Booking") // As trainer in bookings
+  customerBookings           TrainerBooking[]            @relation("Customer_Booking") // As customer in bookings
 
   createdAt  DateTime @default(now())
 }
@@ -117,9 +119,24 @@ model TrainerTimeSlot {
 
   dailyAvailability   TrainerDailyAvailability @relation("Daily_TimeSlot", fields: [dailyAvailabilityId], references: [id])
   trainer             User                    @relation("Trainer_Slot", fields: [trainerId], references: [id])
+  bookings            TrainerBooking[]        @relation("TimeSlot_Booking")
 
   @@index([trainerId])
   @@index([date])
 }
 
+model TrainerBooking {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId            String   @db.ObjectId
+  trainerId             String   @db.ObjectId
+  timeSlotId            String   @db.ObjectId
+  isAttendedByTrainer   Boolean  @default(false)
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  customer              User                @relation("Customer_Booking", fields: [customerId], references: [id])
+  trainer               User                @relation("Trainer_Booking", fields: [trainerId], references: [id])
+  timeSlot              TrainerTimeSlot     @relation("TimeSlot_Booking", fields: [timeSlotId], references: [id])
+}
 
