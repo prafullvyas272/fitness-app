@@ -26,7 +26,7 @@ const router = Router();
  *     tags:
  *       - Authentication
  *     summary: Register user
- *     description: Register a new user with first name, last name, email, phone, and password.
+ *     description: Register a new user as Trainer or Customer.
  *     requestBody:
  *       required: true
  *       content:
@@ -39,6 +39,7 @@ const router = Router();
  *               - email
  *               - phone
  *               - password
+ *               - role
  *             properties:
  *               firstName:
  *                 type: string
@@ -57,6 +58,29 @@ const router = Router();
  *                 type: string
  *                 format: password
  *                 example: mypassword123
+ *               role:
+ *                 type: string
+ *                 enum: [Trainer, Customer]
+ *                 example: Trainer
+ *           examples:
+ *             TrainerSignup:
+ *               summary: Trainer registration
+ *               value:
+ *                 firstName: John
+ *                 lastName: Doe
+ *                 email: trainer@example.com
+ *                 phone: "+1234567890"
+ *                 password: Strong@123
+ *                 role: Trainer
+ *             CustomerSignup:
+ *               summary: Customer registration
+ *               value:
+ *                 firstName: Jane
+ *                 lastName: Smith
+ *                 email: customer@example.com
+ *                 phone: "+1987654321"
+ *                 password: Strong@123
+ *                 role: Customer
  *     responses:
  *       201:
  *         description: User registered

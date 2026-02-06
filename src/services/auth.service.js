@@ -12,16 +12,15 @@ const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 const OTP_EXPIRY_MINUTES = 5;
 
 
-export const registerUser = async (firstName, lastName, email, phone, password) => {
+export const registerUser = async (firstName, lastName, email, phone, password, role) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Find the Trainer role id
-  const trainerRole = await prisma.role.findUnique({
-    where: { name: "Trainer" },
+  const roleData = await prisma.role.findUnique({
+    where: { name: role },
   });
 
   if (!trainerRole) {
-    throw new Error("Trainer role not found in the roles table");
+    throw new Error("Invalid Role. The role not found in the database.");
   }
 
   const user = await prisma.user.create({
@@ -31,7 +30,7 @@ export const registerUser = async (firstName, lastName, email, phone, password) 
       email,
       phone,
       password: hashedPassword,
-      roleId: trainerRole.id,
+      roleId: roleData.id,
     },
   });
 
