@@ -32,7 +32,15 @@ export const login = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "OTP sent to your registered email.",
-      data,
+      data: {
+        user: {
+          id: data.user.id,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+          email: data.user.email,
+          roleId: data.user.roleId,
+        },
+      },
     });
   } catch (err) {
     res.status(401).json({ success: false, message: err.message });
