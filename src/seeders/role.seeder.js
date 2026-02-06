@@ -10,7 +10,7 @@ async function main() {
   const roles = [
     { name: 'SuperAdmin' },
     { name: 'Trainer' },
-    { name: 'User' },
+    { name: 'Customer' },
   ];
 
   for (const role of roles) {
