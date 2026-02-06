@@ -12,6 +12,7 @@ import authRoutes from "./routes/auth.routes.js";
 import healthRoutes from "./routes/health.routes.js";
 import userSpecialityRoutes from "./routes/user-speciality.routes.js";
 import userAvailabilityRoutes from "./routes/user-availability.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 
 dotenv.config();
@@ -50,5 +51,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api", healthRoutes);
 app.use("/api/user", userSpecialityRoutes);
 app.use("/api/user", userAvailabilityRoutes);
+app.use("/api", userRoutes);
 
 export default app;
