@@ -15,11 +15,12 @@ const OTP_EXPIRY_MINUTES = 5;
 export const registerUser = async (firstName, lastName, email, phone, password, role) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  console.log(role)
   const roleData = await prisma.role.findUnique({
     where: { name: role },
   });
 
-  if (!trainerRole) {
+  if (!roleData) {
     throw new Error("Invalid Role. The role not found in the database.");
   }
 

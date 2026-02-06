@@ -1,6 +1,7 @@
 import express from "express";
 import { getAllTrainersHandler, getAllCustomersHandler } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
 const router = express.Router();
 
@@ -61,8 +62,7 @@ const router = express.Router();
  *                 message:
  *                   type: string
  */
-router.get("/trainers", authMiddleware, getAllTrainersHandler);
-
+router.get("/trainers", authMiddleware, superadminMiddleware, getAllTrainersHandler);
 
 /**
  * @swagger
@@ -114,6 +114,6 @@ router.get("/trainers", authMiddleware, getAllTrainersHandler);
  *                 message:
  *                   type: string
  */
-router.get("/customers", authMiddleware, getAllCustomersHandler);
+router.get("/customers", authMiddleware, superadminMiddleware, getAllCustomersHandler);
 
 export default router;

@@ -13,6 +13,7 @@ export const register = async (req, res) => {
     const { firstName, lastName, email, phone, password, role } = req.body;
     const data = await registerUser(firstName, lastName, email, phone, password, role);
 
+    console.log('role')
     res.status(201).json({
       success: true,
       message: "User registered",
