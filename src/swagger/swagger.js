@@ -23,10 +23,10 @@ const options = {
         name: "Authentication",
         description: "Auth, OTP, and social login APIs",
       },
-      {
-        name: "User Speciality",
-        description: "User speciality management APIs",
-      },
+      // {
+      //   name: "User Speciality",
+      //   description: "User speciality management APIs",
+      // },
     ],
   },
 

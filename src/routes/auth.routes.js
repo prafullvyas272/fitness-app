@@ -25,6 +25,8 @@ const router = Router();
  *   post:
  *     tags:
  *       - Authentication
+ *       - Customer
+ *       - Trainer
  *     summary: Register user
  *     description: Register a new user as Trainer or Customer.
  *     requestBody:
@@ -104,6 +106,9 @@ router.post("/register", validate(registerSchema), register);
  *   post:
  *     tags:
  *       - Authentication
+ *       - Superadmin
+ *       - Customer
+ *       - Trainer
  *     summary: Login user
  *     description: Login an existing user using email and password.
  *     requestBody:

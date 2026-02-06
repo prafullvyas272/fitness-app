@@ -12,7 +12,7 @@ const router = Router();
  * /api/user/specialities:
  *   post:
  *     tags:
- *       - User Speciality
+ *       - Trainer
  *     summary: Update user specialities (external IDs)
  *     security:
  *       - bearerAuth: []
@@ -40,7 +40,7 @@ router.post("/specialities", authMiddleware, updateSpecialities);
  * /api/user/specialities:
  *   get:
  *     tags:
- *       - User Speciality
+ *       - Trainer
  *     summary: Get user specialities
  *     security:
  *       - bearerAuth: []

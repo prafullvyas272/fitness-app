@@ -12,7 +12,7 @@ const router = Router();
  * /api/user/availability:
  *   get:
  *     tags:
- *       - User Availability
+ *       - Trainer
  *     summary: Get a user's daily availability for a specific date
  *     security:
  *       - bearerAuth: []
@@ -40,7 +40,7 @@ router.get("/availability", authMiddleware, getUserAvailability);
  * /api/user/availability:
  *   post:
  *     tags:
- *       - User Availability
+ *       - Trainer
  *     summary: Set a user's daily availability for a specific date
  *     security:
  *       - bearerAuth: []

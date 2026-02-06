@@ -10,7 +10,8 @@ const router = express.Router();
  *   get:
  *     summary: Get all trainers
  *     tags:
- *       - Trainers
+ *       - Trainer
+ *       - Superadmin
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -69,7 +70,8 @@ router.get("/trainers", authMiddleware, getAllTrainersHandler);
  *   get:
  *     summary: Get all customers
  *     tags:
- *       - Customers
+ *       - Customer
+ *       - Superadmin
  *     security:
  *       - bearerAuth: []
  *     responses:
