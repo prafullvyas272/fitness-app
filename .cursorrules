@@ -1,0 +1,173 @@
+You are generating backend code for a Node.js + Express + Prisma application.
+
+Follow these architectural rules strictly when creating or modifying any backend files.
+
+────────────────────────────────────────
+GENERAL ARCHITECTURE
+────────────────────────────────────────
+Always use a 3-layer architecture:
+1. Routes
+2. Controllers
+3. Services
+
+Each layer has a single responsibility and MUST NOT violate it.
+
+────────────────────────────────────────
+FOLDER STRUCTURE (MANDATORY)
+────────────────────────────────────────
+Use the following structure:
+
+src/
+├── routes/
+│   └── <domain>.routes.js
+├── controllers/
+│   └── <domain>.controller.js
+├── services/
+│   └── <domain>.service.js
+├── middlewares/
+├── utils/
+│   └── prisma.js
+
+Never place business logic outside the service layer.
+
+────────────────────────────────────────
+ROUTES RULES
+────────────────────────────────────────
+Routes MUST:
+- Define HTTP method and path only
+- Attach authentication and authorization middlewares
+- Attach exactly ONE controller handler per route
+- Contain Swagger / OpenAPI documentation
+
+Routes MUST NOT:
+- Contain business logic
+- Contain try/catch blocks
+- Import Prisma
+- Access request data directly
+
+Example:
+router.get(
+  "/trainers",
+  authMiddleware,
+  superadminMiddleware,
+  getAllTrainersHandler
+);
+
+────────────────────────────────────────
+CONTROLLER RULES
+────────────────────────────────────────
+Controllers MUST:
+- Export async handler functions
+- End function names with "Handler"
+- Extract data from req (params, query, body, user)
+- Call exactly ONE service function
+- Handle try/catch
+- Return HTTP responses using res.status().json()
+
+Controllers MUST NOT:
+- Import or use Prisma
+- Contain business logic
+- Perform role or permission checks
+- Contain database queries
+
+Example pattern:
+
+export const exampleHandler = async (req, res) => {
+  try {
+    const result = await exampleService();
+    res.status(200).json({
+      success: true,
+      message: "Operation successful",
+      data: result
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+────────────────────────────────────────
+SERVICE RULES
+────────────────────────────────────────
+Services MUST:
+- Contain all business logic
+- Communicate with Prisma / database
+- Be reusable and HTTP-agnostic
+- Throw plain Error objects when something fails
+
+Services MUST NOT:
+- Import Express
+- Use req or res
+- Return HTTP responses
+- Use status codes
+
+Service function naming:
+- Must start with a verb (get, create, update, delete, assign, etc.)
+- Must describe business intent
+- Must NOT include HTTP or handler terms
+- Use pagination & filtering conventions
+
+Example:
+export const getAllTrainers = async () => {
+  // prisma logic here
+};
+
+────────────────────────────────────────
+PRISMA RULES
+────────────────────────────────────────
+Prisma usage is allowed ONLY in:
+- services/*
+- utils/prisma.js
+
+Prisma MUST NEVER be used in:
+- routes
+- controllers
+- middlewares
+
+────────────────────────────────────────
+ERROR HANDLING
+────────────────────────────────────────
+- Services throw plain Error("message")
+- Controllers catch errors and convert them to HTTP responses
+- Only controllers decide HTTP status codes
+
+────────────────────────────────────────
+SWAGGER / OPENAPI RULES
+────────────────────────────────────────
+- Swagger documentation MUST exist only in route files
+- One Swagger block per route
+- Swagger response schema MUST match controller response
+
+────────────────────────────────────────
+AUTHORIZATION RULES
+────────────────────────────────────────
+- Authentication and role checks MUST be implemented as middlewares
+- Controllers and services must assume authorization is already done
+- Never check roles inside controllers or services
+
+────────────────────────────────────────
+RESPONSE FORMAT (STRICT)
+────────────────────────────────────────
+Success response:
+{
+  "success": true,
+  "message": "Human readable message",
+  "data": <any>
+}
+
+Error response:
+{
+  "success": false,
+  "message": "Error description"
+}
+
+────────────────────────────────────────
+CODE GENERATION RULE
+────────────────────────────────────────
+When asked to create a new endpoint:
+- Always generate route + controller + service
+- Never merge layers
+- Follow naming, structure, and responsibility rules above
+- Prefer clarity and simplicity over abstraction
