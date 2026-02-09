@@ -114,3 +114,31 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
     throw new Error("Failed to book slot: " + err.message);
   }
 };
+
+
+export const markAsAttended = async (bookingId, isAttended) => {
+  if (!bookingId || typeof isAttended !== "boolean") {
+    throw new Error("bookingId and isAttended are required");
+  }
+
+  // Find the booking by bookingId
+  const booking = await prisma.trainerBooking.findUnique({
+    where: {
+      id: bookingId,
+    },
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+
+  try {
+    const updatedBooking = await prisma.trainerBooking.update({
+      where: { id: bookingId },
+      data: { isAttendedByTrainer: isAttended },
+    });
+    return updatedBooking;
+  } catch (err) {
+    throw new Error("Failed to mark as attended: " + err.message);
+  }
+};
