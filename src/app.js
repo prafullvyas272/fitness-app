@@ -13,7 +13,8 @@ import healthRoutes from "./routes/health.routes.js";
 import userSpecialityRoutes from "./routes/user-speciality.routes.js";
 import userAvailabilityRoutes from "./routes/user-availability.routes.js";
 import userRoutes from "./routes/user.routes.js";
-
+import timeSlotRoutes from "./routes/time-slot.routes.js";
+import bookingRoutes from "./routes/booking.routes.js";
 
 dotenv.config();
 
@@ -52,5 +53,8 @@ app.use("/api", healthRoutes);
 app.use("/api/user", userSpecialityRoutes);
 app.use("/api/user", userAvailabilityRoutes);
 app.use("/api", userRoutes);
+app.use("/api", timeSlotRoutes);
+app.use("/api", bookingRoutes);
+
 
 export default app;
