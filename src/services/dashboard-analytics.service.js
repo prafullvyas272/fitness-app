@@ -1,12 +1,28 @@
+import prisma from "../utils/prisma.js";
+import { getMonthStartAndEndDates, getWeekStartAndEndDates, getYearStartAndEndDates } from "../utils/date.js";
+
 export const getDashboardAnalytics = async (userId) => {
+
+  // Get weekly summary data
+  const { weekStartDate, weekEndDate } = getWeekStartAndEndDates(new Date());
+  const weeklySummaryData = await getDashboardSummaryDataByDates(userId, weekStartDate, weekEndDate);
+
+  // Get month summary data
+  const { monthStartDate, monthEndDate } = getMonthStartAndEndDates(new Date());
+  const monthlySummaryData = await getDashboardSummaryDataByDates(userId, monthStartDate, monthEndDate);
+
+  // Get year summary data
+  const { yearStartDate, yearEndDate } = getYearStartAndEndDates(new Date());
+  const yearlySummaryData = await getDashboardSummaryDataByDates(userId, yearStartDate, yearEndDate);
+
   return {
     success: true,
     data: {
       weekly: {
         summary: {
-          sessionsCompletedPercentage: 92,
-          booked: 20,
-          attended: 18,
+          sessionsCompletedPercentage: weeklySummaryData.sessionsCompletedPercentage,
+          booked: weeklySummaryData.booked,
+          attended: weeklySummaryData.attended,
         },
         bookingStatistics: {
           totalSessions: 50,
@@ -19,9 +35,9 @@ export const getDashboardAnalytics = async (userId) => {
       },
       monthly: {
         summary: {
-          sessionsCompletedPercentage: 87,
-          booked: 87,
-          attended: 55,
+          sessionsCompletedPercentage: monthlySummaryData.sessionsCompletedPercentage,
+          booked: monthlySummaryData.booked,
+          attended: monthlySummaryData.attended,
         },
         bookingStatistics: {
           totalSessions: 210,
@@ -34,9 +50,9 @@ export const getDashboardAnalytics = async (userId) => {
       },
       yearly: {
         summary: {
-          sessionsCompletedPercentage: 90,
-          booked: 960,
-          attended: 840,
+          sessionsCompletedPercentage: yearlySummaryData.sessionsCompletedPercentage,
+          booked: yearlySummaryData.booked,
+          attended: yearlySummaryData.attended,
         },
         bookingStatistics: {
           totalSessions: 2400,
@@ -64,3 +80,46 @@ export const getDashboardAnalytics = async (userId) => {
     }
   };
 };
+
+
+export const getDashboardSummaryDataByDates = async (trainerId, startDate, endDate) => {
+  try {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    const totalBookedSlots = await prisma.trainerTimeSlot.count({
+      where: {
+        trainerId: trainerId,
+        isBooked: true,
+        date: {
+          gte: start,
+          lte: end,
+        }
+      }
+    });
+
+    const totalAttendedSlots = await prisma.trainerBooking.count({
+      where: {
+        trainerId: trainerId,
+        isAttendedByTrainer: true,
+        createdAt: {
+          gte: start,
+          lte: end,
+        }
+      }
+    });
+
+    const sessionsCompletedPercentage =
+      totalBookedSlots > 0 ? (totalAttendedSlots / totalBookedSlots) * 100 : 0;
+
+    return {
+      booked: totalBookedSlots,
+      attended: totalAttendedSlots,
+      sessionsCompletedPercentage,
+    };
+
+  } catch (error) {
+    console.error(error)
+    return;
+  }
+}
