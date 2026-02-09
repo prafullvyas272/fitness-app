@@ -7,7 +7,7 @@ import { getTrainerSlotsByDateHandler } from "../controllers/time-slot.controlle
  *   get:
  *     summary: Get paginated time slots for a trainer on a specific date
  *     tags:
- *       - TimeSlots
+ *       - Customer
  *     parameters:
  *       - in: path
  *         name: trainerId
