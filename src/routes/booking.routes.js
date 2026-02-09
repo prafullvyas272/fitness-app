@@ -8,7 +8,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
  *   get:
  *     summary: Get paginated bookings for a specific trainer
  *     tags:
- *       - Booking
+ *       - Trainer
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -123,7 +123,7 @@ router.get(
  *   post:
  *     summary: Book a time slot with a trainer (customer only)
  *     tags:
- *       - Booking
+ *       - Customer
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -201,8 +201,6 @@ router.post(
  *   post:
  *     summary: Mark a trainer booking as attended
  *     tags:
- *       - Booking
- *       - Customer
  *       - Trainer
  *     security:
  *       - bearerAuth: []
