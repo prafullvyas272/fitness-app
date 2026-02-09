@@ -28,10 +28,13 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const data = await loginUser(email, password);
+    const isSuperadmin = !!data.user.access_token;
 
     res.status(200).json({
       success: true,
-      message: "OTP sent to your registered email.",
+      message: isSuperadmin
+        ? "Login successful."
+        : "OTP sent to your registered email.",
       data: {
         user: {
           id: data.user.id,
@@ -40,6 +43,10 @@ export const login = async (req, res) => {
           email: data.user.email,
           roleId: data.user.roleId,
         },
+        ...(isSuperadmin && {
+          access_token: data.user.access_token,
+          refresh_token: data.user.refresh_token,
+        }),
       },
     });
   } catch (err) {

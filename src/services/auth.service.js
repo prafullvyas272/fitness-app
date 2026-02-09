@@ -7,6 +7,7 @@ import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
+import RoleEnum from "../enums/RoleEnum.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 const OTP_EXPIRY_MINUTES = 5;
@@ -64,6 +65,15 @@ export const loginUser = async (email, password) => {
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Invalid credentials");
+
+
+  if (user.role && user.role.name === RoleEnum.SUPERADMIN) {
+    const access_token = signToken({ userId: user.id });
+    const refresh_token = signToken({ userId: user.id }, { expiresIn: "30d", type: "refresh" });
+    user.access_token = access_token;
+    user.refresh_token = refresh_token;
+  }
+  console.log(user)
 
   // const access_token = signToken({ userId: user.id });
   // // Generate refresh token, store it in DB (or in-memory/redis/etc.), return it to user
