@@ -1,5 +1,5 @@
 import express from "express";
-import { getBookingsByTrainerHandler, bookSlotHandler } from "../controllers/booking.controller.js";
+import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler } from "../controllers/booking.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 /**
@@ -192,6 +192,73 @@ router.post(
   "/trainers/:trainerId/book",
   authMiddleware,
   bookSlotHandler
+);
+
+
+/**
+ * @swagger
+ * /api/bookings/{bookingId}/attend:
+ *   post:
+ *     summary: Mark a trainer booking as attended
+ *     tags:
+ *       - Booking
+ *       - Customer
+ *       - Trainer
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID to mark as attended
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isAttended:
+ *                 type: boolean
+ *                 description: Whether the booking was attended (true/false)
+ *             required:
+ *               - isAttended
+ *     responses:
+ *       200:
+ *         description: Booking marked as attended
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Booking marked as attended
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Bad Request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Error message
+ */
+router.post(
+  "/bookings/:bookingId/attend",
+  authMiddleware,
+  markAsAttendedHandler
 );
 
 export default router;

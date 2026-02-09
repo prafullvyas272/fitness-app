@@ -1,4 +1,4 @@
-import { getBookingsByTrainerWithPagination, bookSlot } from "../services/booking.service.js";
+import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended } from "../services/booking.service.js";
 
 /**
  * Extracts trainerId from params and pagination from query, calls service, and returns response.
@@ -65,3 +65,35 @@ export const bookSlotHandler = async (req, res) => {
     });
   }
 };
+
+
+/**
+ * Controller: markAsAttendedHandler
+ */
+export const markAsAttendedHandler = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { isAttended } = req.body;
+
+    if (!bookingId || typeof isAttended === "undefined") {
+      return res.status(400).json({
+        success: false,
+        message: "bookingId and isAttended are required"
+      });
+    }
+
+    const booking = await markAsAttended(bookingId, isAttended);
+
+    res.status(200).json({
+      success: true,
+      message: isAttended ? "Booking marked as attended" : "Booking marked as not attended",
+      data: booking
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
