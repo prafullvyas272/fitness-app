@@ -15,6 +15,9 @@ export const getDashboardAnalytics = async (userId) => {
   const { yearStartDate, yearEndDate } = getYearStartAndEndDates(new Date());
   const yearlySummaryData = await getDashboardSummaryDataByDates(userId, yearStartDate, yearEndDate);
 
+  // Get Month booking stats
+  const monthlyBookingStats = await getMonthlyBookingStats(userId);
+
   return {
     success: true,
     data: {
@@ -42,10 +45,7 @@ export const getDashboardAnalytics = async (userId) => {
         bookingStatistics: {
           totalSessions: 210,
           trend: "stable",
-          chart: {
-            labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
-            data: [48, 55, 60, 47]
-          }
+          data: monthlyBookingStats,
         }
       },
       yearly: {
@@ -123,3 +123,62 @@ export const getDashboardSummaryDataByDates = async (trainerId, startDate, endDa
     return;
   }
 }
+
+
+
+export const getMonthlyBookingStats = async (trainerId) => {
+  // 1. Fetch bookings with time slot info
+  const bookings = await prisma.trainerBooking.findMany({
+    where: { trainerId },
+    include: {
+      timeSlot: {
+        select: {
+          startTime: true,
+          endTime: true,
+          date: true
+        }
+      }
+    }
+  });
+
+  // 2. Structure: month -> timeSlot -> count
+  const monthlyMap = {};
+
+  for (const booking of bookings) {
+    const month = booking.timeSlot.date.getMonth(); // 0-based
+    const startHour = booking.timeSlot.startTime.getHours();
+    const endHour = booking.timeSlot.endTime.getHours();
+
+    const slotLabel = `${startHour}-${endHour} PM`; // adjust AM/PM if needed
+
+    if (!monthlyMap[month]) {
+      monthlyMap[month] = {};
+    }
+
+    monthlyMap[month][slotLabel] =
+      (monthlyMap[month][slotLabel] || 0) + 1;
+  }
+
+  // 3. Pick most popular slot per month
+  const result = Object.keys(monthlyMap).map(month => {
+    const slots = monthlyMap[month];
+
+    let maxSlot = null;
+    let maxCount = 0;
+
+    for (const slot in slots) {
+      if (slots[slot] > maxCount) {
+        maxCount = slots[slot];
+        maxSlot = slot;
+      }
+    }
+
+    return {
+      month: Number(month) + 1, // human-readable
+      mostPopularTimeSlot: maxSlot,
+      sessions: maxCount
+    };
+  });
+
+  return result;
+};
