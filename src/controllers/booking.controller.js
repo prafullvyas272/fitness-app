@@ -1,4 +1,4 @@
-import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended } from "../services/booking.service.js";
+import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById } from "../services/booking.service.js";
 
 /**
  * Extracts trainerId from params and pagination from query, calls service, and returns response.
@@ -96,4 +96,36 @@ export const markAsAttendedHandler = async (req, res) => {
     });
   }
 };
+
+
+/**
+ * Controller: cancelBookingByIdHandler
+ * Cancels a booking by its ID.
+ */
+export const cancelBookingByIdHandler = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    if (!bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: "bookingId is required"
+      });
+    }
+
+    const cancelledBooking = await cancelBookingById(bookingId);
+
+    res.status(200).json({
+      success: true,
+      message: "Booking cancelled successfully",
+      data: cancelledBooking
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
 

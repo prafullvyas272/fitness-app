@@ -142,3 +142,49 @@ export const markAsAttended = async (bookingId, isAttended) => {
     throw new Error("Failed to mark as attended: " + err.message);
   }
 };
+
+
+/**
+ * Cancel a booking by its ID.
+ * @param {string} bookingId - The booking ID to cancel.
+ * @returns {Promise<object>} - The cancelled booking object.
+ */
+export const cancelBookingById = async (bookingId) => {
+  if (!bookingId) {
+    throw new Error("bookingId is required");
+  }
+
+  const booking = await prisma.trainerBooking.findUnique({
+    where: { id: bookingId }
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+
+  if (booking.isCancelled) {
+    throw new Error("Booking is already cancelled");
+  }
+
+  try {
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      // Mark booking as cancelled
+      const cancelledBooking = await tx.trainerBooking.update({
+        where: { id: bookingId },
+        data: { isCancelled: true }
+      });
+
+      // Mark timeslot as available
+      await tx.trainerTimeSlot.update({
+        where: { id: booking.timeSlotId },
+        data: { isBooked: false }
+      });
+
+      return cancelledBooking;
+    });
+
+    return updatedBooking;
+  } catch (err) {
+    throw new Error("Failed to cancel booking: " + err.message);
+  }
+};

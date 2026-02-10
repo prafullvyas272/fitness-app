@@ -1,5 +1,5 @@
 import express from "express";
-import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler } from "../controllers/booking.controller.js";
+import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler, cancelBookingByIdHandler } from "../controllers/booking.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 /**
@@ -259,4 +259,56 @@ router.post(
   markAsAttendedHandler
 );
 
+
+/**
+ * @swagger
+ * /api/bookings/{bookingId}/cancel:
+ *   post:
+ *     summary: Cancel a booking by its ID
+ *     tags:
+ *       - Customer
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID to cancel
+ *     responses:
+ *       200:
+ *         description: Booking cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Booking cancelled successfully
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Bad Request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Error message
+ */
+router.post(
+  "/bookings/:bookingId/cancel",
+  authMiddleware,
+  cancelBookingByIdHandler
+);
 export default router;
