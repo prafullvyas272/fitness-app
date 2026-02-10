@@ -97,7 +97,8 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
         data: {
           customerId,
           trainerId,
-          timeSlotId
+          timeSlotId,
+          originalTimeSlotId: timeSlotId,
         }
       });
 
@@ -186,5 +187,88 @@ export const cancelBookingById = async (bookingId) => {
     return updatedBooking;
   } catch (err) {
     throw new Error("Failed to cancel booking: " + err.message);
+  }
+};
+
+
+/**
+ * Reschedule a booking by changing its timeslot.
+ * @param {string} bookingId - The booking ID to reschedule.
+ * @param {string} newTimeSlotId - The new timeslot ID to assign.
+ * @returns {Promise<object>} - The updated booking object.
+ */
+export const rescheduleBooking = async (bookingId, newTimeSlotId) => {
+  if (!bookingId) {
+    throw new Error("bookingId is required");
+  }
+  if (!newTimeSlotId) {
+    throw new Error("newTimeSlotId is required");
+  }
+
+  // Find existing booking
+  const booking = await prisma.trainerBooking.findUnique({
+    where: { id: bookingId }
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+
+  if (booking.isCancelled) {
+    throw new Error("Cannot reschedule a cancelled booking");
+  }
+
+  // Check if new timeslot exists & not booked
+  const newTimeSlot = await prisma.trainerTimeSlot.findUnique({
+    where: { id: newTimeSlotId }
+  });
+
+  if (!newTimeSlot) {
+    throw new Error("New time slot not found");
+  }
+
+  if (newTimeSlot.isBooked) {
+    throw new Error("New time slot is already booked");
+  }
+
+  // Prevent rescheduling to same slot
+  if (booking.timeSlotId === newTimeSlotId) {
+    throw new Error("Booking is already assigned to the given time slot");
+  }
+
+  try {
+    // Transaction to move booking to new slot and update slot statuses
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      // Free up old time slot
+      await tx.trainerTimeSlot.update({
+        where: { id: booking.timeSlotId },
+        data: { isBooked: false }
+      });
+
+      // Mark new time slot as booked
+      await tx.trainerTimeSlot.update({
+        where: { id: newTimeSlotId },
+        data: { isBooked: true }
+      });
+
+      // Update booking
+      const updated = await tx.trainerBooking.update({
+        where: { id: bookingId },
+        data: {
+          timeSlotId: newTimeSlotId,
+          rescheduledCount: booking.rescheduledCount + 1,
+          lastRescheduledAt: new Date(),
+          originalTimeSlotId: booking.originalTimeSlotId
+            ? booking.originalTimeSlotId
+            : booking.timeSlotId
+        }
+      });
+
+      return updated;
+    });
+
+    return updatedBooking;
+  } catch (err) {
+    throw new Error("Failed to reschedule booking: " + err.message);
   }
 };

@@ -1,5 +1,5 @@
 import express from "express";
-import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler, cancelBookingByIdHandler } from "../controllers/booking.controller.js";
+import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler, cancelBookingByIdHandler, rescheduleBookingHandler } from "../controllers/booking.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 /**
@@ -310,5 +310,70 @@ router.post(
   "/bookings/:bookingId/cancel",
   authMiddleware,
   cancelBookingByIdHandler
+);
+
+
+/**
+ * @swagger
+ * /api/bookings/{bookingId}/reschedule:
+ *   post:
+ *     summary: Reschedule a booking to a new time slot
+ *     tags:
+ *       - Customer
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID to reschedule
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - newTimeSlotId
+ *             properties:
+ *               newTimeSlotId:
+ *                 type: string
+ *                 description: New time slot ID for the booking
+ *     responses:
+ *       200:
+ *         description: Booking rescheduled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Booking rescheduled successfully
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Bad Request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: bookingId and newTimeSlotId are required
+ */
+router.post(
+  "/bookings/:bookingId/reschedule",
+  authMiddleware,
+  rescheduleBookingHandler
 );
 export default router;

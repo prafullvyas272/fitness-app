@@ -1,4 +1,4 @@
-import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById } from "../services/booking.service.js";
+import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById, rescheduleBooking } from "../services/booking.service.js";
 
 /**
  * Extracts trainerId from params and pagination from query, calls service, and returns response.
@@ -128,4 +128,34 @@ export const cancelBookingByIdHandler = async (req, res) => {
   }
 };
 
+/**
+ * Controller: rescheduleBookingHandler
+ * Reschedules a booking to a new time slot.
+ */
+export const rescheduleBookingHandler = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { newTimeSlotId } = req.body;
+
+    if (!bookingId || !newTimeSlotId) {
+      return res.status(400).json({
+        success: false,
+        message: "bookingId and newTimeSlotId are required"
+      });
+    }
+
+    const updatedBooking = await rescheduleBooking(bookingId, newTimeSlotId);
+
+    res.status(200).json({
+      success: true,
+      message: "Booking rescheduled successfully",
+      data: updatedBooking
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
 
