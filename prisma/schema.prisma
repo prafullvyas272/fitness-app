@@ -39,6 +39,10 @@ model User {
   trainerBookings            TrainerBooking[]            @relation("Trainer_Booking") // As trainer in bookings
   customerBookings           TrainerBooking[]            @relation("Customer_Booking") // As customer in bookings
 
+  // Added back-relations for AssignedCustomer
+  assignedCustomersAsCustomer AssignedCustomer[] @relation("AssignedCustomer_Customer")
+  assignedCustomersAsTrainer  AssignedCustomer[] @relation("AssignedCustomer_Trainer")
+
   createdAt  DateTime @default(now())
 }
 
@@ -140,3 +144,21 @@ model TrainerBooking {
   timeSlot              TrainerTimeSlot     @relation("TimeSlot_Booking", fields: [timeSlotId], references: [id])
 }
 
+model AssignedCustomer {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId  String   @db.ObjectId
+  trainerId   String   @db.ObjectId
+
+  isActive    Boolean  @default(true)
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+
+  customer    User     @relation("AssignedCustomer_Customer", fields: [customerId], references: [id])
+  trainer     User     @relation("AssignedCustomer_Trainer", fields: [trainerId], references: [id])
+  createdAt           DateTime @default(now())
+  
+  updatedAt           DateTime @updatedAt
+  @@unique([customerId, trainerId])
+  @@index([customerId, isActive])
+  @@index([trainerId, isActive])
+}
