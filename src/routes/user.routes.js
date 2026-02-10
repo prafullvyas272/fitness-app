@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllTrainersHandler, getAllCustomersHandler } from "../controllers/user.controller.js";
+import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
@@ -115,5 +115,86 @@ router.get("/trainers", authMiddleware, superadminMiddleware, getAllTrainersHand
  *                   type: string
  */
 router.get("/customers", authMiddleware, superadminMiddleware, getAllCustomersHandler);
+
+/**
+ * @swagger
+ * /api/assign-customer:
+ *   post:
+ *     summary: Assign a customer to a trainer
+ *     tags:
+ *       - Trainer
+ *       - Superadmin
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - trainerId
+ *               - customerId
+ *             properties:
+ *               trainerId:
+ *                 type: string
+ *                 description: The ID of the trainer
+ *               customerId:
+ *                 type: string
+ *                 description: The ID of the customer
+ *     responses:
+ *       200:
+ *         description: Customer assigned to trainer successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     trainerId:
+ *                       type: string
+ *                     customerId:
+ *                       type: string
+ *                     isActive:
+ *                       type: boolean
+ *                     startDate:
+ *                       type: string
+ *                       format: date-time
+ *                     endDate:
+ *                       type: string
+ *                       format: date-time
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.post(
+  "/assign-customer",
+  authMiddleware,
+  superadminMiddleware,
+  assignCustomerHandler
+);
+
 
 export default router;

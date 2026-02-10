@@ -1,4 +1,4 @@
-import { getAllTrainers, getAllCustomers } from "../services/user.service.js";
+import { getAllTrainers, getAllCustomers, assignCustomer } from "../services/user.service.js";
 
 /**
  * Get all trainers
@@ -6,10 +6,18 @@ import { getAllTrainers, getAllCustomers } from "../services/user.service.js";
 export const getAllTrainersHandler = async (req, res) => {
     try {
         const trainers = await getAllTrainers();
+
+        
+        const formattedTrainers = trainers.map(
+            ({ assignedCustomersAsTrainer, ...trainer }) => ({
+            ...trainer,
+            assignedCustomers: assignedCustomersAsTrainer,
+            })
+        );
         res.status(200).json({
             success: true,
             message: 'Trainers list fetched sucessfully.',
-            data: trainers,
+            data: formattedTrainers,
         });
     } catch (err) {
         res.status(400).json({
@@ -27,15 +35,45 @@ export const getAllTrainersHandler = async (req, res) => {
 export const getAllCustomersHandler = async (req, res) => {
     try {
         const customers = await getAllCustomers();
+
+        const formattedCustomers = customers.map(
+            ({ assignedCustomersAsCustomer, ...customer }) => ({
+            ...customer,
+            assignedTrainers: assignedCustomersAsCustomer,
+            })
+        );
         res.status(200).json({
             success: true,
             message: 'Customers list fetched sucessfully.',
-            data: customers,
+            data: formattedCustomers,
         });
     } catch (err) {
         res.status(400).json({
             success: false,
             message: err.message,
+        });
+    }
+};
+
+
+/**
+ * Assign a customer to a trainer
+ */
+export const assignCustomerHandler = async (req, res) => {
+    try {
+        const { trainerId, customerId } = req.body;
+
+        const assignment = await assignCustomer(trainerId, customerId);
+
+        res.status(200).json({
+            success: true,
+            message: "Customer successfully assigned to trainer.",
+            data: assignment
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message
         });
     }
 };
