@@ -29,6 +29,7 @@ model User {
   provider   String   @default("LOCAL")
   providerId String?
   roleId     String
+  isActive   Boolean @default(false)
 
   role       Role     @relation(fields: [roleId], references: [id])
   otps       Otp[]    // Added back-relation to Otp

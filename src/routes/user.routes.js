@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler } from "../controllers/user.controller.js";
+import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler, toggleUserIsActiveHandler } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
@@ -196,5 +196,162 @@ router.post(
   assignCustomerHandler
 );
 
+/**
+ * @swagger
+ * /api/trainers/{id}/toggle-active:
+ *   post:
+ *     summary: Toggle the isActive status for a trainer
+ *     tags:
+ *       - Superadmin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique identifier of the trainer.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - isActive
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *                 description: The new isActive status to set.
+ *     responses:
+ *       200:
+ *         description: Trainer isActive status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     isActive:
+ *                       type: boolean
+ *                     roleId:
+ *                       type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.post(
+  "/trainers/:id/toggle-active",
+  authMiddleware,
+  superadminMiddleware,
+  toggleUserIsActiveHandler
+);
+
+/**
+ * @swagger
+ * /api/customers/{id}/toggle-active:
+ *   post:
+ *     summary: Toggle the isActive status for a customer
+ *     tags:
+ *       - Superadmin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique identifier of the customer.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - isActive
+ *             properties:
+ *               isActive:
+ *                 type: boolean
+ *                 description: The new isActive status to set.
+ *     responses:
+ *       200:
+ *         description: Customer isActive status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     isActive:
+ *                       type: boolean
+ *                     roleId:
+ *                       type: string
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.post(
+  "/customers/:id/toggle-active",
+  authMiddleware,
+  superadminMiddleware,
+  toggleUserIsActiveHandler
+);
 
 export default router;

@@ -153,3 +153,45 @@ export const assignCustomer = async (trainerId, customerId) => {
 
   return assignment;
 };
+
+
+/**
+ * Toggle the isActive status for a user.
+ * @param {string} userId - The ID of the user to update.
+ * @param {boolean} isActive - The new isActive value to set.
+ * @returns {object} The updated user object.
+ */
+export const toggleUserIsActive = async (userId, isActive) => {
+  if (!userId || isActive === undefined) {
+    throw new Error("userId and isActive are required");
+  }
+  if (typeof isActive !== "boolean") {
+    throw new Error("isActive must be a boolean");
+  }
+
+  // Find the user
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { isActive: isActive },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      isActive: true,
+      roleId: true,
+      createdAt: true,
+    },
+  });
+
+  return updatedUser;
+};
