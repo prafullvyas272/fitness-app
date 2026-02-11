@@ -7,11 +7,12 @@ export const getAllTrainersHandler = async (req, res) => {
     try {
         const trainers = await getAllTrainers();
 
-        
+        console.log(trainers)
         const formattedTrainers = trainers.map(
-            ({ assignedCustomersAsTrainer, ...trainer }) => ({
-            ...trainer,
-            assignedCustomers: assignedCustomersAsTrainer,
+            ({ assignedCustomersAsTrainer, userProfileDetails, ...trainer }) => ({
+                ...trainer,
+                assignedCustomers: assignedCustomersAsTrainer,
+                userProfileDetails: Array.isArray(userProfileDetails) && userProfileDetails.length > 0 ? userProfileDetails[0] : null
             })
         );
         res.status(200).json({
