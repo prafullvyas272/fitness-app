@@ -272,3 +272,53 @@ export const rescheduleBooking = async (bookingId, newTimeSlotId) => {
     throw new Error("Failed to reschedule booking: " + err.message);
   }
 };
+
+
+/**
+ * Get a booking's details (including customer, trainer, and timeSlot) by bookingId.
+ * @param {string} bookingId
+ * @returns {Promise<Object>} Booking details object
+ */
+export const getBookingDetailsById = async (bookingId) => {
+  if (!bookingId) {
+    throw new Error("bookingId is required");
+  }
+
+  const booking = await prisma.trainerBooking.findUnique({
+    where: { id: bookingId },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true
+        }
+      },
+      trainer: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true
+        }
+      },
+      timeSlot: {
+        select: {
+          id: true,
+          date: true,
+          startTime: true,
+          endTime: true,
+          slotType: true,
+          durationMinutes: true
+        }
+      }
+    }
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+
+  return booking;
+};

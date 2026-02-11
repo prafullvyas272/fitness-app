@@ -1,5 +1,5 @@
 import express from "express";
-import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler, cancelBookingByIdHandler, rescheduleBookingHandler } from "../controllers/booking.controller.js";
+import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler, cancelBookingByIdHandler, rescheduleBookingHandler, getBookingDetailsByIdHandler } from "../controllers/booking.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 /**
@@ -8,6 +8,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
  *   get:
  *     summary: Get paginated bookings for a specific trainer
  *     tags:
+ *       - Booking
  *       - Trainer
  *     security:
  *       - bearerAuth: []
@@ -123,6 +124,7 @@ router.get(
  *   post:
  *     summary: Book a time slot with a trainer (customer only)
  *     tags:
+ *       - Booking
  *       - Customer
  *     security:
  *       - bearerAuth: []
@@ -201,6 +203,7 @@ router.post(
  *   post:
  *     summary: Mark a trainer booking as attended
  *     tags:
+ *       - Booking
  *       - Trainer
  *     security:
  *       - bearerAuth: []
@@ -267,6 +270,7 @@ router.post(
  *     summary: Cancel a booking by its ID
  *     tags:
  *       - Customer
+ *       - Booking
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -320,6 +324,7 @@ router.post(
  *     summary: Reschedule a booking to a new time slot
  *     tags:
  *       - Customer
+ *       - Booking
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -376,4 +381,60 @@ router.post(
   authMiddleware,
   rescheduleBookingHandler
 );
+
+
+/**
+ * @swagger
+ * /api/bookings/{bookingId}:
+ *   get:
+ *     summary: Get details of a booking by ID
+ *     tags:
+ *       - Booking
+ *       - Trainer
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the booking to retrieve
+ *     responses:
+ *       200:
+ *         description: Booking details fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Booking details fetched successfully
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Invalid Booking ID or booking not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: bookingId is required
+ */
+
+router.get(
+  "/bookings/:bookingId",
+  authMiddleware,
+  getBookingDetailsByIdHandler
+);
+
 export default router;
