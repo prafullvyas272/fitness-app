@@ -322,3 +322,26 @@ export const getBookingDetailsById = async (bookingId) => {
 
   return booking;
 };
+
+
+/**
+ * Update accolades array for a booking.
+ * @param {string} bookingId
+ * @param {number[]} accolades
+ * @returns {Promise<Object>} The updated booking object
+ */
+export const updateBookingAccolades = async (bookingId, accolades) => {
+  if (!bookingId) {
+    throw new Error("bookingId is required");
+  }
+  if (!Array.isArray(accolades)) {
+    throw new Error("accolades must be an array");
+  }
+
+  const updatedBooking = await prisma.trainerBooking.update({
+    where: { id: bookingId },
+    data: { accolades },
+  });
+
+  return updatedBooking;
+};

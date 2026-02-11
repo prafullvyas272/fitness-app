@@ -1,4 +1,4 @@
-import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById, rescheduleBooking, getBookingDetailsById } from "../services/booking.service.js";
+import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById, rescheduleBooking, getBookingDetailsById, updateBookingAccolades } from "../services/booking.service.js";
 
 /**
  * Extracts trainerId from params and pagination from query, calls service, and returns response.
@@ -180,6 +180,37 @@ export const getBookingDetailsByIdHandler = async (req, res) => {
       success: true,
       message: "Booking details fetched successfully",
       data: bookingDetails
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+/**
+ * Controller: updateBookingAccoladesHandler
+ * Updates the accolades array for a booking
+ */
+export const updateBookingAccoladesHandler = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { accolades } = req.body;
+
+    if (!bookingId || !Array.isArray(accolades)) {
+      return res.status(400).json({
+        success: false,
+        message: "bookingId and accolades (as array) are required"
+      });
+    }
+
+    const updatedBooking = await updateBookingAccolades(bookingId, accolades);
+
+    res.status(200).json({
+      success: true,
+      message: "Booking accolades updated successfully",
+      data: updatedBooking
     });
   } catch (err) {
     res.status(400).json({
