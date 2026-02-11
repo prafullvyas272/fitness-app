@@ -5,16 +5,16 @@ import prisma from "../utils/prisma.js";
  * Returns an array of users with Trainer role.
  */
 export const getAllTrainers = async () => {
-  // First, get the roleId for the Trainer role
+  // Get the Trainer roleId
   const trainerRole = await prisma.role.findUnique({
-    where: { name: 'Trainer' },
-    select: { id: true }
+    where: { name: "Trainer" },
+    select: { id: true },
   });
   if (!trainerRole) {
     throw new Error("Trainer role not found");
   }
 
-  // Fetch all users with roleId matching Trainer
+  // Fetch all users with roleId matching Trainer, including assigned customers and profile details
   const trainers = await prisma.user.findMany({
     where: { roleId: trainerRole.id },
     select: {
@@ -41,11 +41,25 @@ export const getAllTrainers = async () => {
               lastName: true,
               email: true,
               phone: true,
-            }
-          }
+            },
+          },
         },
       },
-    }
+      userProfileDetails: {
+        select: {
+          id: true,
+          address: true,
+          bio: true,
+          hostGymName: true,
+          hostGymAddress: true,
+          avatarUrl: true,
+          dob: true,
+          gender: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
   });
 
   return trainers;

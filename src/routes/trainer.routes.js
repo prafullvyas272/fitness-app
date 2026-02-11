@@ -36,10 +36,14 @@ const router = express.Router();
  *                 format: email
  *               phone:
  *                 type: string
- *               password:
+ *               hostGymName:
  *                 type: string
- *               isActive:
- *                 type: boolean
+ *               hostGymAddress:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               bio:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Trainer created successfully.
@@ -84,6 +88,14 @@ router.post(
  *                 type: string
  *                 format: email
  *               phone:
+ *                 type: string
+ *               hostGymName:
+ *                 type: string
+ *               hostGymAddress:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               bio:
  *                 type: string
  *               isActive:
  *                 type: boolean

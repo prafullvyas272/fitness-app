@@ -1,4 +1,5 @@
 import prisma from "../utils/prisma.js";
+import { getHashedPassword } from "../utils/password.js";
 
 /**
  * Create a new Trainer user.
@@ -16,8 +17,8 @@ export const createTrainer = async (data) => {
   }
 
   // Check for required fields
-  if (!data.email || !data.password) {
-    throw new Error("Email and password are required.");
+  if (!data.email) {
+    throw new Error("Email is required.");
   }
 
   // Check if email already exists
@@ -28,28 +29,58 @@ export const createTrainer = async (data) => {
     throw new Error("Email already in use.");
   }
 
-  const trainer = await prisma.user.create({
-    data: {
-      firstName: data.firstName || null,
-      lastName: data.lastName || null,
-      email: data.email,
-      phone: data.phone || null,
-      password: data.password, // Assume password is already hashed at higher layer/middleware
-      roleId: trainerRole.id,
-      isActive: data.isActive !== undefined ? data.isActive : true,
-    },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      phone: true,
-      isActive: true,
-      roleId: true,
-      createdAt: true,
-    },
+  const hashedPassword = await getHashedPassword(data.password);
+
+  // Wrap all operations that should be atomic in a transaction
+  const result = await prisma.$transaction(async (tx) => {
+    // Create the trainer user first
+    const trainer = await tx.user.create({
+      data: {
+        firstName: data.firstName || null,
+        lastName: data.lastName || null,
+        email: data.email,
+        phone: data.phone || null,
+        password: hashedPassword,
+        roleId: trainerRole.id,
+        isActive: data.isActive !== undefined ? data.isActive : true,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        isActive: true,
+        roleId: true,
+        createdAt: true,
+      },
+    });
+
+    // Create a UserProfileDetail record for the trainer if profile fields are provided
+    const profileFields = {};
+    if (
+      data.hostGymName !== undefined ||
+      data.hostGymAddress !== undefined ||
+      data.address !== undefined ||
+      data.bio !== undefined
+    ) {
+      if (data.hostGymName !== undefined) profileFields.hostGymName = data.hostGymName;
+      if (data.hostGymAddress !== undefined) profileFields.hostGymAddress = data.hostGymAddress;
+      if (data.address !== undefined) profileFields.address = data.address;
+      if (data.bio !== undefined) profileFields.bio = data.bio;
+
+      await tx.userProfileDetail.create({
+        data: {
+          userId: trainer.id,
+          ...profileFields
+        }
+      });
+    }
+
+    return trainer;
   });
-  return trainer;
+
+  return result;
 };
 
 /**
@@ -61,38 +92,78 @@ export const createTrainer = async (data) => {
 export const updateTrainer = async (trainerId, data) => {
   if (!trainerId) throw new Error("Trainer ID is required");
 
-  // Make sure the user is a trainer
   const trainer = await prisma.user.findUnique({
     where: { id: trainerId },
-    select: { id: true, role: { select: { name: true } } }
+    include: {
+      role: true
+    }
   });
-  if (!trainer) {
-    throw new Error("Trainer not found");
-  }
-  if (trainer.role.name !== "Trainer") {
+
+  if (!trainer) throw new Error("Trainer not found");
+  if (trainer.role.name !== "Trainer")
     throw new Error("User is not a trainer");
-  }
 
-  // Prevent changing roleId through this update
-  const { roleId, ...safeData } = data;
+  const {
+    roleId,
+    hostGymName,
+    hostGymAddress,
+    address,
+    bio,
+    ...safeData
+  } = data;
 
-  const updatedTrainer = await prisma.user.update({
-    where: { id: trainerId },
-    data: safeData,
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      phone: true,
-      isActive: true,
-      roleId: true,
-      createdAt: true,
-    },
+  const result = await prisma.$transaction(async (tx) => {
+    // ✅ Update User table only with valid fields
+    const updatedTrainer = await tx.user.update({
+      where: { id: trainerId },
+      data: safeData,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        isActive: true,
+        roleId: true,
+        createdAt: true,
+      },
+    });
+
+    // ✅ Handle profile fields separately
+    const profileFields = {};
+
+    if (hostGymName !== undefined) profileFields.hostGymName = hostGymName;
+    if (hostGymAddress !== undefined) profileFields.hostGymAddress = hostGymAddress;
+    if (address !== undefined) profileFields.address = address;
+    if (bio !== undefined) profileFields.bio = bio;
+
+    if (Object.keys(profileFields).length > 0) {
+      const existingProfile = await tx.userProfileDetail.findFirst({
+        where: { userId: trainerId },
+        select: { id: true, userId: true }
+      });
+
+      if (existingProfile) {
+        await tx.userProfileDetail.update({
+          where: { id: existingProfile.id },
+          data: profileFields,
+        });
+      } else {
+        await tx.userProfileDetail.create({
+          data: {
+            userId: trainerId,
+            ...profileFields,
+          },
+        });
+      }
+    }
+
+    return updatedTrainer;
   });
 
-  return updatedTrainer;
+  return result;
 };
+
 
 /**
  * Delete a Trainer user.
@@ -172,6 +243,20 @@ export const showTrainerProfileData = async (trainerId) => {
       specialities: {
         select: {
           specialityId: true
+        }
+      },
+      userProfileDetails: {
+        select: {
+          id: true,
+          address: true,
+          bio: true,
+          hostGymName: true,
+          hostGymAddress: true,
+          avatarUrl: true,
+          dob: true,
+          gender: true,
+          createdAt: true,
+          updatedAt: true,
         }
       }
     }

@@ -29,7 +29,7 @@ model User {
   provider   String   @default("LOCAL")
   providerId String?
   roleId     String
-  isActive   Boolean @default(false)
+  isActive   Boolean  @default(false)
 
   role       Role     @relation(fields: [roleId], references: [id])
   otps       Otp[]    // Added back-relation to Otp
@@ -44,7 +44,28 @@ model User {
   assignedCustomersAsCustomer AssignedCustomer[] @relation("AssignedCustomer_Customer")
   assignedCustomersAsTrainer  AssignedCustomer[] @relation("AssignedCustomer_Trainer")
 
+  userProfileDetails UserProfileDetail[] @relation("UserProfileDetailToUser")
+
   createdAt  DateTime @default(now())
+}
+
+model UserProfileDetail {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  address         String?
+  bio             String?
+  hostGymName     String?
+  hostGymAddress  String?
+  avatarUrl       String?
+  dob             DateTime?
+  gender          String?
+
+  user            User     @relation("UserProfileDetailToUser", fields: [userId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Otp {
