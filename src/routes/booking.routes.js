@@ -1,5 +1,5 @@
 import express from "express";
-import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler, cancelBookingByIdHandler, rescheduleBookingHandler, getBookingDetailsByIdHandler } from "../controllers/booking.controller.js";
+import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler, cancelBookingByIdHandler, rescheduleBookingHandler, getBookingDetailsByIdHandler, updateBookingAccoladesHandler } from "../controllers/booking.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 /**
@@ -436,5 +436,71 @@ router.get(
   authMiddleware,
   getBookingDetailsByIdHandler
 );
+
+/**
+ * @swagger
+ * /api/bookings/{bookingId}/accolades:
+ *   put:
+ *     summary: Update accolades for a booking
+ *     tags:
+ *       - Booking
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The booking ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               accolades:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *     responses:
+ *       200:
+ *         description: Booking accolades updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Booking accolades updated successfully
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Bad request or error updating accolades
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: bookingId and accolades (as array) are required
+ */
+
+router.put(
+  "/bookings/:bookingId/accolades",
+  authMiddleware,
+  updateBookingAccoladesHandler
+);
+
 
 export default router;
