@@ -16,6 +16,7 @@ import userRoutes from "./routes/user.routes.js";
 import timeSlotRoutes from "./routes/time-slot.routes.js";
 import bookingRoutes from "./routes/booking.routes.js";
 import trainerRoutes from "./routes/trainer.routes.js";
+import customerRoutes from "./routes/customer.routes.js";
 
 dotenv.config();
 
@@ -57,6 +58,8 @@ app.use("/api", userRoutes);
 app.use("/api", timeSlotRoutes);
 app.use("/api", bookingRoutes);
 app.use("/", trainerRoutes);
+app.use("/", customerRoutes);
+
 
 
 
