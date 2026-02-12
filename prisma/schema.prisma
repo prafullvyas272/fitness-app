@@ -57,6 +57,7 @@ model UserProfileDetail {
   hostGymName     String?
   hostGymAddress  String?
   avatarUrl       String?
+  avatarPublicId  String?
   dob             DateTime?
   gender          String?
 

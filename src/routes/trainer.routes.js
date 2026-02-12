@@ -8,7 +8,7 @@ import {
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
-
+import upload from "../middlewares/upload.middleware.js";
 const router = express.Router();
 
 /**
@@ -23,7 +23,7 @@ const router = express.Router();
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -33,17 +33,11 @@ const router = express.Router();
  *                 type: string
  *               email:
  *                 type: string
- *                 format: email
  *               phone:
  *                 type: string
- *               hostGymName:
+ *               avatar:
  *                 type: string
- *               hostGymAddress:
- *                 type: string
- *               address:
- *                 type: string
- *               bio:
- *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Trainer created successfully.
@@ -54,6 +48,7 @@ router.post(
   "/api/trainers",
   authMiddleware,
   superadminMiddleware,
+  upload.single("avatar"),
   createTrainerHandler
 );
 
@@ -109,6 +104,7 @@ router.put(
   "/api/trainers/:id",
   authMiddleware,
   superadminMiddleware,
+  upload.single("avatar"),
   updateTrainerHandler
 );
 

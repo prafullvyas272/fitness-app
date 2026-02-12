@@ -62,12 +62,17 @@ export const createTrainer = async (data) => {
       data.hostGymName !== undefined ||
       data.hostGymAddress !== undefined ||
       data.address !== undefined ||
-      data.bio !== undefined
+      data.bio !== undefined ||
+      data.avatarUrl !== undefined ||
+      data.avatarPublicId !== undefined
     ) {
       if (data.hostGymName !== undefined) profileFields.hostGymName = data.hostGymName;
       if (data.hostGymAddress !== undefined) profileFields.hostGymAddress = data.hostGymAddress;
       if (data.address !== undefined) profileFields.address = data.address;
       if (data.bio !== undefined) profileFields.bio = data.bio;
+      if (data.avatarUrl !== undefined) profileFields.avatarUrl = data.avatarUrl;
+      if (data.avatarPublicId !== undefined) profileFields.avatarPublicId = data.avatarPublicId;
+
 
       await tx.userProfileDetail.create({
         data: {
@@ -118,6 +123,7 @@ export const updateTrainer = async (trainerId, data) => {
     hostGymAddress,
     address,
     bio,
+    avatarUrl,
     ...safeData
   } = data;
 
@@ -146,6 +152,8 @@ export const updateTrainer = async (trainerId, data) => {
     if (hostGymAddress !== undefined) profileFields.hostGymAddress = hostGymAddress;
     if (address !== undefined) profileFields.address = address;
     if (bio !== undefined) profileFields.bio = bio;
+    if (avatarUrl !== undefined) profileFields.avatarUrl = avatarUrl;
+
 
     if (Object.keys(profileFields).length > 0) {
       const existingProfile = await tx.userProfileDetail.findFirst({
