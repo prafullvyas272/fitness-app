@@ -33,7 +33,16 @@ const router = express.Router();
  *                 type: string
  *               email:
  *                 type: string
+ *                 format: email
  *               phone:
+ *                 type: string
+ *               hostGymName:
+ *                 type: string
+ *               hostGymAddress:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               bio:
  *                 type: string
  *               avatar:
  *                 type: string
@@ -53,6 +62,7 @@ router.post(
 );
 
 /**
+/**
  * @swagger
  * /api/trainers/{id}:
  *   put:
@@ -71,7 +81,7 @@ router.post(
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -94,11 +104,34 @@ router.post(
  *                 type: string
  *               isActive:
  *                 type: boolean
+ *               avatar:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: Trainer updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
  *       400:
  *         description: Error occurred.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  */
 router.put(
   "/api/trainers/:id",

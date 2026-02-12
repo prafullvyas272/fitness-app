@@ -23,7 +23,7 @@ const router = express.Router();
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -36,10 +36,9 @@ const router = express.Router();
  *                 format: email
  *               phone:
  *                 type: string
- *               password:
+ *               avatar:
  *                 type: string
- *               isActive:
- *                 type: boolean
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Customer created successfully.
@@ -72,7 +71,7 @@ router.post(
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -87,6 +86,9 @@ router.post(
  *                 type: string
  *               isActive:
  *                 type: boolean
+ *               avatar:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       200:
  *         description: Customer updated successfully.

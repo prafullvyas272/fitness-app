@@ -44,6 +44,7 @@ export const updateTrainerHandler = async (req, res) => {
         if (req.file) {
             const uploadResult = await uploadToCloudinary(req.file.buffer, "trainer_avatars");
             updateData.avatarUrl = uploadResult.secure_url;
+            updateData.avatarPublicId = uploadResult.public_id;
         }
           
         const updatedTrainer = await updateTrainer(trainerId, updateData);

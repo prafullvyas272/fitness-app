@@ -91,6 +91,19 @@ export const getAllCustomers = async () => {
         email: true,
         phone: true,
         createdAt: true,
+        isActive: true,
+        userProfileDetails: {
+          select: {
+            id: true,
+            address: true,
+            bio: true,
+            avatarUrl: true,
+            dob: true,
+            gender: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
         assignedCustomersAsCustomer: {
           select: {
             id: true,
