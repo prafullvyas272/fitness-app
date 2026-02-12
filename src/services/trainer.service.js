@@ -99,6 +99,15 @@ export const updateTrainer = async (trainerId, data) => {
     }
   });
 
+  if (data.email) {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email }
+    });
+    if (existingUser && existingUser.id !== trainerId) {
+      throw new Error("Email already in use.");
+    }
+  }
+
   if (!trainer) throw new Error("Trainer not found");
   if (trainer.role.name !== "Trainer")
     throw new Error("User is not a trainer");
