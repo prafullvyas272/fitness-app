@@ -8,6 +8,7 @@ import {
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
+import upload from "../middlewares/upload.middleware.js";
 
 const router = express.Router();
 
@@ -49,6 +50,7 @@ router.post(
   "/api/customers",
   authMiddleware,
   superadminMiddleware,
+  upload.single("avatar"),
   createCustomerHandler
 );
 
@@ -99,6 +101,7 @@ router.put(
   "/api/customers/:id",
   authMiddleware,
   superadminMiddleware,
+  upload.single("avatar"),
   updateCustomerHandler
 );
 
