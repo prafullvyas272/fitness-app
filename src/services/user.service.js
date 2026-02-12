@@ -24,6 +24,7 @@ export const getAllTrainers = async () => {
       email: true,
       phone: true,
       createdAt: true,
+      isActive: true,
       assignedCustomersAsTrainer: {
         select: {
           id: true,
