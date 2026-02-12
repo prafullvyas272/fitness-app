@@ -40,8 +40,8 @@ export const getAllCustomersHandler = async (req, res) => {
         const formattedCustomers = customers.map(
             ({ assignedCustomersAsCustomer, ...customer }) => ({
             ...customer,
-            assignedTrainers: assignedCustomersAsCustomer,
-            userProfileDetails: Array.isArray(userProfileDetails) && userProfileDetails.length > 0 ? userProfileDetails[0] : null
+            assignedTrainers: assignedCustomersAsCustomer
+            
             })
         );
         res.status(200).json({
