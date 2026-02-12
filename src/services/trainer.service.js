@@ -53,6 +53,8 @@ export const createTrainer = async (data) => {
         isActive: true,
         roleId: true,
         createdAt: true,
+        userProfileDetails: true,
+
       },
     });
 
