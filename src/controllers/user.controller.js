@@ -41,6 +41,7 @@ export const getAllCustomersHandler = async (req, res) => {
             ({ assignedCustomersAsCustomer, ...customer }) => ({
             ...customer,
             assignedTrainers: assignedCustomersAsCustomer,
+            userProfileDetails: Array.isArray(userProfileDetails) && userProfileDetails.length > 0 ? userProfileDetails[0] : null
             })
         );
         res.status(200).json({
