@@ -20,10 +20,17 @@ export const createTrainerHandler = async (req, res) => {
         }
 
         const trainer = await createTrainer(trainerData);
+
+        let formattedTrainer = { ...trainer };
+        if (Array.isArray(trainer.userProfileDetails) && trainer.userProfileDetails.length > 0) {
+            formattedTrainer.userProfileDetails = trainer.userProfileDetails[0];
+        } else {
+            formattedTrainer.userProfileDetails = null;
+        }
         res.status(201).json({
             success: true,
             message: "Trainer created successfully.",
-            data: trainer,
+            data: formattedTrainer,
         });
     } catch (err) {
         res.status(400).json({
