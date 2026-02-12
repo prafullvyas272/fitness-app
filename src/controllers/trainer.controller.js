@@ -33,10 +33,17 @@ export const updateTrainerHandler = async (req, res) => {
         const trainerId = req.params.id;
         const updateData = req.body;
         const updatedTrainer = await updateTrainer(trainerId, updateData);
+        // Ensure userProfileDetails is returned as object (not array) if exists, else null
+        let trainerData = { ...updatedTrainer };
+        if (Array.isArray(trainerData.userProfileDetails) && trainerData.userProfileDetails.length > 0) {
+            trainerData.userProfileDetails = trainerData.userProfileDetails[0];
+        } else {
+            trainerData.userProfileDetails = null;
+        }
         res.status(200).json({
             success: true,
             message: "Trainer updated successfully.",
-            data: updatedTrainer,
+            data: trainerData,
         });
     } catch (err) {
         res.status(400).json({

@@ -126,6 +126,7 @@ export const updateTrainer = async (trainerId, data) => {
         isActive: true,
         roleId: true,
         createdAt: true,
+        userProfileDetails: true
       },
     });
 
@@ -158,7 +159,22 @@ export const updateTrainer = async (trainerId, data) => {
       }
     }
 
-    return updatedTrainer;
+    const updatedTrainerData = await tx.user.findUnique({
+      where: { id: trainerId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        isActive: true,
+        roleId: true,
+        createdAt: true,
+        userProfileDetails: true
+      },
+    });
+
+    return updatedTrainerData;
   });
 
   return result;
