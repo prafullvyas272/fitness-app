@@ -9,7 +9,7 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith("image/")) {
-      cb(new Error("Only image files are allowed"), false);
+      return cb(new multer.MulterError("LIMIT_UNEXPECTED_FILE"));
     }
     cb(null, true);
   },
