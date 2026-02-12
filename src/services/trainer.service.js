@@ -84,7 +84,21 @@ export const createTrainer = async (data) => {
       });
     }
 
-    return trainer;
+    const trainerWithProfile = await tx.user.findUnique({
+      where: { id: trainer.id },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        isActive: true,
+        roleId: true,
+        createdAt: true,
+        userProfileDetails: true,
+      }
+    });
+    return trainerWithProfile;
   });
 
   return result;
