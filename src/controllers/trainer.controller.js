@@ -4,6 +4,7 @@ import {
     deleteTrainer,
     showTrainerProfileData,
 } from "../services/trainer.service.js";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 /**
  * Controller for creating a new trainer user.
@@ -11,6 +12,13 @@ import {
 export const createTrainerHandler = async (req, res) => {
     try {
         const trainerData = req.body;
+
+        if (req.file) {
+            const uploadResult = await uploadToCloudinary(req.file.buffer, "trainer_avatars");
+            trainerData.avatarUrl = uploadResult.secure_url;
+            trainerData.avatarPublicId = uploadResult.public_id;
+        }
+
         const trainer = await createTrainer(trainerData);
         res.status(201).json({
             success: true,
@@ -32,6 +40,12 @@ export const updateTrainerHandler = async (req, res) => {
     try {
         const trainerId = req.params.id;
         const updateData = req.body;
+
+        if (req.file) {
+            const uploadResult = await uploadToCloudinary(req.file.buffer, "trainer_avatars");
+            updateData.avatarUrl = uploadResult.secure_url;
+        }
+          
         const updatedTrainer = await updateTrainer(trainerId, updateData);
         // Ensure userProfileDetails is returned as object (not array) if exists, else null
         let trainerData = { ...updatedTrainer };
