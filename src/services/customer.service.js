@@ -247,7 +247,7 @@ export const showCustomerProfileData = async (customerId) => {
       isActive: true,
       roleId: true,
       createdAt: true,
-      assignedTrainersAsCustomer: {
+      assignedCustomersAsCustomer: {
         select: {
           id: true,
           trainerId: true,
@@ -266,13 +266,6 @@ export const showCustomerProfileData = async (customerId) => {
         }
       },
       userProfileDetails: true,
-      goals: {
-        select: {
-          id: true,
-          text: true,
-          createdAt: true
-        }
-      }
     }
   });
 
