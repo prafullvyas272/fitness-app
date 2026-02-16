@@ -191,3 +191,12 @@ model AssignedCustomer {
   @@index([customerId, isActive])
   @@index([trainerId, isActive])
 }
+
+
+model Speciality {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  createdBy String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
