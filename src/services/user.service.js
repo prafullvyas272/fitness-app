@@ -223,3 +223,35 @@ export const toggleUserIsActive = async (userId, isActive) => {
 
   return updatedUser;
 };
+
+
+/**
+ * Unassign a customer from a trainer.
+ * @param {string} trainerId - The ID of the trainer.
+ * @param {string} customerId - The ID of the customer to unassign.
+ * @returns {object} The updated assignment object.
+ */
+export const unassignCustomer = async (trainerId, customerId) => {
+  if (!trainerId || !customerId) {
+    throw new Error("Both trainerId and customerId are required");
+  }
+
+  const assignment = await prisma.assignedCustomer.findFirst({
+    where: {
+      trainerId,
+      customerId,
+      isActive: true
+    }
+  });
+
+  if (!assignment) {
+    throw new Error("Active assignment not found");
+  }
+
+  const deletedAssignment = await prisma.assignedCustomer.delete({
+    where: { id: assignment.id },
+  });
+
+
+  return deletedAssignment;
+};

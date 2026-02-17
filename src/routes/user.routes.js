@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler, toggleUserIsActiveHandler } from "../controllers/user.controller.js";
+import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler, toggleUserIsActiveHandler, unassignCustomerHandler } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
@@ -352,6 +352,89 @@ router.post(
   authMiddleware,
   superadminMiddleware,
   toggleUserIsActiveHandler
+);
+
+
+/**
+ * @swagger
+ * /api/unassign-customer/{id}:
+ *   post:
+ *     summary: Unassign a customer from a trainer
+ *     tags:
+ *       - Superadmin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique identifier of the customer to unassign.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - trainerId
+ *             properties:
+ *               trainerId:
+ *                 type: string
+ *                 description: The unique identifier of the trainer to unassign the customer from.
+ *     responses:
+ *       200:
+ *         description: Customer successfully unassigned from trainer.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     trainerId:
+ *                       type: string
+ *                     customerId:
+ *                       type: string
+ *                     isActive:
+ *                       type: boolean
+ *                     startDate:
+ *                       type: string
+ *                       format: date-time
+ *                     endDate:
+ *                       type: string
+ *                       format: date-time
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.post(
+  "/unassign-customer/:id",
+  authMiddleware,
+  superadminMiddleware,
+  unassignCustomerHandler
 );
 
 export default router;

@@ -1,4 +1,4 @@
-import { getAllTrainers, getAllCustomers, assignCustomer, toggleUserIsActive } from "../services/user.service.js";
+import { getAllTrainers, getAllCustomers, assignCustomer, toggleUserIsActive, unassignCustomer } from "../services/user.service.js";
 
 /**
  * Get all trainers
@@ -95,6 +95,30 @@ export const toggleUserIsActiveHandler = async (req, res) => {
             success: true,
             message: "User isActive status updated successfully.",
             data: updatedUser
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message
+        });
+    }
+};
+
+
+/**
+ * Unassign a customer from a trainer.
+ */
+export const unassignCustomerHandler = async (req, res) => {
+    try {
+        const customerId = req.params.id;
+        const { trainerId } = req.body;
+
+        const deletedAssignment = await unassignCustomer(trainerId, customerId);
+
+        res.status(200).json({
+            success: true,
+            message: "Customer successfully unassigned from trainer.",
+            data: deletedAssignment
         });
     } catch (err) {
         res.status(400).json({
