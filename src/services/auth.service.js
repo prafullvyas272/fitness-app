@@ -59,6 +59,10 @@ export const loginUser = async (email, password) => {
     throw new Error("Please login using Google");
   }
 
+  if (!user?.isActive) {
+    throw new Error("Your account needs approval. Please contact admin.");
+  }
+
   if (!user.password) {
     throw new Error("Invalid credentials");
   }
