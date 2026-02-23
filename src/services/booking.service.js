@@ -106,7 +106,7 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
       });
 
       await tx.trainerTimeSlot.update({
-        where: { id: timeSlotId },
+        where: { timeSlotId: timeSlotId },
         data: { isBooked: true }
       });
 
