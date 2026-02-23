@@ -33,11 +33,12 @@ export const getUserAvailabilityDataByDate = async (userId, date) => {
     for (const slot of dailyAvailability.timeSlots) {
         const start = slot.startTime.toISOString().substr(11, 5);
         const end = slot.endTime.toISOString().substr(11, 5);
+        const timeSlotId = slot.timeSlotId;
 
         if (slot.slotType === "PEAK") {
-            peakSlots.push({ start, end });
+            peakSlots.push({ start, end, timeSlotId });
         } else if (slot.slotType === "ALTERNATIVE") {
-            alternativeSlots.push({ start, end });
+            alternativeSlots.push({ start, end, timeSlotId });
         }
     }
 
@@ -93,6 +94,7 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
             startTime,
             endTime,
             slotType: "PEAK",
+            timeSlotId: slot.timeSlotId,
             durationMinutes,
             isBooked: false,
         });
@@ -109,6 +111,7 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
             startTime,
             endTime,
             slotType: "ALTERNATIVE",
+            timeSlotId: slot.timeSlotId,
             durationMinutes,
             isBooked: false,
         });
