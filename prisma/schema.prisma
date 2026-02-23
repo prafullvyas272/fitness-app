@@ -173,7 +173,7 @@ model TrainerBooking {
 
   customer              User                @relation("Customer_Booking", fields: [customerId], references: [id], onDelete: Cascade)
   trainer               User                @relation("Trainer_Booking", fields: [trainerId], references: [id], onDelete: Cascade)
-  timeSlot              TrainerTimeSlot     @relation("TimeSlot_Booking", fields: [timeSlotId], references: [id], onDelete: Cascade)
+  timeSlot              TrainerTimeSlot     @relation("TimeSlot_Booking", fields: [timeSlotId], references: [timeSlotId], onDelete: Cascade)
 }
 
 model AssignedCustomer {
