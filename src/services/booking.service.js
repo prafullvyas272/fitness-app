@@ -33,7 +33,13 @@ export const getBookingsByTrainerWithPagination = async ( trainerId, page = 1, p
           select: {
             id: true,
             firstName: true,
-            lastName: true
+            lastName: true,
+            userProfileDetails: {
+              select: {
+                id: true,
+                hostGymName: true,
+              }
+            }
           }
         },
         trainer: {
