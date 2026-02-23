@@ -21,22 +21,19 @@ export const getBookingsByTrainerWithPagination = async ( trainerId, page = 1, p
       skip,
       take: pageSize,
       include: {
+        timeSlot:{
+          select: {
+            id: true,
+            startTime: true,
+            endTime: true,
+            slotType: true
+          }
+        },
         customer: {
           select: {
             id: true,
             firstName: true,
-            lastName: true,
-            email: true
-          }
-        },
-        timeSlot: {
-          select: {
-            id: true,
-            date: true,
-            startTime: true,
-            endTime: true,
-            slotType: true,
-            durationMinutes: true
+            lastName: true
           }
         },
         trainer: {
@@ -44,7 +41,13 @@ export const getBookingsByTrainerWithPagination = async ( trainerId, page = 1, p
             id: true,
             firstName: true,
             lastName: true,
-            email: true
+            email: true,
+            userProfileDetails: {
+              select: {
+                id: true,
+                hostGymName: true,
+              }
+            }
           }
         }
       }
