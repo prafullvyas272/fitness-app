@@ -63,6 +63,9 @@ router.get("/availability", authMiddleware, getUserAvailability);
  *                 items:
  *                   type: object
  *                   properties:
+ *                     timeSlotId:
+ *                       type: string
+ *                       example: "6996abf044e63e52f5d934dc"
  *                     start:
  *                       type: string
  *                       example: "10:30"
@@ -74,6 +77,9 @@ router.get("/availability", authMiddleware, getUserAvailability);
  *                 items:
  *                   type: object
  *                   properties:
+ *                     timeSlotId:
+ *                       type: string
+ *                       example: "6996abf044e63e52f5d934dc"
  *                     start:
  *                       type: string
  *                       example: "15:00"

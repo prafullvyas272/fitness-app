@@ -6,6 +6,7 @@ const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const slotSchema = z.object({
   start: z.string().regex(timeRegex, { message: "Start time must be in HH:mm format" }),
   end: z.string().regex(timeRegex, { message: "End time must be in HH:mm format" }),
+  timeSlotId: z.string().regex(/^[a-f\d]{24}$/i, { message: "Invalid timeSlotId" }),
 }).refine(
   (slot) => {
     // compare time strings: "09:00" < "18:00"
