@@ -47,6 +47,8 @@ model User {
   userProfileDetails UserProfileDetail[] @relation("UserProfileDetailToUser")
   workoutVideos   WorkoutVideo[] @relation("UserWorkoutVideos")
 
+  plans      Plan[]   @relation("UserPlans")
+
   createdAt  DateTime @default(now())
 }
 
@@ -242,4 +244,17 @@ model WorkoutVideo {
 
   uploader     User @relation("UserWorkoutVideos", fields: [uploadedBy], references: [id])
 
+}
+
+model Plan {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  price      Float
+  features   String[]
+  isPopular  Boolean  @default(false)
+  createdBy  String   @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  creator    User     @relation("UserPlans", fields: [createdBy], references: [id])
 }
