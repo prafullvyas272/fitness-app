@@ -6,10 +6,9 @@ export const createWorkoutVideo = async ({
   title,
   description,
   tags,
-  fileBuffer,
+  filePath,
   uploadedBy,
 }) => {
-
   try {
     const video = await prisma.workoutVideo.create({
       data: {
@@ -21,14 +20,21 @@ export const createWorkoutVideo = async ({
       },
     });
 
-    await videoQueue.add("upload", {
-      videoId: video.id,
-      fileBuffer,
-    });
-
-    console.log(
-      `Workout video created and upload job queued. Video ID: ${video.id}`
+    await videoQueue.add(
+      "video-upload",
+      {
+        videoId: video.id,
+        filePath,
+      },
+      {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      }
     );
+
+    console.log(`Video queued: ${video.id}`);
 
     return video;
   } catch (err) {

@@ -14,7 +14,7 @@ export const uploadWorkoutVideoHandler = async (req, res) => {
       title,
       description,
       tags: parsedTags,
-      fileBuffer: req.file.buffer,
+      filePath: req.file.path,
       uploadedBy: req.user.userId,
     });
 

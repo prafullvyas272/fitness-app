@@ -1,9 +1,10 @@
 import multer from "multer";
+import fs from "fs";
 
-const storage = multer.memoryStorage();
+const memoryStorage = multer.memoryStorage();
 
 export const upload = multer({
-  storage,
+  storage: memoryStorage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB
   },
@@ -15,10 +16,27 @@ export const upload = multer({
   },
 });
 
+const videoDir = "uploads/videos";
+
+if (!fs.existsSync(videoDir)) {
+  fs.mkdirSync(videoDir, { recursive: true });
+}
+
+const videoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, videoDir);
+  },
+  filename: (req, file, cb) => {
+    const safeName = file.originalname.replace(/\s+/g, "-");
+    const uniqueName = `${Date.now()}-${safeName}`;
+    cb(null, uniqueName);
+  },
+});
+
 export const videoUpload = multer({
-  storage,
+  storage: videoStorage,
   limits: {
-    fileSize: 200 * 1024 * 1024, // 200MB
+    fileSize: 20 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("video/")) {
