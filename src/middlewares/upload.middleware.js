@@ -34,7 +34,7 @@ const videoStorage = multer.diskStorage({
 });
 
 export const videoUpload = multer({
-  storage: videoStorage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 20 * 1024 * 1024,
   },
