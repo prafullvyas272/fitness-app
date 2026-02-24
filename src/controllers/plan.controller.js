@@ -112,11 +112,12 @@ export const deletePlanHandler = async (req, res) => {
  */
 export const listAllPlansHandler = async (req, res) => {
   try {
-    const plans = await listAllPlans();
+    const { page = 1, pageSize = 10 } = req.query;
+    const result = await listAllPlans(Number(page), Number(pageSize));
     res.status(200).json({
       success: true,
       message: "Plans fetched successfully",
-      data: plans,
+      data: result,
     });
   } catch (err) {
     res.status(400).json({
