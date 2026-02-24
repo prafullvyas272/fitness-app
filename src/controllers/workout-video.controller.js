@@ -25,8 +25,9 @@ export const uploadWorkoutVideoHandler = async (req, res) => {
       title,
       description,
       tags: parsedTags,
-      filePath: req.file.path,
+      filePath: req.file.buffer,
       uploadedBy: req.user.userId,
+      
     });
 
     res.status(200).json({
