@@ -69,15 +69,34 @@ export const deletePlan = async (id) => {
 };
 
 /**
- * List all plans.
- * @returns {Promise<Array>}
+ * Get a paginated list of plans.
+ * @param {number} [page=1] - Page number (1-based)
+ * @param {number} [pageSize=10] - Number of plans per page
+ * @returns {Promise<Object>} - { plans, pagination }
  */
-export const listAllPlans = async () => {
+export const listAllPlans = async (page = 1, pageSize = 10) => {
+  if (page < 1) page = 1;
+  if (pageSize < 1) pageSize = 10;
+  const skip = (page - 1) * pageSize;
+
   try {
-    const all = await prisma.plan.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
-    return all;
+    const [total, plans] = await Promise.all([
+      prisma.plan.count(),
+      prisma.plan.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+    ]);
+    return {
+      plans,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
   } catch (err) {
     throw new Error('Failed to fetch plans: ' + err.message);
   }

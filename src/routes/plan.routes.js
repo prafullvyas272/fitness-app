@@ -201,11 +201,24 @@ router.delete(
  * @swagger
  * /api/plans:
  *   get:
- *     summary: List all plans
+ *     summary: List all plans (paginated)
  *     tags:
  *       - Plans
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number (1-based)
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of plans per page
  *     responses:
  *       200:
  *         description: Plans fetched successfully
@@ -219,9 +232,23 @@ router.delete(
  *                 message:
  *                   type: string
  *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Plan'
+ *                   type: object
+ *                   properties:
+ *                     plans:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Plan'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                         page:
+ *                           type: integer
+ *                         pageSize:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
  *       400:
  *         description: Error occurred while fetching plans
  *         content:
