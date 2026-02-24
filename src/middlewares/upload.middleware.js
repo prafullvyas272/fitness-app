@@ -2,7 +2,7 @@ import multer from "multer";
 
 const storage = multer.memoryStorage();
 
-const upload = multer({
+export const upload = multer({
   storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB
@@ -15,4 +15,16 @@ const upload = multer({
   },
 });
 
-export default upload;
+export const videoUpload = multer({
+  storage,
+  limits: {
+    fileSize: 200 * 1024 * 1024, // 200MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("video/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only video files allowed"));
+    }
+  },
+});

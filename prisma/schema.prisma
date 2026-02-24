@@ -45,6 +45,7 @@ model User {
   assignedCustomersAsTrainer  AssignedCustomer[] @relation("AssignedCustomer_Trainer")
 
   userProfileDetails UserProfileDetail[] @relation("UserProfileDetailToUser")
+  workoutVideos   WorkoutVideo[] @relation("UserWorkoutVideos")
 
   createdAt  DateTime @default(now())
 }
@@ -218,4 +219,27 @@ model TimeSlot {
   trainerTimeSlots    TrainerTimeSlot[]
 
   @@index([date])
+}
+
+enum VideoUploadStatus {
+  PROCESSING 
+  READY 
+  FAILED
+}
+
+model WorkoutVideo {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  description  String?
+  tags         String[]
+  videoUrl     String?
+  thumbnailUrl String?
+  publicId     String?
+  status       VideoUploadStatus   @default(PROCESSING)
+  uploadedBy   String   @db.ObjectId
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  uploader     User @relation("UserWorkoutVideos", fields: [uploadedBy], references: [id])
+
 }

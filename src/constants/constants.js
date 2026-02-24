@@ -1,0 +1,5 @@
+export const VIDEO_UPLOAD_STATUS = {
+  PROCESSING: "PROCESSING",
+  READY: "READY",
+  FAILED: "FAILED"
+};

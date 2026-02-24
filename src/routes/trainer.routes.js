@@ -8,7 +8,7 @@ import {
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
-import upload from "../middlewares/upload.middleware.js";
+import { upload } from "../middlewares/upload.middleware.js";
 const router = express.Router();
 
 /**

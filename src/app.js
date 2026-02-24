@@ -19,6 +19,7 @@ import trainerRoutes from "./routes/trainer.routes.js";
 import customerRoutes from "./routes/customer.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import specialityRoutes from "./routes/speciality.routes.js";
+import workoutVideoRoutes from "./routes/workout-video.routes.js";
 
 dotenv.config();
 
@@ -62,7 +63,7 @@ app.use("/api", bookingRoutes);
 app.use("/", trainerRoutes);
 app.use("/", customerRoutes);
 app.use("/api", specialityRoutes);
-
+app.use("/api", workoutVideoRoutes);
 
 
 
