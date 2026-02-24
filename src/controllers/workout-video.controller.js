@@ -5,9 +5,8 @@ export const uploadWorkoutVideoHandler = async (req, res) => {
     const { title, description, tags } = req.body;
 
     if (!req.file) {
-      throw new Error("Video file is required");
+      return res.status(400).json({ message: "Video file is required" });
     }
-    console.log(tags)
 
     let parsedTags = [];
 
@@ -25,21 +24,17 @@ export const uploadWorkoutVideoHandler = async (req, res) => {
       title,
       description,
       tags: parsedTags,
-      filePath: req.file.buffer,
-      uploadedBy: req.user.userId,
-      
+      file: req.file, // ⭐ IMPORTANT
+      uploadedBy: req.user.userId, // adjust if needed
     });
 
-    res.status(200).json({
+    return res.status(201).json({
       success: true,
-      message: "Video upload started",
       data: video,
     });
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+    console.error(err);
+    res.status(500).json({ message: "Upload failed" });
   }
 };
 

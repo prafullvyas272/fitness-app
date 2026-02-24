@@ -1,12 +1,32 @@
 import prisma from "../utils/prisma.js";
-import { videoQueue } from "../queues/video.queue.js";
+// import { videoQueue } from "../queues/video.queue.js";
 import { VIDEO_UPLOAD_STATUS } from "../constants/constants.js";
+
+import cloudinary from "../config/cloudinary.js";
+import streamifier from "streamifier";
+
+const uploadBufferToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: "video",
+        folder: "workouts",
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+};
 
 export const createWorkoutVideo = async ({
   title,
   description,
   tags,
-  filePath,
+  file,
   uploadedBy,
 }) => {
   try {
@@ -20,25 +40,30 @@ export const createWorkoutVideo = async ({
       },
     });
 
-    await videoQueue.add(
-      "video-upload",
-      {
-        videoId: video.id,
-        filePath,
+    const result = await uploadBufferToCloudinary(file.buffer);
+
+    const updatedVideo = await prisma.workoutVideo.update({
+      where: { id: video.id },
+      data: {
+        videoUrl: result.secure_url,
+        publicId: result.public_id,
+        status: VIDEO_UPLOAD_STATUS.READY,
       },
-      {
-        attempts: 3,
-        backoff: { type: "exponential", delay: 5000 },
-        removeOnComplete: true,
-        removeOnFail: false,
-      }
-    );
+    });
 
-    console.log(`Video queued: ${video.id}`);
+    console.log("Video uploaded:", updatedVideo.id);
 
-    return video;
+    return updatedVideo;
   } catch (err) {
     console.error("Error in createWorkoutVideo:", err);
+
+    if (err?.videoId) {
+      await prisma.workoutVideo.update({
+        where: { id: err.videoId },
+        data: { status: VIDEO_UPLOAD_STATUS.FAILED },
+      });
+    }
+
     throw new Error("Failed to create workout video");
   }
 };
