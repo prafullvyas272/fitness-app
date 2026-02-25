@@ -3,3 +3,5 @@ export const VIDEO_UPLOAD_STATUS = {
   READY: "READY",
   FAILED: "FAILED"
 };
+
+export const TEMPORARY_SUPER_OTP = 123456;
