@@ -115,12 +115,17 @@ export const updateCustomer = async (customerId, data) => {
     }
   }
 
+  if (typeof data.isActive === "string") {
+    data.isActive = data.isActive === "true";
+  }
+
   // Prevent changing roleId through this update
   const {
     roleId,
     address,
     bio,
     avatarUrl,
+    avatar,
     avatarPublicId,
     ...safeData
   } = data;

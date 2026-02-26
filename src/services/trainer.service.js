@@ -124,6 +124,10 @@ export const updateTrainer = async (trainerId, data) => {
     }
   });
 
+  if (typeof data.isActive === "string") {
+    data.isActive = data.isActive === "true";
+  }
+
   if (data.email) {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email }
@@ -144,8 +148,10 @@ export const updateTrainer = async (trainerId, data) => {
     address,
     bio,
     avatarUrl,
+    avatar,
     ...safeData
   } = data;
+  console.log(data, avatarUrl, safeData)
 
   const result = await prisma.$transaction(async (tx) => {
     // ✅ Update User table only with valid fields
