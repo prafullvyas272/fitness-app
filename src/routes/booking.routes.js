@@ -224,6 +224,13 @@ router.post(
  *               isAttended:
  *                 type: boolean
  *                 description: Whether the booking was attended (true/false)
+ *               bookingStatus:
+ *                 type: string
+ *                 description: New status of the booking (PENDING, ATTENDED, NOTATTENDED)
+ *                 enum:
+ *                   - PENDING
+ *                   - ATTENDED
+ *                   - NOTATTENDED
  *             required:
  *               - isAttended
  *     responses:

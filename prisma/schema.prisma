@@ -158,13 +158,19 @@ model TrainerTimeSlot {
   @@index([date])
 }
 
+enum BookingStatus {
+  PENDING
+  ATTENDED
+  NOTATTENDED
+}
+
 model TrainerBooking {
   id                    String   @id @default(auto()) @map("_id") @db.ObjectId
   customerId            String   @db.ObjectId
   trainerId             String   @db.ObjectId
   timeSlotId            String   @db.ObjectId
-  isAttendedByTrainer   Boolean  @default(false)
   isCancelled           Boolean  @default(false)
+  bookingStatus         BookingStatus @default(PENDING)
 
   originalTimeSlotId    String?  @db.ObjectId
   rescheduledCount      Int      @default(0)

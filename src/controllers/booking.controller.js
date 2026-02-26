@@ -1,3 +1,4 @@
+import { BookingStatus } from "../constants/constants.js";
 import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById, rescheduleBooking, getBookingDetailsById, updateBookingAccolades } from "../services/booking.service.js";
 
 /**
@@ -73,20 +74,20 @@ export const bookSlotHandler = async (req, res) => {
 export const markAsAttendedHandler = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { isAttended } = req.body;
+    const { bookingStatus } = req.body;
 
-    if (!bookingId || typeof isAttended === "undefined") {
+    if (!bookingId || typeof bookingStatus === "undefined") {
       return res.status(400).json({
         success: false,
-        message: "bookingId and isAttended are required"
+        message: "bookingId and bookingStatus are required"
       });
     }
 
-    const booking = await markAsAttended(bookingId, isAttended);
+    const booking = await markAsAttended(bookingId, bookingStatus);
 
     res.status(200).json({
       success: true,
-      message: isAttended ? "Booking marked as attended" : "Booking marked as not attended",
+      message: bookingStatus === BookingStatus.ATTENDED ? "Booking marked as attended" : "Booking marked as not attended",
       data: booking
     });
   } catch (err) {

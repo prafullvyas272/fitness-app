@@ -126,9 +126,9 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
 };
 
 
-export const markAsAttended = async (bookingId, isAttended) => {
-  if (!bookingId || typeof isAttended !== "boolean") {
-    throw new Error("bookingId and isAttended are required");
+export const markAsAttended = async (bookingId, bookingStatus) => {
+  if (!bookingId) {
+    throw new Error("bookingId is required");
   }
 
   // Find the booking by bookingId
@@ -145,7 +145,9 @@ export const markAsAttended = async (bookingId, isAttended) => {
   try {
     const updatedBooking = await prisma.trainerBooking.update({
       where: { id: bookingId },
-      data: { isAttendedByTrainer: isAttended },
+      data: { 
+        bookingStatus: bookingStatus
+      },
     });
     return updatedBooking;
   } catch (err) {

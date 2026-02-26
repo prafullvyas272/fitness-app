@@ -5,3 +5,9 @@ export const VIDEO_UPLOAD_STATUS = {
 };
 
 export const TEMPORARY_SUPER_OTP = 123456;
+
+export const BookingStatus = {
+  PENDING: "PENDING",
+  ATTENDED: "ATTENDED",
+  NOTATTENDED: "NOTATTENDED"
+};
