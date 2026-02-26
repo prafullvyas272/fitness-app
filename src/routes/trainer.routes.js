@@ -12,6 +12,7 @@ import { upload } from "../middlewares/upload.middleware.js";
 const router = express.Router();
 
 /**
+/**
  * @swagger
  * /api/trainers:
  *   post:
@@ -44,14 +45,45 @@ const router = express.Router();
  *                 type: string
  *               bio:
  *                 type: string
+ *               gender:
+ *                 type: string
+ *                 enum:
+ *                   - MALE
+ *                   - FEMALE
+ *                   - OTHER
  *               avatar:
  *                 type: string
  *                 format: binary
  *     responses:
  *       201:
  *         description: Trainer created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Trainer created successfully
+ *                 data:
+ *                   type: object
+ *                   nullable: true
  *       400:
  *         description: Error occurred.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Error description
  */
 router.post(
   "/api/trainers",
@@ -61,6 +93,7 @@ router.post(
   createTrainerHandler
 );
 
+/**
 /**
 /**
  * @swagger
@@ -102,6 +135,12 @@ router.post(
  *                 type: string
  *               bio:
  *                 type: string
+ *               gender:
+ *                 type: string
+ *                 enum:
+ *                   - MALE
+ *                   - FEMALE
+ *                   - OTHER
  *               isActive:
  *                 type: boolean
  *               avatar:
@@ -117,10 +156,13 @@ router.post(
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
+ *                   example: Trainer updated successfully
  *                 data:
  *                   type: object
+ *                   nullable: true
  *       400:
  *         description: Error occurred.
  *         content:
@@ -130,8 +172,10 @@ router.post(
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: false
  *                 message:
  *                   type: string
+ *                   example: Error description
  */
 router.put(
   "/api/trainers/:id",

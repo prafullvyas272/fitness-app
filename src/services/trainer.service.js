@@ -42,6 +42,7 @@ export const createTrainer = async (data) => {
         phone: data.phone || null,
         password: hashedPassword,
         roleId: trainerRole.id,
+        gender: data.gender,
         isActive: data.isActive !== undefined ? data.isActive : true,
       },
       select: {
@@ -92,6 +93,7 @@ export const createTrainer = async (data) => {
         lastName: true,
         email: true,
         phone: true,
+        gender: true,
         isActive: true,
         roleId: true,
         createdAt: true,
@@ -140,6 +142,7 @@ export const updateTrainer = async (trainerId, data) => {
     address,
     bio,
     avatarUrl,
+    gender,
     ...safeData
   } = data;
 
@@ -202,6 +205,7 @@ export const updateTrainer = async (trainerId, data) => {
         phone: true,
         isActive: true,
         roleId: true,
+        gender: true,
         createdAt: true,
         userProfileDetails: true
       },

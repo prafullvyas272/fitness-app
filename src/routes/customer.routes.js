@@ -40,11 +40,41 @@ const router = express.Router();
  *               avatar:
  *                 type: string
  *                 format: binary
+ *               gender:
+ *                 type: string
+ *                 enum:
+ *                   - MALE
+ *                   - FEMALE
+ *                   - OTHER
  *     responses:
  *       201:
  *         description: Customer created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Customer created successfully
+ *                 data:
+ *                   type: object
  *       400:
  *         description: Error occurred.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Error description
  */
 router.post(
   "/api/customers",
@@ -91,6 +121,12 @@ router.post(
  *               avatar:
  *                 type: string
  *                 format: binary
+ *               gender:
+ *                 type: string
+ *                 enum:
+ *                   - MALE
+ *                   - FEMALE
+ *                   - OTHER
  *     responses:
  *       200:
  *         description: Customer updated successfully.

@@ -19,6 +19,12 @@ model Role {
   users User[]
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 model User {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   firstName  String?
@@ -30,6 +36,8 @@ model User {
   providerId String?
   roleId     String
   isActive   Boolean  @default(false)
+  phoneVerified Boolean @default(false)
+  gender     Gender?
 
   role       Role     @relation(fields: [roleId], references: [id])
   otps       Otp[]    // Added back-relation to Otp

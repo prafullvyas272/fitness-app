@@ -41,6 +41,7 @@ export const createCustomer = async (data) => {
         email: data.email,
         phone: data.phone || null,
         password: hashedPassword,
+        gender: data.gender,
         roleId: customerRole.id,
         isActive: data.isActive !== undefined ? data.isActive : true,
       },
@@ -120,6 +121,7 @@ export const updateCustomer = async (customerId, data) => {
     bio,
     avatarUrl,
     avatarPublicId,
+    gender,
     ...safeData
   } = data;
 
