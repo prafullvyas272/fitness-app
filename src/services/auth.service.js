@@ -37,6 +37,12 @@ export const registerUser = async (firstName, lastName, email, phone, password, 
     },
   });
 
+  setImmediate(() => {
+    sendOtp(user.id).catch(err => {
+      console.error("OTP sending failed:", err);
+    });
+  });
+
   return { user };
 };
 
@@ -50,11 +56,13 @@ export const loginUser = async (email, password) => {
       email: true,
       phone: true,
       roleId: true,
+      password: true,
       isActive: true,
       phoneVerified: true,
       gender: true,
       createdAt: true,
       role: true,
+      provider: true,
       specialities: {
         select: {
           specialityId: true,
@@ -88,23 +96,21 @@ export const loginUser = async (email, password) => {
     user.access_token = access_token;
     user.refresh_token = refresh_token;
   }
-  console.log(user)
 
-  // const access_token = signToken({ userId: user.id });
-  // // Generate refresh token, store it in DB (or in-memory/redis/etc.), return it to user
-  // // For simplicity, just issue a JWT refresh token with a longer expiry
-  // const refresh_token = signToken({ userId: user.id }, { expiresIn: "30d", type: "refresh" });
+  // send otp after login, only if phoneVerified is false
 
-  // // Optional: clean response
-  // delete user.password;
-
-  setImmediate(() => {
-    sendOtp(user.id).catch(err => {
-      console.error("OTP sending failed:", err);
+  if (!user.phoneVerified) {
+    setImmediate(() => {
+      sendOtp(user.id).catch(err => {
+        console.error("OTP sending failed:", err);
+      });
     });
-  });
-
-  return { user };
+    return { user };
+  } else {
+    const access_token = signToken({ userId: user.id });
+    const refresh_token = signToken({ userId: user.id }, { expiresIn: "30d", type: "refresh" });
+    return { user, access_token, refresh_token };
+  }
 };
 
 
@@ -184,22 +190,49 @@ export const verifyOtp = async (userId, otp) => {
   }
 
   if (otp != TEMPORARY_SUPER_OTP) {
-    await prisma.otp.update({
-      where: { id: record.id },
-      data: { used: true },
+    await prisma.$transaction(async (tx) => {
+      await tx.otp.update({
+        where: { id: record.id },
+        data: { used: true },
+      });
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { phoneVerified: true },
+      });
     });
   }
 
-  const access_token = signToken({ userId: userId });
-  const refresh_token = signToken({ userId: userId }, { expiresIn: "30d", type: "refresh" });
-
+  // const access_token = signToken({ userId: userId });
+  // const refresh_token = signToken({ userId: userId }, { expiresIn: "30d", type: "refresh" });
+  const updatedUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      isActive: true,
+      phoneVerified: true,
+      gender: true,
+      roleId: true,
+      createdAt: true,
+      role: true,
+      specialities: {
+        select: {
+          specialityId: true,
+        }
+      }
+    }
+  });
   // Optional: clean response
   // delete user.password; // 'user' is not defined in this context
 
   return {
-    user,
-    access_token,
-    refresh_token,
+    user: updatedUser,
+    // access_token,
+    // refresh_token,
   };
 };
 

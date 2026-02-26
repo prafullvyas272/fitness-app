@@ -25,6 +25,7 @@ export const getAllTrainers = async () => {
       phone: true,
       createdAt: true,
       isActive: true,
+      gender: true,
       assignedCustomersAsTrainer: {
         select: {
           id: true,
@@ -55,7 +56,6 @@ export const getAllTrainers = async () => {
           hostGymAddress: true,
           avatarUrl: true,
           dob: true,
-          gender: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -91,6 +91,7 @@ export const getAllCustomers = async () => {
         email: true,
         phone: true,
         createdAt: true,
+        gender: true,
         isActive: true,
         userProfileDetails: {
           select: {
@@ -99,7 +100,6 @@ export const getAllCustomers = async () => {
             bio: true,
             avatarUrl: true,
             dob: true,
-            gender: true,
             createdAt: true,
             updatedAt: true,
           },
@@ -216,6 +216,7 @@ export const toggleUserIsActive = async (userId, isActive) => {
       email: true,
       phone: true,
       isActive: true,
+      gender: true,
       roleId: true,
       createdAt: true,
     },

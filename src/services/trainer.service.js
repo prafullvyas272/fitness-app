@@ -274,6 +274,7 @@ export const showTrainerProfileData = async (trainerId) => {
       phone: true,
       isActive: true,
       roleId: true,
+      gender: true,
       createdAt: true,
       assignedCustomersAsTrainer: {
         select: {
@@ -307,7 +308,6 @@ export const showTrainerProfileData = async (trainerId) => {
           hostGymAddress: true,
           avatarUrl: true,
           dob: true,
-          gender: true,
           createdAt: true,
           updatedAt: true,
         }

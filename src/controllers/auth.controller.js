@@ -16,7 +16,7 @@ export const register = async (req, res) => {
     console.log('role')
     res.status(201).json({
       success: true,
-      message: "User registered",
+      message: "User registered successfully. OTP sent to your email and phone.",
       data,
     });
   } catch (err) {
@@ -28,27 +28,58 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const data = await loginUser(email, password);
-    const isSuperadmin = !!data.user.access_token;
+    const { user } = data;
 
-    res.status(200).json({
+    let response = {
       success: true,
-      message: isSuperadmin
-        ? "Login successful."
-        : "OTP sent to your registered email.",
       data: {
         user: {
-          id: data.user.id,
-          firstName: data.user.firstName,
-          lastName: data.user.lastName,
-          email: data.user.email,
-          roleId: data.user.roleId,
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          roleId: user.roleId,
+          isActive: user.isActive,
+          phoneVerified: user.phoneVerified,
+          gender: user.gender,
+          createdAt: user.createdAt,
+          provider: user.provider,
+          specialities: user.specialities,
         },
-        ...(isSuperadmin && {
-          access_token: data.user.access_token,
-          refresh_token: data.user.refresh_token,
-        }),
       },
-    });
+    };
+
+    if (!!user.access_token) {
+      response.message = "Login successful.";
+      response.data.access_token = user.access_token;
+      response.data.refresh_token = user.refresh_token;
+      return res.status(200).json(response);
+    }
+
+    if (user.isActive && user.phoneVerified) {
+      response.message = "Login successful.";
+      response.data.access_token = data.access_token;
+      response.data.refresh_token = data.refresh_token;
+      return res.status(200).json(response);
+    }
+
+     // Active but not phone verified
+    if (user.isActive && !user.phoneVerified) {
+      response.message = "OTP sent to your registered email.";
+      return res.status(200).json(response);
+    }
+
+    // Not active, but phone verified
+    if (!user.isActive && user.phoneVerified) {
+      response.message = "Your account needs approval from admin.";
+      return res.status(200).json(response);
+    }
+
+    // fallback
+    response.success = false;
+    response.message = "Invalid login state.";
+    return res.status(401).json(response);
   } catch (err) {
     res.status(401).json({ success: false, message: err.message });
   }

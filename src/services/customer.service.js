@@ -52,6 +52,7 @@ export const createCustomer = async (data) => {
         email: true,
         phone: true,
         isActive: true,
+        gender: true,
         roleId: true,
         createdAt: true,
       },
@@ -137,6 +138,7 @@ export const updateCustomer = async (customerId, data) => {
         email: true,
         phone: true,
         isActive: true,
+        gender: true,
         roleId: true,
         createdAt: true,
         userProfileDetails: true
@@ -180,6 +182,7 @@ export const updateCustomer = async (customerId, data) => {
         email: true,
         phone: true,
         isActive: true,
+        gender: true,
         roleId: true,
         createdAt: true,
         userProfileDetails: true
@@ -248,6 +251,7 @@ export const showCustomerProfileData = async (customerId) => {
       phone: true,
       isActive: true,
       roleId: true,
+      gender: true,
       createdAt: true,
       assignedCustomersAsCustomer: {
         select: {
