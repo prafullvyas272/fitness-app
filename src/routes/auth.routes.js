@@ -64,6 +64,12 @@ const router = Router();
  *                 type: string
  *                 enum: [Trainer, Customer]
  *                 example: Trainer
+ *               gender:
+ *                 type: string
+ *                 enum:
+ *                   - MALE
+ *                   - FEMALE
+ *                   - OTHER
  *           examples:
  *             TrainerSignup:
  *               summary: Trainer registration
@@ -74,6 +80,7 @@ const router = Router();
  *                 phone: "+1234567890"
  *                 password: Strong@123
  *                 role: Trainer
+ *                 gender: MALE
  *             CustomerSignup:
  *               summary: Customer registration
  *               value:
@@ -83,6 +90,7 @@ const router = Router();
  *                 phone: "+1987654321"
  *                 password: Strong@123
  *                 role: Customer
+ *                 gender: MALE
  *     responses:
  *       201:
  *         description: User registered

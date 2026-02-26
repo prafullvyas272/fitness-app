@@ -14,7 +14,7 @@ const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 const OTP_EXPIRY_MINUTES = 5;
 
 
-export const registerUser = async (firstName, lastName, email, phone, password, role) => {
+export const registerUser = async (firstName, lastName, email, phone, password, role, gender = null) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   console.log(role)
@@ -32,6 +32,7 @@ export const registerUser = async (firstName, lastName, email, phone, password, 
       lastName,
       email,
       phone,
+      gender,
       password: hashedPassword,
       roleId: roleData.id,
     },

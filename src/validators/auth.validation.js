@@ -20,6 +20,11 @@ export const registerSchema = z
       .string()
       .min(10, "Phone number must be at least 10 digits"),
 
+    gender: z
+      .enum(["MALE", "FEMALE", "OTHER"], {
+        errorMap: () => ({ message: "Gender is required. It must be either MALE, FEMALE, OTHER" }),
+      }),
+
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")

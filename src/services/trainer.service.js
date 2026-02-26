@@ -51,6 +51,8 @@ export const createTrainer = async (data) => {
         lastName: true,
         email: true,
         phone: true,
+        gender: true,
+        phoneVerified: true,
         isActive: true,
         roleId: true,
         createdAt: true,

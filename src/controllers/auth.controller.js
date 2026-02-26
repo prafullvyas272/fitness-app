@@ -10,8 +10,8 @@ import { googleLogin } from "../services/auth.service.js";
 
 export const register = async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, password, role } = req.body;
-    const data = await registerUser(firstName, lastName, email, phone, password, role);
+    const { firstName, lastName, email, phone, password, role, gender } = req.body;
+    const data = await registerUser(firstName, lastName, email, phone, password, role, gender);
 
     console.log('role')
     res.status(201).json({
