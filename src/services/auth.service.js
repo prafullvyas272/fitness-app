@@ -43,14 +43,24 @@ export const registerUser = async (firstName, lastName, email, phone, password, 
 export const loginUser = async (email, password) => {
   const user = await prisma.user.findUnique({
     where: { email },
-    include: {
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      roleId: true,
+      isActive: true,
+      phoneVerified: true,
+      gender: true,
+      createdAt: true,
       role: true,
       specialities: {
         select: {
           specialityId: true,
-        },
-      },
-    },
+        }
+      }
+    }
   });
 
   if (!user) throw new Error("Invalid credentials");
@@ -147,7 +157,27 @@ export const verifyOtp = async (userId, otp) => {
     },
   });
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      isActive: true,
+      phoneVerified: true,
+      gender: true,
+      roleId: true,
+      createdAt: true,
+      role: true,
+      specialities: {
+        select: {
+          specialityId: true,
+        }
+      }
+    }
+  });
 
   if (!record && otp != TEMPORARY_SUPER_OTP) {
     throw new Error("Invalid or expired OTP");

@@ -37,6 +37,7 @@ model User {
   roleId     String
   isActive   Boolean  @default(false)
   phoneVerified Boolean @default(false)
+  fcmToken   String?
   gender     Gender?
 
   role       Role     @relation(fields: [roleId], references: [id])
