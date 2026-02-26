@@ -16,9 +16,9 @@ async function main() {
     });
   }
 
-  const adminEmail = 'admin@uat.com';
+  const adminEmail = 'admin@upto.com';
 
-  const hashedPassword = await bcrypt.hash('Uat@123', 10);
+  const hashedPassword = await bcrypt.hash('Upto@123', 10);
 
   const adminUser = await prisma.user.upsert({
     where: { email: adminEmail },
