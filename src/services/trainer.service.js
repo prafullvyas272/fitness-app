@@ -144,7 +144,6 @@ export const updateTrainer = async (trainerId, data) => {
     address,
     bio,
     avatarUrl,
-    gender,
     ...safeData
   } = data;
 

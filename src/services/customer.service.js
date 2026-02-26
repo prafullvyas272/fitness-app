@@ -122,7 +122,6 @@ export const updateCustomer = async (customerId, data) => {
     bio,
     avatarUrl,
     avatarPublicId,
-    gender,
     ...safeData
   } = data;
 
