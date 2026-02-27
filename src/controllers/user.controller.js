@@ -35,7 +35,7 @@ export const getAllTrainersHandler = async (req, res) => {
  */
 export const getAllCustomersHandler = async (req, res) => {
     try {
-        const customers = await getAllCustomers();
+        const customers = await getAllCustomers(req.user);
 
         const formattedCustomers = customers.map(
             ({ assignedCustomersAsCustomer, ...customer }) => ({
