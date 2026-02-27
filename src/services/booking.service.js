@@ -105,6 +105,7 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
       id: timeSlotId,
     }
   });
+  console.log(slot)
 
   if (!slot) {
     throw new Error("Time slot not found");
@@ -129,7 +130,7 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
       });
 
       await tx.trainerTimeSlot.update({
-        where: { timeSlotId: timeSlotId },
+        where: { id: timeSlotId },
         data: { isBooked: true }
       });
 
