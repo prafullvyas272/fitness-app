@@ -116,7 +116,6 @@ const router = express.Router();
 router.get(
   "/trainer/:trainerId/time-slots",
   authMiddleware,
-  superadminMiddleware,
   getTrainerSlotsByDateHandler
 );
 
