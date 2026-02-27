@@ -204,10 +204,17 @@ export const cancelBookingById = async (bookingId) => {
       });
 
       // Mark timeslot as available
-      await tx.trainerTimeSlot.update({
-        where: { id: booking.timeSlotId },
-        data: { isBooked: false }
+      // Only update timeslot if found (defensive check)
+      const timeSlot = await tx.trainerTimeSlot.findUnique({
+        where: { id: booking.timeSlotId }
       });
+
+      if (timeSlot) {
+        await tx.trainerTimeSlot.update({
+          where: { id: booking.timeSlotId },
+          data: { isBooked: false }
+        });
+      }
 
       return cancelledBooking;
     });
