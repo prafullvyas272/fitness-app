@@ -114,7 +114,7 @@ router.get("/trainers", authMiddleware, superadminMiddleware, getAllTrainersHand
  *                 message:
  *                   type: string
  */
-router.get("/customers", authMiddleware, superadminMiddleware, getAllCustomersHandler);
+router.get("/customers", authMiddleware, getAllCustomersHandler);
 
 /**
  * @swagger

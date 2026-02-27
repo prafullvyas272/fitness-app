@@ -4,29 +4,45 @@ import prisma from "../utils/prisma.js";
  * Get a paginated list of bookings for a specific trainer.
  * 
  */
-export const getBookingsByTrainerWithPagination = async ( trainerId, page = 1, pageSize = 10) => {
+export const getBookingsByTrainerWithPagination = async ( trainerId, date = null, page = 1, pageSize = 10) => {
   if (!trainerId) {
     throw new Error("trainerId is required");
   }
 
   const skip = (page - 1) * pageSize;
 
+  // If date is provided, filter bookings where the related timeSlot's date matches
+  const dateFilter = date ? {
+        timeSlot: {
+          date: {
+            equals: new Date(date),
+          },
+        },
+      }
+    : {};
+
+  const filters = {
+    trainerId: trainerId,
+    ...dateFilter,
+  };
+
   const [total, bookings] = await Promise.all([
     prisma.trainerBooking.count({
-      where: { trainerId: trainerId }
+      where: filters
     }),
     prisma.trainerBooking.findMany({
-      where: { trainerId: trainerId },
+      where: filters,
       orderBy: { createdAt: "desc" },
       skip,
       take: pageSize,
       include: {
-        timeSlot:{
+        timeSlot: {
           select: {
             id: true,
             startTime: true,
             endTime: true,
-            slotType: true
+            slotType: true,
+            date: true,
           }
         },
         customer: {
@@ -34,6 +50,7 @@ export const getBookingsByTrainerWithPagination = async ( trainerId, page = 1, p
             id: true,
             firstName: true,
             lastName: true,
+            email: true,
             userProfileDetails: {
               select: {
                 id: true,

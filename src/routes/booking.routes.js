@@ -6,7 +6,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
  * @swagger
  * /api/trainers/{trainerId}/bookings:
  *   get:
- *     summary: Get paginated bookings for a specific trainer
+ *     summary: Get paginated bookings for a specific trainer, optionally filtered by date
  *     tags:
  *       - Booking
  *       - Trainer
@@ -19,6 +19,13 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
  *         schema:
  *           type: string
  *         description: Trainer ID for which to list bookings
+ *       - in: query
+ *         name: date
+ *         required: false
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter bookings for a specific date (YYYY-MM-DD)
  *       - in: query
  *         name: page
  *         required: false

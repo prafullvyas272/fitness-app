@@ -6,11 +6,12 @@ import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBoo
  */
 export const getBookingsByTrainerHandler = async (req, res) => {
   try {
-    const { trainerId } = req.params;
+    const { trainerId, date } = req.params;
     const { page = 1, pageSize = 10 } = req.query;
 
     const result = await getBookingsByTrainerWithPagination(
       trainerId,
+      date,
       Number(page),
       Number(pageSize)
     );
