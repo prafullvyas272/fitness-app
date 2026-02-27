@@ -16,10 +16,43 @@ export const getBookingsByTrainerHandler = async (req, res) => {
       Number(pageSize)
     );
 
+    // Transform userProfileDetails from array to object for customer and trainer per booking
+    const formattedBookings = result.bookings.map((booking) => {
+      let formattedCustomer = { ...booking.customer };
+      let formattedTrainer = { ...booking.trainer };
+
+      if (
+        Array.isArray(formattedCustomer.userProfileDetails) &&
+        formattedCustomer.userProfileDetails.length > 0
+      ) {
+        formattedCustomer.userProfileDetails = formattedCustomer.userProfileDetails[0];
+      } else {
+        formattedCustomer.userProfileDetails = null;
+      }
+
+      if (
+        Array.isArray(formattedTrainer.userProfileDetails) &&
+        formattedTrainer.userProfileDetails.length > 0
+      ) {
+        formattedTrainer.userProfileDetails = formattedTrainer.userProfileDetails[0];
+      } else {
+        formattedTrainer.userProfileDetails = null;
+      }
+
+      return {
+        ...booking,
+        customer: formattedCustomer,
+        trainer: formattedTrainer,
+      };
+    });
+
     res.status(200).json({
       success: true,
       message: "Bookings fetched successfully",
-      data: result
+      data: {
+        ...result,
+        bookings: formattedBookings,
+      }
     });
   } catch (err) {
     res.status(400).json({

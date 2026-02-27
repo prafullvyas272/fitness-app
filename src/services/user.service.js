@@ -73,8 +73,11 @@ export const getAllTrainers = async () => {
  */
 export const getAllCustomers = async (loggedInUser) => {
   // Get role details
+  const loggedInUserFull = await prisma.user.findUnique({
+    where: { id: loggedInUser.userId },
+  });
   const role = await prisma.role.findUnique({
-    where: { id: loggedInUser.roleId },
+    where: { id: loggedInUserFull.roleId },
     select: { name: true }
   });
 
@@ -96,7 +99,6 @@ export const getAllCustomers = async (loggedInUser) => {
   if (role.name === RoleEnum.SUPERADMIN) {
     return await prisma.user.findMany({
       where: { roleId: customerRole.id },
-      select: customerSelectObject()
     });
   }
 
@@ -107,12 +109,11 @@ export const getAllCustomers = async (loggedInUser) => {
         roleId: customerRole.id,
         assignedCustomersAsCustomer: {
           some: {
-            trainerId: loggedInUser.id,
+            trainerId: loggedInUserFull.id,
             isActive: true
           }
         }
       },
-      select: customerSelectObject()
     });
   }
 

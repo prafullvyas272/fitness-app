@@ -198,12 +198,19 @@ export const appleLoginHandler = async (req, res) => {
 export const getUserProfileByIdHandler = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const user = await getUserProfileById(userId); 
+    const user = await getUserProfileById(userId);
+
+    let formattedUser = { ...user };
+    if (Array.isArray(formattedUser.userProfileDetails) && formattedUser.userProfileDetails.length > 0) {
+      formattedUser.userProfileDetails = formattedUser.userProfileDetails[0];
+    } else {
+      formattedUser.userProfileDetails = null;
+    }
 
     res.status(200).json({
       success: true,
       message: "User profile fetched successfully",
-      data: user,
+      data: formattedUser,
     });
   } catch (err) {
     res.status(404).json({
