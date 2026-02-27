@@ -440,7 +440,6 @@ router.get(
 router.get(
   "/time-slots",
   authMiddleware,
-  superadminMiddleware,
   getAllTimeSlotHandler
 );
 
