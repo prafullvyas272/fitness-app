@@ -5,6 +5,7 @@ import {
   resendOtp,
   facebookLogin,
   appleLogin,
+  getUserProfileById,
 } from "../services/auth.service.js";
 import { googleLogin } from "../services/auth.service.js";
 
@@ -188,6 +189,24 @@ export const appleLoginHandler = async (req, res) => {
     });
   } catch (err) {
     res.status(401).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getUserProfileByIdHandler = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await getUserProfileById(userId); 
+
+    res.status(200).json({
+      success: true,
+      message: "User profile fetched successfully",
+      data: user,
+    });
+  } catch (err) {
+    res.status(404).json({
       success: false,
       message: err.message,
     });

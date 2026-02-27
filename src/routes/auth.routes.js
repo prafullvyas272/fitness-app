@@ -15,7 +15,9 @@ import {
   googleLoginHandler,
   facebookLoginHandler,
   appleLoginHandler,
+  getUserProfileByIdHandler,
 } from "../controllers/auth.controller.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -352,6 +354,51 @@ router.post("/facebook", facebookLoginHandler);
  */
 router.post("/apple", appleLoginHandler);
 
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   get:
+ *     tags:
+ *       - Authentication
+ *     summary: Get authenticated user profile
+ *     description: Retrieve the profile of the currently authenticated user.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: User profile fetched successfully
+ *                 data:
+ *                   type: object
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ */
+router.get(
+  "/profile",
+  authMiddleware,
+  getUserProfileByIdHandler
+);
 
 
 export default router;

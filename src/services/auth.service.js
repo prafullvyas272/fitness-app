@@ -415,3 +415,19 @@ export const appleLogin = async (identityToken, fullName) => {
 
   return { user, token };
 };
+
+export const getUserProfileById = async (userId) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      role: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+};
+
