@@ -102,7 +102,7 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
   // Check if the time slot exists and is not already booked
   const slot = await prisma.trainerTimeSlot.findUnique({
     where: { 
-      timeSlotId: timeSlotId,
+      id: timeSlotId,
     }
   });
 
