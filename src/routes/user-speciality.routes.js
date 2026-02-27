@@ -42,8 +42,6 @@ router.post("/specialities", authMiddleware, updateSpecialities);
  *     tags:
  *       - Trainer
  *     summary: Get user specialities
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of speciality IDs
