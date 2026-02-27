@@ -180,7 +180,6 @@ router.post(
 router.put(
   "/api/trainers/:id",
   authMiddleware,
-  superadminMiddleware,
   upload.single("avatar"),
   updateTrainerHandler
 );

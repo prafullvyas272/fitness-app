@@ -421,6 +421,8 @@ export const getUserProfileById = async (userId) => {
     where: { id: userId },
     include: {
       role: true,
+      specialities: true,
+      userProfileDetails: true,
     },
   });
 

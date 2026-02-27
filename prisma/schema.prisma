@@ -72,6 +72,7 @@ model UserProfileDetail {
   avatarPublicId  String?
   dob             DateTime?
   gender          String?
+  socialMediaLinks String[]
 
   user            User     @relation("UserProfileDetailToUser", fields: [userId], references: [id], onDelete: Cascade )
 
