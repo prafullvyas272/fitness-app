@@ -48,6 +48,6 @@ router.post("/specialities", authMiddleware, updateSpecialities);
  *       200:
  *         description: List of speciality IDs
  */
-router.get("/specialities", authMiddleware, getSpecialities);
+router.get("/specialities", getSpecialities);
 
 export default router;

@@ -96,10 +96,12 @@ model Otp {
 model UserSpeciality {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   userId        String   @db.ObjectId
-  specialityId  Int      
+  specialityId  String   @db.ObjectId
   createdAt     DateTime @default(now())
 
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  speciality    Speciality @relation("Speciality_UserSpeciality", fields: [specialityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, specialityId])
 }
@@ -220,6 +222,8 @@ model Speciality {
   createdBy String   @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  userSpecialities UserSpeciality[] @relation("Speciality_UserSpeciality")
 }
 
 model TimeSlot {
