@@ -187,8 +187,6 @@ router.delete(
  *     summary: List all specialities
  *     tags:
  *       - Specialities
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Specialities fetched successfully
@@ -219,7 +217,6 @@ router.delete(
  */
 router.get(
   "/specialities",
-  authMiddleware,
   listAllSpecialitiesHandler
 );
 

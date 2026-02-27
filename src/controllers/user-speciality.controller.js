@@ -34,7 +34,7 @@ export const updateSpecialities = async (req, res) => {
  */
 export const getSpecialities = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req?.user?.userId ?? null;
 
         const specialityIds = await getUserSpecialities(userId);
 
