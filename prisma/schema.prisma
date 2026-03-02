@@ -43,6 +43,10 @@ model User {
   role       Role     @relation(fields: [roleId], references: [id])
   otps       Otp[]    // Added back-relation to Otp
   specialities UserSpeciality[]
+
+
+  isPremiumMember   Boolean @default(false)
+
   trainerWeeklyAvailabilities TrainerWeeklyAvailability[] @relation("Trainer_Weekly")
   trainerDailyAvailabilities TrainerDailyAvailability[] @relation("Trainer_Daily")
   trainerTimeSlots           TrainerTimeSlot[]           @relation("Trainer_Slot")
