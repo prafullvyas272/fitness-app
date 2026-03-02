@@ -78,7 +78,7 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
     // 3. Upsert the daily availability for this date+user
     let dailyDoc = await updateOrCreateDailyData(userId, date, weekDoc.id, isAvailable);
 
-    await deleteExistinTimeSlots(dailyDoc.id);
+    // await deleteExistinTimeSlots(dailyDoc.id);
 
     // 5. Add new slots and calculate totalDayMinutes for the day
     const slots = [];
@@ -117,10 +117,21 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
         });
     }
 
-    if (slots.length > 0) {
-        await prisma.trainerTimeSlot.createMany({
-            data: slots,
+    for (const slot of slots) {
+        // Check if a slot already exists with same date and same timeSlotId
+        const exists = await prisma.trainerTimeSlot.findFirst({
+            where: {
+                date: slot.date,
+                timeSlotId: slot.timeSlotId,
+            },
         });
+
+        // Only create if it does not exist
+        if (!exists) {
+            await prisma.trainerTimeSlot.create({
+                data: slot,
+            });
+        }
     }
 
     // 6. Update totalDayMinutes field in dailyDoc with sum of slot durations
@@ -230,15 +241,15 @@ const updateOrCreateDailyData = async (userId, date, trainerWeekId, isAvailable)
  * Delete existing slots by daily data availability id
  * @param {*} dailyDocId 
  */
-const deleteExistinTimeSlots = async (dailyDocId) => {
-    await prisma.trainerTimeSlot.deleteMany({
-        where: {
-            dailyAvailabilityId: dailyDocId,
-        },
-    });
+// const deleteExistinTimeSlots = async (dailyDocId) => {
+//     await prisma.trainerTimeSlot.deleteMany({
+//         where: {
+//             dailyAvailabilityId: dailyDocId,
+//         },
+//     });
 
-    return true;
-}
+//     return true;
+// }
 
 export const canTrainerApplyLeave = async (trainerId, date) => {
     const { monthStartDate, monthEndDate } = getMonthStartAndEndDates(date);
