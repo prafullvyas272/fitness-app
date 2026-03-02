@@ -100,6 +100,16 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
         });
     }
 
+    // Remove alternative slots for this date/user that are not present in new payload
+    if (peakSlots.length !== 0) {
+        await calculateAndDeletePeakSlots(
+            userId,
+            dailyDoc.id,
+            date,
+            peakSlots
+        );
+    }
+
     // If there are no alternativeSlots, delete all ALTERNATIVE slots for that date for this user
     if (alternativeSlots.length === 0) {
         await prisma.trainerTimeSlot.deleteMany({
@@ -112,30 +122,50 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
         });
     }
 
+    // Remove alternative slots for this date/user that are not present in new payload
+    if (alternativeSlots.length !== 0) {
+        await calculateAndDeleteAlternativeSlots(
+            userId,
+            dailyDoc.id,
+            date,
+            alternativeSlots
+        );
+    }
+
     for (const slot of alternativeSlots) {
         const startTime = makeDateAt(date, slot.start);
         const endTime = makeDateAt(date, slot.end);
         const durationMinutes = Math.round((endTime - startTime) / 60000);
 
-        // First, create the time slot
-        const createdSlot = await prisma.trainerTimeSlot.create({
-            data: {
-                dailyAvailabilityId: dailyDoc.id,
-                trainerId: userId,
-                date: new Date(date),
-                startTime,
-                endTime,
-                slotType: "ALTERNATIVE",
-                durationMinutes,
-                isBooked: false,
-            }
-        });
+        if (!slot?.timeSlotId) {
+            // First, create the time slot
+            const createdSlot = await prisma.trainerTimeSlot.create({
+                data: {
+                    dailyAvailabilityId: dailyDoc.id,
+                    trainerId: userId,
+                    date: new Date(date),
+                    startTime,
+                    endTime,
+                    slotType: "ALTERNATIVE",
+                    durationMinutes,
+                    isBooked: false,
+                }
+            });
 
-        // Then, update its timeSlotId to the created slot's id
-        await prisma.trainerTimeSlot.update({
-            where: { id: createdSlot.id },
-            data: { timeSlotId: createdSlot.id }
-        });
+            // Then, update its timeSlotId to the created slot's id
+            await prisma.trainerTimeSlot.update({
+                where: { id: createdSlot.id },
+                data: { timeSlotId: createdSlot.id }
+            });
+        } else {
+            await prisma.trainerTimeSlot.update({
+                where: { id: slot.timeSlotId },
+                data: {
+                    startTime,
+                    endTime
+                },
+            });
+        }
     }
 
     for (const slot of slots) {
@@ -341,4 +371,141 @@ export const applyLeave = async (trainerId, date) => {
     }
 
     return dailyDoc;
+};
+
+
+/**
+ * Finds alternative time slots for the user on a given date,
+ * deletes those that are not present in the new payload,
+ * and returns the remaining slot IDs.
+ * 
+ * @param {string} trainerId
+ * @param {string} dailyAvailabilityId
+ * @param {string|Date} date
+ * @param {Array<{timeSlotId?: string, start: string, end: string}>} currentAlternativeSlotsPayload
+ * @returns {Promise<Array>} IDs of alternative slots that were retained
+ */
+export const calculateAndDeleteAlternativeSlots = async (
+    trainerId,
+    dailyAvailabilityId,
+    date,
+    currentAlternativeSlotsPayload = []
+) => {
+    try {
+        const result = await prisma.$transaction(async (trx) => {
+            // Fetch existing alternative slots for this day
+            const existingSlots = await trx.trainerTimeSlot.findMany({
+                where: {
+                    dailyAvailabilityId: dailyAvailabilityId,
+                    trainerId: trainerId,
+                    date: new Date(date),
+                    slotType: "ALTERNATIVE",
+                }
+            });
+
+            // Gather IDs that should be kept (present in new payload with timeSlotId)
+            const validPayloadIds = new Set(
+                currentAlternativeSlotsPayload
+                    .filter(slot => slot.timeSlotId)
+                    .map(slot => String(slot.timeSlotId))
+            );
+
+            // Find which slots to delete
+            const slotsToDelete = existingSlots.filter(
+                slot => !validPayloadIds.has(String(slot.id))
+            );
+
+            // Delete those slots
+            if (slotsToDelete.length > 0) {
+                await trx.trainerTimeSlot.deleteMany({
+                    where: {
+                        id: {
+                            in: slotsToDelete.map(slot => slot.id)
+                        }
+                    }
+                });
+            }
+
+            // Return IDs of slots NOT deleted (still valid)
+            const remainingSlotIds = existingSlots
+                .filter(slot => !slotsToDelete.find(delSlot => delSlot.id === slot.id))
+                .map(slot => slot.id);
+
+            return remainingSlotIds;
+        });
+
+        return result;
+    } catch (err) {
+        throw new Error(`Failed to calculate and delete alternative slots: ${err.message}`);
+    }
+};
+
+
+
+/**
+ * Finds PEAK time slots for the user on a given date,
+ * deletes those that are not present in the new payload,
+ * and returns the remaining slot IDs.
+ *
+ * @param {string} trainerId
+ * @param {string} dailyAvailabilityId
+ * @param {string|Date} date
+ * @param {Array<{timeSlotId?: string, start: string, end: string}>} currentPeakSlotsPayload
+ * @returns {Promise<Array>} IDs of PEAK slots that were retained
+ */
+export const calculateAndDeletePeakSlots = async (
+    trainerId,
+    dailyAvailabilityId,
+    date,
+    currentPeakSlotsPayload = []
+) => {
+    try {
+        const result = await prisma.$transaction(async (trx) => {
+            // Fetch existing PEAK slots for this day
+            const existingSlots = await trx.trainerTimeSlot.findMany({
+                where: {
+                    dailyAvailabilityId: dailyAvailabilityId,
+                    trainerId: trainerId,
+                    date: new Date(date),
+                    slotType: "PEAK",
+                }
+            });
+
+            console.log(1)
+
+            // Gather IDs that should be kept (present in new payload with timeSlotId)
+            const validPayloadIds = new Set(
+                currentPeakSlotsPayload
+                    .filter(slot => slot.timeSlotId)
+                    .map(slot => String(slot.timeSlotId))
+            );
+
+            // Find which slots to delete
+            const slotsToDelete = existingSlots.filter(
+                slot => !validPayloadIds.has(String(slot.id))
+            );
+
+            // Delete those slots
+            if (slotsToDelete.length > 0) {
+                await trx.trainerTimeSlot.deleteMany({
+                    where: {
+                        id: {
+                            in: slotsToDelete.map(slot => slot.id)
+                        }
+                    }
+                });
+            }
+
+            // Return IDs of slots NOT deleted (still valid)
+            const remainingSlotIds = existingSlots
+                .filter(slot => !slotsToDelete.find(delSlot => delSlot.id === slot.id))
+                .map(slot => slot.id);
+
+            return remainingSlotIds;
+        });
+
+        return result;
+    } catch (err) {
+        throw new Error(`Failed to calculate and delete peak slots: ${err.message}`);
+    }
 };

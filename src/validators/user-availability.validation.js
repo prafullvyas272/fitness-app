@@ -18,6 +18,10 @@ const peakSlotSchema = z.object({
 const alternativeSlotSchema = z.object({
   start: z.string().regex(timeRegex, { message: "Start time must be in HH:mm format" }),
   end: z.string().regex(timeRegex, { message: "End time must be in HH:mm format" }),
+  timeSlotId: z
+    .string()
+    .regex(/^[a-f\d]{24}$/i, { message: "Invalid timeSlotId" })
+    .optional(),
 }).refine(
   (slot) => {
     // compare time strings: "09:00" < "18:00"
