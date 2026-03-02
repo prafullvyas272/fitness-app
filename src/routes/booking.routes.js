@@ -1,5 +1,5 @@
 import express from "express";
-import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler, cancelBookingByIdHandler, rescheduleBookingHandler, getBookingDetailsByIdHandler, updateBookingAccoladesHandler } from "../controllers/booking.controller.js";
+import { getBookingsByTrainerHandler, bookSlotHandler, markAsAttendedHandler, cancelBookingByIdHandler, rescheduleBookingHandler, getBookingDetailsByIdHandler, updateBookingAccoladesHandler, getBookingAndAvailabilityDataHandler } from "../controllers/booking.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 /**
@@ -515,6 +515,53 @@ router.put(
   authMiddleware,
   updateBookingAccoladesHandler
 );
+
+
+/**
+ * @swagger
+ * /api/bookings-and-availability:
+ *   get:
+ *     summary: Fetch demo bookings and availability data
+ *     tags:
+ *       - Booking
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Booking and availability data fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Booking and availability data fetched successfully
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Bad request or error fetching data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Error fetching booking and availability data
+ */
+router.get(
+  "/bookings-and-availability",
+  authMiddleware,
+  getBookingAndAvailabilityDataHandler
+);
+
 
 
 export default router;

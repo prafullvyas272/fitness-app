@@ -388,3 +388,15 @@ export const updateBookingAccolades = async (bookingId, accolades) => {
 
   return updatedBooking;
 };
+
+
+export const getBookingAndAvailabilityData = async () => {
+  try {
+    // Method implementation will go here (fetch bookings and availability).
+    // For now, return empty array as requested.
+    return [];
+  } catch (err) {
+    // In case of error, also return empty array for now.
+    return [];
+  }
+};

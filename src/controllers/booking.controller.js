@@ -1,5 +1,5 @@
 import { BookingStatus } from "../constants/constants.js";
-import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById, rescheduleBooking, getBookingDetailsById, updateBookingAccolades } from "../services/booking.service.js";
+import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById, rescheduleBooking, getBookingDetailsById, updateBookingAccolades, getBookingAndAvailabilityData } from "../services/booking.service.js";
 
 /**
  * Extracts trainerId from params and pagination from query, calls service, and returns response.
@@ -246,6 +246,27 @@ export const updateBookingAccoladesHandler = async (req, res) => {
       success: true,
       message: "Booking accolades updated successfully",
       data: updatedBooking
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+
+/**
+ * Controller: getBookingAndAvailabilityDataHandler
+ * Fetches bookings and availability data (demo implementation).
+ */
+export const getBookingAndAvailabilityDataHandler = async (req, res) => {
+  try {
+    const data = await getBookingAndAvailabilityData();
+    res.status(200).json({
+      success: true,
+      message: "Booking and availability data fetched successfully",
+      data: data
     });
   } catch (err) {
     res.status(400).json({
