@@ -100,20 +100,41 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
         });
     }
 
+    // If there are no alternativeSlots, delete all ALTERNATIVE slots for that date for this user
+    if (alternativeSlots.length === 0) {
+        await prisma.trainerTimeSlot.deleteMany({
+            where: {
+                dailyAvailabilityId: dailyDoc.id,
+                trainerId: userId,
+                date: new Date(date),
+                slotType: "ALTERNATIVE",
+            },
+        });
+    }
+
     for (const slot of alternativeSlots) {
         const startTime = makeDateAt(date, slot.start);
         const endTime = makeDateAt(date, slot.end);
         const durationMinutes = Math.round((endTime - startTime) / 60000);
-        slots.push({
-            dailyAvailabilityId: dailyDoc.id,
-            trainerId: userId,
-            date: new Date(date),
-            startTime,
-            endTime,
-            slotType: "ALTERNATIVE",
-            timeSlotId: slot.timeSlotId,
-            durationMinutes,
-            isBooked: false,
+
+        // First, create the time slot
+        const createdSlot = await prisma.trainerTimeSlot.create({
+            data: {
+                dailyAvailabilityId: dailyDoc.id,
+                trainerId: userId,
+                date: new Date(date),
+                startTime,
+                endTime,
+                slotType: "ALTERNATIVE",
+                durationMinutes,
+                isBooked: false,
+            }
+        });
+
+        // Then, update its timeSlotId to the created slot's id
+        await prisma.trainerTimeSlot.update({
+            where: { id: createdSlot.id },
+            data: { timeSlotId: createdSlot.id }
         });
     }
 

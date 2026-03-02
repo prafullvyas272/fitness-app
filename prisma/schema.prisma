@@ -162,7 +162,8 @@ model TrainerTimeSlot {
   isBooked            Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  timeSlotId          String   @unique @db.ObjectId
+  timeSlotId          String?  @db.ObjectId
+
 
 
   dailyAvailability   TrainerDailyAvailability @relation("Daily_TimeSlot", fields: [dailyAvailabilityId], references: [id], onDelete: Cascade)

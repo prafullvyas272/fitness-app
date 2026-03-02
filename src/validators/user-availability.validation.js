@@ -3,10 +3,21 @@ import { z } from "zod";
 // Slot schema: { start: "HH:mm", end: "HH:mm" }
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-const slotSchema = z.object({
+const peakSlotSchema = z.object({
   start: z.string().regex(timeRegex, { message: "Start time must be in HH:mm format" }),
   end: z.string().regex(timeRegex, { message: "End time must be in HH:mm format" }),
   timeSlotId: z.string().regex(/^[a-f\d]{24}$/i, { message: "Invalid timeSlotId" }),
+}).refine(
+  (slot) => {
+    // compare time strings: "09:00" < "18:00"
+    return slot.start < slot.end;
+  },
+  { message: "Slot 'end' time must be after 'start' time", path: ["end"] }
+);
+
+const alternativeSlotSchema = z.object({
+  start: z.string().regex(timeRegex, { message: "Start time must be in HH:mm format" }),
+  end: z.string().regex(timeRegex, { message: "End time must be in HH:mm format" }),
 }).refine(
   (slot) => {
     // compare time strings: "09:00" < "18:00"
@@ -19,11 +30,11 @@ export const userAvailabilitySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Date must be in YYYY-MM-DD format" }),
   isAvailable: z.boolean(),
   peakSlots: z
-    .array(slotSchema)
+    .array(peakSlotSchema)
     .optional()
     .default([]),
   alternativeSlots: z
-    .array(slotSchema)
+    .array(alternativeSlotSchema)
     .optional()
     .default([]),
 }).superRefine((data, ctx) => {
