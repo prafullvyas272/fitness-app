@@ -328,7 +328,8 @@ export const getBookingDetailsById = async (bookingId) => {
           id: true,
           firstName: true,
           lastName: true,
-          email: true
+          email: true,
+          isPremiumMember: true,
         }
       },
       trainer: {
@@ -336,7 +337,13 @@ export const getBookingDetailsById = async (bookingId) => {
           id: true,
           firstName: true,
           lastName: true,
-          email: true
+          email: true,
+          userProfileDetails: {
+            select: {
+              id: true,
+              hostGymName: true,
+            }
+          }
         }
       },
       timeSlot: {

@@ -188,6 +188,8 @@ model TrainerBooking {
   isCancelled           Boolean  @default(false)
   bookingStatus         BookingStatus @default(PENDING)
 
+  personalTrainingSession String?
+
   originalTimeSlotId    String?  @db.ObjectId
   rescheduledCount      Int      @default(0)
   lastRescheduledAt     DateTime?
