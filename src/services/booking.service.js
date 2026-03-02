@@ -390,13 +390,64 @@ export const updateBookingAccolades = async (bookingId, accolades) => {
 };
 
 
-export const getBookingAndAvailabilityData = async () => {
+export const getBookingAndAvailabilityData = async (trainerId) => {
   try {
-    // Method implementation will go here (fetch bookings and availability).
-    // For now, return empty array as requested.
-    return [];
+    const now = new Date();
+    const rangeStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));
+    const rangeEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 2, 1));
+
+    const slots = await prisma.trainerTimeSlot.findMany({
+      where: {
+        trainerId,
+        date: {
+          gte: rangeStart,
+          lt: rangeEnd,
+        },
+      },
+      select: {
+        date: true,
+        isBooked: true,
+      },
+    });
+
+    const dateMap = new Map();
+
+    for (const slot of slots) {
+      const key = slot.date.toISOString().slice(0, 10);
+      if (!dateMap.has(key)) {
+        dateMap.set(key, { total: 0, booked: 0 });
+      }
+      const entry = dateMap.get(key);
+      entry.total += 1;
+      if (slot.isBooked) entry.booked += 1;
+    }
+
+    const booked = [];
+    const available = [];
+    const holiday = [];
+    const holidaySet = new Set();
+
+    const current = new Date(rangeStart);
+    while (current < rangeEnd) {
+      if (current.getUTCDay() === 0) {
+        const key = current.toISOString().slice(0, 10);
+        holiday.push(key);
+        holidaySet.add(key);
+      }
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
+
+    for (const [dateKey, counts] of dateMap.entries()) {
+      if (counts.booked === counts.total) {
+        booked.push(dateKey);
+      } else {
+        available.push(dateKey);
+      }
+    }
+
+    return { booked, available, holiday };
+    
   } catch (err) {
-    // In case of error, also return empty array for now.
     return [];
   }
 };

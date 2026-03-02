@@ -262,7 +262,8 @@ export const updateBookingAccoladesHandler = async (req, res) => {
  */
 export const getBookingAndAvailabilityDataHandler = async (req, res) => {
   try {
-    const data = await getBookingAndAvailabilityData();
+    const trainerId = req.user.userId;
+    const data = await getBookingAndAvailabilityData(trainerId);
     res.status(200).json({
       success: true,
       message: "Booking and availability data fetched successfully",
