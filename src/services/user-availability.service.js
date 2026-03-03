@@ -33,7 +33,7 @@ export const getUserAvailabilityDataByDate = async (userId, date) => {
     for (const slot of dailyAvailability.timeSlots) {
         const start = slot.startTime.toISOString().substr(11, 5);
         const end = slot.endTime.toISOString().substr(11, 5);
-        const timeSlotId = slot.timeSlotId;
+        const timeSlotId = slot.id;
 
         if (slot.slotType === "PEAK") {
             peakSlots.push({ start, end, timeSlotId });
