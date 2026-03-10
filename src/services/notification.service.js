@@ -72,10 +72,23 @@ export const sendRegistrationNotification = async (user) => {
  */
 export const sendTrainerRequestNotification = async (trainerRequestId, trainerRequestData) => {
   try {
+
+    // Get RoleEnum.SUPERADMIN's roleId
+    const superAdminRole = await prisma.role.findUnique({
+      where: { name: RoleEnum.SUPERADMIN },
+      select: { id: true }
+    });
+
+    if (!superAdminRole) {
+      throw new Error("SuperAdmin role not found");
+    }
+
+    const superAdminRoleId = superAdminRole.id;
+    console.log(superAdminRoleId)
     // 1. Find all superadmins with an fcmToken
     const superAdmins = await prisma.user.findMany({
       where: {
-        role: { name: RoleEnum.SUPERADMIN },
+        roleId: superAdminRoleId,
         isActive: true,
         NOT: { fcmToken: null }
       },
