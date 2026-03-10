@@ -303,7 +303,19 @@ export const showTrainerProfileData = async (trainerId) => {
       },
       specialities: {
         select: {
-          specialityId: true
+          id: true,
+          userId: true,
+          specialityId: true,
+          createdAt: true,
+          speciality: {
+            select: {
+              id: true,
+              name: true,
+              createdBy: true,
+              createdAt: true,
+              updatedAt: true
+            }
+          }
         }
       },
       userProfileDetails: {
@@ -329,6 +341,6 @@ export const showTrainerProfileData = async (trainerId) => {
   // Optionally, format specialities array to flatten
   return {
     ...trainer,
-    specialities: trainer.specialities ? trainer.specialities.map(s => ({ specialityId: s.specialityId })) : []
+    specialities: trainer.specialities ? trainer.specialities : []
   };
 };

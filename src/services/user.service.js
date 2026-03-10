@@ -61,6 +61,23 @@ export const getAllTrainers = async () => {
           updatedAt: true,
         },
       },
+      specialities: {
+        select: {
+          id: true,
+          userId: true,
+          specialityId: true,
+          createdAt: true,
+          speciality: {
+            select: {
+              id: true,
+              name: true,
+              createdBy: true,
+              createdAt: true,
+              updatedAt: true
+            }
+          }
+        }
+      }
     },
   });
 
