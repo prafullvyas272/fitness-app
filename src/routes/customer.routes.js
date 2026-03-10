@@ -4,6 +4,7 @@ import {
   updateCustomerHandler,
   deleteCustomerHandler,
   showCustomerProfileDataHandler,
+  applyForUPTHandler,
 } from "../controllers/customer.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -196,6 +197,62 @@ router.get(
   "/api/customers/:id/profile",
   authMiddleware,
   showCustomerProfileDataHandler
+);
+
+
+/**
+ * @swagger
+ * /api/customers/apply-upt:
+ *   post:
+ *     summary: Customer applies for a personal trainer (UPT)
+ *     tags:
+ *       - Customer
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               trainerId:
+ *                 type: string
+ *                 description: ID of the trainer to apply to
+ *               message:
+ *                 type: string
+ *                 description: Optional message to the trainer
+ *     responses:
+ *       201:
+ *         description: Trainer request submitted successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   description: The created TrainerRequest record
+ *       400:
+ *         description: Error occurred.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.post(
+  "/api/customers/apply-upt",
+  authMiddleware,
+  applyForUPTHandler
 );
 
 export default router;
