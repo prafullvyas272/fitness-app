@@ -344,3 +344,122 @@ export const showTrainerProfileData = async (trainerId) => {
     specialities: trainer.specialities ? trainer.specialities : []
   };
 };
+
+
+/**
+ * Method to get trainer session by month and year
+ * @param {*} trainerId 
+ * @param {*} month 
+ * @param {*} year 
+ * @returns 
+ */
+export const getTrainerSessionsByMonthAndYear = async (
+  trainerId,
+  month,
+  year
+) => {
+  if (!trainerId) {
+    throw new Error("trainerId is required");
+  }
+
+  if (!month || !year) {
+    throw new Error("month and year are required");
+  }
+
+  // Parse month and year to build a date range
+  const monthNum = parseInt(month, 10);
+  const yearNum = parseInt(year, 10);
+  if (isNaN(monthNum) || isNaN(yearNum)) {
+    throw new Error("Invalid month or year");
+  }
+
+  // Compute first and last day of the month
+  const startDate = new Date(Date.UTC(yearNum, monthNum - 1, 1, 0, 0, 0));
+  const endDate = new Date(Date.UTC(yearNum, monthNum, 0, 23, 59, 59, 999));
+
+  // Fetch trainer info for name (useful for response)
+  const trainer = await prisma.user.findUnique({
+    where: { id: trainerId },
+    select: { firstName: true, lastName: true }
+  });
+
+  if (!trainer) throw new Error("Trainer not found");
+
+  const trainerName =
+    [trainer.firstName, trainer.lastName].filter(Boolean).join(" ").trim();
+
+  // Fetch all relevant bookings for the trainer within the date range, not cancelled
+  const bookings = await prisma.trainerBooking.findMany({
+    where: {
+      trainerId: trainerId,
+      isCancelled: false,
+      timeSlot: {
+        date: {
+          gte: startDate,
+          lte: endDate
+        }
+      }
+    },
+    include: {
+      timeSlot: true,
+      customer: {
+        select: { firstName: true, lastName: true }
+      }
+    }
+  });
+
+  const now = new Date();
+
+  // Map bookings to required format & split into upcoming/past
+  const formattedSessions = bookings.map((booking) => {
+    const slot = booking.timeSlot;
+    // slot date is ISO format
+    const localDate = new Date(slot.date);
+    const date = localDate.toISOString().split("T")[0];
+
+    // Time as "2:00 PM - 3:00 PM"
+    const startTime = new Date(slot.startTime);
+    const endTime = new Date(slot.endTime);
+    const hoursFormat = (d) =>
+      d.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+      });
+
+    const time = `${hoursFormat(startTime)} - ${hoursFormat(endTime)}`;
+
+    const customerName = [booking.customer?.firstName, booking.customer?.lastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    return {
+      date,
+      time,
+      trainerName,
+      customerName: customerName || "",
+      title: "" // empty as per instructions
+    };
+  });
+
+  const upcomingSessions = [];
+  const pastSessions = [];
+
+  formattedSessions.forEach((session, idx) => {
+    // Use session's start time for comparison to now
+    const startTime = bookings[idx].timeSlot.startTime
+      ? new Date(bookings[idx].timeSlot.startTime)
+      : null;
+    if (startTime && startTime >= now) {
+      upcomingSessions.push(session);
+    } else {
+      pastSessions.push(session);
+    }
+  });
+
+  return {
+    upcomingSessions,
+    pastSessions
+  };
+};

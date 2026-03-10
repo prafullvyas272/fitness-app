@@ -4,6 +4,7 @@ import {
   updateTrainerHandler,
   deleteTrainerHandler,
   showTrainerProfileDataHandler,
+  getTrainerSessionsByMonthAndYearHandler,
 } from "../controllers/trainer.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -240,5 +241,47 @@ router.get(
   authMiddleware,
   showTrainerProfileDataHandler
 );
+
+
+/**
+ * @swagger
+ * /api/trainers/{id}/sessions:
+ *   get:
+ *     summary: Get trainer sessions by month and year
+ *     tags:
+ *       - Customer
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the trainer
+ *       - in: query
+ *         name: month
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Month to filter sessions (e.g., 01 for January)
+ *       - in: query
+ *         name: year
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Year to filter sessions (e.g., 2024)
+ *     responses:
+ *       200:
+ *         description: Trainer sessions fetched successfully.
+ *       400:
+ *         description: Error occurred.
+ */
+router.get(
+  "/api/trainers/:id/sessions",
+  authMiddleware,
+  getTrainerSessionsByMonthAndYearHandler
+);
+
 
 export default router;
