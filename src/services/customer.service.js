@@ -350,7 +350,9 @@ export const applyForUPT = async (data) => {
       },
     });
 
-    await sendTrainerRequestNotification(trainerRequest.id, { customerId, trainerId, message });
+    // TODO: need to uncommet later
+
+    // await sendTrainerRequestNotification(trainerRequest.id, { customerId, trainerId, message });
 
     return trainerRequest;
   } catch (error) {
