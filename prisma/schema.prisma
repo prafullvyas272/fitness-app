@@ -44,7 +44,6 @@ model User {
   otps       Otp[]    // Added back-relation to Otp
   specialities UserSpeciality[]
 
-
   isPremiumMember   Boolean @default(false)
 
   trainerWeeklyAvailabilities TrainerWeeklyAvailability[] @relation("Trainer_Weekly")
@@ -61,6 +60,11 @@ model User {
   workoutVideos   WorkoutVideo[] @relation("UserWorkoutVideos")
 
   plans      Plan[]   @relation("UserPlans")
+
+  trainerRequests TrainerRequest[] @relation("CustomerRequests") // As the customer who made the request
+  trainerApplications TrainerRequest[] @relation("TrainerRequests") // As the trainer receiving requests
+
+  notifications Notification[] // Opposite relation: user has many notifications
 
   createdAt  DateTime @default(now())
 }
@@ -284,4 +288,41 @@ model Plan {
   updatedAt  DateTime @updatedAt
 
   creator    User     @relation("UserPlans", fields: [createdBy], references: [id])
+}
+
+enum TrainerRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model TrainerRequest {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId  String   @db.ObjectId
+  trainerId   String   @db.ObjectId
+  message     String?
+  status      TrainerRequestStatus @default(PENDING)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer    User @relation("CustomerRequests", fields: [customerId], references: [id])
+  trainer     User @relation("TrainerRequests", fields: [trainerId], references: [id])
+}
+
+enum NotificationType {
+  TRAINER_REQUEST
+  BOOKING
+}
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  title     String
+  message   String
+  type      NotificationType
+  isRead    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id])
 }

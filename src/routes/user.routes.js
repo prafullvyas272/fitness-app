@@ -62,7 +62,7 @@ const router = express.Router();
  *                 message:
  *                   type: string
  */
-router.get("/trainers", authMiddleware, superadminMiddleware, getAllTrainersHandler);
+router.get("/trainers", authMiddleware, getAllTrainersHandler);
 
 /**
  * @swagger

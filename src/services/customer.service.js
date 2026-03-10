@@ -1,5 +1,6 @@
 import prisma from "../utils/prisma.js";
 import { getHashedPassword } from "../utils/password.js";
+import { sendTrainerRequestNotification } from "./notification.service.js";
 
 /**
  * Create a new Customer user.
@@ -292,4 +293,67 @@ export const showCustomerProfileData = async (customerId) => {
       createdAt: g.createdAt
     })) : []
   };
+};
+
+
+/**
+ * Apply for a User Personal Trainer (UPT).
+ * Creates an entry in the TrainerRequest table and sends notification to admins.
+ * @param {object} data - { customerId: string, trainerId: string, message?: string }
+ * @returns {object} The created TrainerRequest record.
+ */
+export const applyForUPT = async (data) => {
+  try {
+    const { customerId, trainerId, message } = data || {};
+
+    if (!customerId) throw new Error("customerId is required");
+    if (!trainerId) throw new Error("trainerId is required");
+
+    // Confirm customer and trainer exist
+    const [customer, trainer] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: customerId },
+        select: { id: true, role: { select: { name: true } } },
+      }),
+      prisma.user.findUnique({
+        where: { id: trainerId },
+        select: { id: true, role: { select: { name: true } } },
+      }),
+    ]);
+
+    if (!customer || customer.role?.name !== "Customer") {
+      throw new Error("Customer not found or not a customer");
+    }
+    if (!trainer || trainer.role?.name !== "Trainer") {
+      throw new Error("Trainer not found or not a trainer");
+    }
+
+    // Check if there's already a pending request for this customer-trainer pair
+    const existing = await prisma.trainerRequest.findFirst({
+      where: {
+        customerId,
+        trainerId,
+        status: "PENDING",
+      },
+    });
+    if (existing) {
+      throw new Error("A pending trainer request already exists for this customer and trainer.");
+    }
+
+    // Create TrainerRequest entry
+    const trainerRequest = await prisma.trainerRequest.create({
+      data: {
+        customerId,
+        trainerId,
+        message,
+        status: "PENDING",
+      },
+    });
+
+    await sendTrainerRequestNotification(trainerRequest.id, { customerId, trainerId, message });
+
+    return trainerRequest;
+  } catch (error) {
+    throw error;
+  }
 };

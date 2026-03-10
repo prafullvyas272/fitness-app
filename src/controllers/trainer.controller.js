@@ -3,6 +3,7 @@ import {
     updateTrainer,
     deleteTrainer,
     showTrainerProfileData,
+    getTrainerSessionsByMonthAndYear,
 } from "../services/trainer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
@@ -106,6 +107,30 @@ export const showTrainerProfileDataHandler = async (req, res) => {
             success: true,
             message: "Trainer profile data fetched successfully.",
             data: profileData,
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
+
+
+/**
+ * Controller for getting trainer sessions by month and year.
+ */
+export const getTrainerSessionsByMonthAndYearHandler = async (req, res) => {
+    try {
+        const trainerId = req.params.id;
+        const { month, year } = req.query;
+
+        const sessions = await getTrainerSessionsByMonthAndYear(trainerId, month, year);
+
+        res.status(200).json({
+            success: true,
+            message: "Trainer sessions fetched successfully.",
+            data: sessions,
         });
     } catch (err) {
         res.status(400).json({

@@ -3,6 +3,7 @@ import {
     updateCustomer,
     deleteCustomer,
     showCustomerProfileData,
+    applyForUPT,
 } from "../services/customer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
@@ -118,6 +119,30 @@ export const showCustomerProfileDataHandler = async (req, res) => {
         res.status(400).json({
             success: false,
             message: err.message,
+        });
+    }
+};
+
+
+/**
+ * Controller for applying for a User Personal Trainer (UPT).
+ * Handles customer requests to connect with a trainer and triggers notification.
+ */
+export const applyForUPTHandler = async (req, res) => {
+    try {
+        const { trainerId, message } = req.body;
+        const customerId = req.user.userId;
+        console.log(req.user)
+        const trainerRequest = await applyForUPT({ customerId, trainerId, message });
+        res.status(201).json({
+            success: true,
+            message: "Trainer request submitted successfully.",
+            data: trainerRequest
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message
         });
     }
 };
