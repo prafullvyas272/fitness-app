@@ -1,3 +1,4 @@
+import RoleEnum from "../enums/RoleEnum.js";
 import { registerUser, loginUser } from "../services/auth.service.js";
 import {
   sendOtp,
@@ -30,6 +31,8 @@ export const login = async (req, res) => {
     const { email, password, fcmToken } = req.body;
     const data = await loginUser(email, password, fcmToken);
     const { user } = data;
+    const role = await getUserRoleByRoleId(user.roleId);
+    const isCustomer = (role.name === RoleEnum.CUSTOMER);
 
     let response = {
       success: true,
@@ -47,6 +50,7 @@ export const login = async (req, res) => {
           createdAt: user.createdAt,
           provider: user.provider,
           specialities: user.specialities,
+          ...(isCustomer && { assignedTrainer: user.assignedCustomersAsCustomer[0] }),
         },
       },
     };
@@ -233,6 +237,24 @@ export const getUserProfileByIdHandler = async (req, res) => {
     res.status(404).json({
       success: false,
       message: err.message,
+    });
+  }
+};
+
+
+export const getUserRoleByRoleId = async (roleId) => {
+  try {
+    const role = await prisma.role.findUnique({
+      where: { id: roleId }
+    });
+    if (!role) {
+      throw new Error("Role not found");
+    }
+    return role;
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
     });
   }
 };

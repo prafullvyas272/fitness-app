@@ -68,7 +68,25 @@ export const loginUser = async (email, password, fcmToken) => {
         select: {
           specialityId: true,
         }
-      }
+      },
+      assignedCustomersAsCustomer: {
+        select: {
+          id: true,
+          trainerId: true,
+          isActive: true,
+          startDate: true,
+          endDate: true,
+          trainer: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+            }
+          }
+        }
+      },
     }
   });
 
