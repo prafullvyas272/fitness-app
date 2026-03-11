@@ -9,6 +9,7 @@ import {
   getUserProfileById,
 } from "../services/auth.service.js";
 import { googleLogin } from "../services/auth.service.js";
+import prisma from "../utils/prisma.js";
 
 export const register = async (req, res) => {
   try {
