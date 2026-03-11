@@ -139,6 +139,9 @@ router.post("/register", validate(registerSchema), register);
  *                 type: string
  *                 format: password
  *                 example: mypassword123
+ *               fcmToken:
+ *                 type: string
+ *                 example: dskjfhsdkjfhsdkjfhskdjhfksdhf
  *     responses:
  *       200:
  *         description: Login successful

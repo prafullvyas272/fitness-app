@@ -1,5 +1,5 @@
-.env
 node_modules
 /src/generated/prisma
 /uploads
 test.txt
+config.bat
