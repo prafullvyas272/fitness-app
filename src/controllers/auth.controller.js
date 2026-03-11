@@ -27,8 +27,8 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const data = await loginUser(email, password);
+    const { email, password, fcmToken } = req.body;
+    const data = await loginUser(email, password, fcmToken);
     const { user } = data;
 
     let response = {

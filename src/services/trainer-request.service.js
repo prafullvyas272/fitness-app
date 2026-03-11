@@ -1,4 +1,5 @@
 import prisma from "../utils/prisma.js";
+import { sendTrainerAssignedNotification } from "./notification.service.js";
 
 export const getAllTrainerRequests = async () => {
   try {
@@ -68,6 +69,10 @@ export const updateTrainerRequestStatus = async ({ requestId, status }) => {
             startDate: new Date(),
           },
         });
+
+        // TODO: need to uncomment later
+        
+        // await sendTrainerAssignedNotification(trainerRequest.customerId, trainerRequest.trainerId);
       }
     }
 
