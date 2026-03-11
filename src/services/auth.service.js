@@ -47,7 +47,7 @@ export const registerUser = async (firstName, lastName, email, phone, password, 
   return { user };
 };
 
-export const loginUser = async (email, password) => {
+export const loginUser = async (email, password, fcmToken) => {
   const user = await prisma.user.findUnique({
     where: { email },
     select: {
@@ -90,6 +90,33 @@ export const loginUser = async (email, password) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Invalid credentials");
 
+  if (fcmToken) {
+    // Update fcmToken in User table
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { fcmToken }
+      }),
+      
+      prisma.userDevice.upsert({
+        where: {
+          userId_fcmToken: {
+            userId: user.id,
+            fcmToken: fcmToken
+          }
+        },
+        update: {
+          fcmToken: fcmToken,
+          createdAt: new Date()
+        },
+        create: {
+          userId: user.id,
+          fcmToken: fcmToken,
+          createdAt: new Date()
+        }
+      })
+    ]);
+  }
 
   if (user.role && user.role.name === RoleEnum.SUPERADMIN) {
     const access_token = signToken({ userId: user.id });

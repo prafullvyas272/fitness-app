@@ -1,79 +1,16 @@
 import prisma from "../utils/prisma.js";
 import RoleEnum from "../enums/RoleEnum.js";
 
-export const sendRegistrationNotification = async (user) => {
-  try {
-    // Find all SuperAdmin users to notify
-    const superAdmins = await prisma.user.findMany({
-      where: {
-        role: {
-          name: RoleEnum.SUPERADMIN
-        },
-        fcmToken: {
-          not: null
-        }
-      },
-      select: {
-        id: true,
-        email: true,
-        fcmToken: true
-      }
-    });
-
-    if (!superAdmins || superAdmins.length === 0) {
-      throw new Error("No SuperAdmin users found with FCM tokens");
-    }
-
-    // Compose notification for each admin
-    const notificationPromises = superAdmins.map(async (adminUser) => {
-      // Compose the message
-      const message = {
-        token: adminUser.fcmToken,
-        data: {
-          type: "USER_REGISTRATION",
-          userId: user.id,
-          userEmail: user.email || "",
-          firstName: user.firstName || "",
-          lastName: user.lastName || "",
-          message: "A new user has registered and is awaiting approval."
-        },
-        android: {
-          priority: "high"
-        },
-        apns: {
-          payload: {
-            aps: {
-              sound: "default"
-            }
-          }
-        }
-      };
-
-      // Dynamically import firebase admin SDK since only allowed in service layer
-      const { default: admin } = await import("../config/firebase.js");
-      return admin.messaging().send(message);
-    });
-
-    // Await all notifications (can also use Promise.allSettled for robustness)
-    await Promise.all(notificationPromises);
-
-    return true;
-  } catch (error) {
-    throw new Error(`Failed to notify SuperAdmin(s): ${error.message}`);
-  }
-};
-
+import { default as admin } from "../config/firebase.js";
 
 /**
- * Send a TRAINER_REQUEST notification to all SuperAdmins and create Notification DB entry.
- * @param {string} trainerRequestId - The ID of the TrainerRequest triggering this notification.
- * @param {object} trainerRequestData - { customerId, trainerId, message }
- * @returns {boolean} true if sent, throws otherwise.
+ * Send a registration notification to all SuperAdmin devices (across all devices per user).
+ * @param {object} user - { id, email, firstName, lastName }
+ * @returns {boolean}
  */
-export const sendTrainerRequestNotification = async (trainerRequestId, trainerRequestData) => {
+export const sendRegistrationNotification = async (user) => {
   try {
-
-    // Get RoleEnum.SUPERADMIN's roleId
+    // 1. Get SuperAdmin Role ID
     const superAdminRole = await prisma.role.findUnique({
       where: { name: RoleEnum.SUPERADMIN },
       select: { id: true }
@@ -83,27 +20,131 @@ export const sendTrainerRequestNotification = async (trainerRequestId, trainerRe
       throw new Error("SuperAdmin role not found");
     }
 
-    const superAdminRoleId = superAdminRole.id;
-    console.log(superAdminRoleId)
-    // 1. Find all superadmins with an fcmToken
+    // 2. Find all active SuperAdmins
     const superAdmins = await prisma.user.findMany({
       where: {
-        roleId: superAdminRoleId,
+        roleId: superAdminRole.id,
         isActive: true,
-        NOT: { fcmToken: null }
       },
       select: {
         id: true,
         email: true,
-        fcmToken: true
       }
     });
 
     if (!superAdmins || superAdmins.length === 0) {
-      throw new Error("No SuperAdmin users found with FCM tokens");
+      throw new Error("No SuperAdmin users found");
     }
 
-    // 2. Compose notification message
+    // 3. For each SuperAdmin, get their devices with FCM tokens
+    const devicePromises = superAdmins.map(async (adminUser) => {
+      const devices = await prisma.userDevice.findMany({
+        where: {
+          userId: adminUser.id,
+          fcmToken: { not: null }
+        },
+        select: { fcmToken: true }
+      });
+      return {
+        adminUser,
+        deviceTokens: devices.map(d => d.fcmToken).filter(Boolean)
+      };
+    });
+
+    const adminDeviceList = await Promise.all(devicePromises);
+
+    // Compose notification message for each device of each admin
+    const messagePromises = [];
+    for (const { adminUser, deviceTokens } of adminDeviceList) {
+      for (const token of deviceTokens) {
+        const message = {
+          token,
+          data: {
+            type: "USER_REGISTRATION",
+            userId: user.id,
+            userEmail: user.email || "",
+            firstName: user.firstName || "",
+            lastName: user.lastName || "",
+            message: "A new user has registered and is awaiting approval."
+          },
+          android: { priority: "high" },
+          apns: { payload: { aps: { sound: "default" } } }
+        };
+        messagePromises.push(
+          (async () => {
+            const { default: admin } = await import("../config/firebase.js");
+            return admin.messaging().send(message);
+          })()
+        );
+      }
+    }
+
+    if (messagePromises.length === 0) {
+      throw new Error("No SuperAdmin devices found with FCM tokens");
+    }
+
+    // Wait for all messages to be sent
+    await Promise.all(messagePromises);
+
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to notify SuperAdmin(s): ${error.message}`);
+  }
+};
+
+
+/**
+ * Send a TRAINER_REQUEST notification to all SuperAdmin devices and create Notification DB entry.
+ * @param {string} trainerRequestId - The ID of the TrainerRequest triggering this notification.
+ * @param {object} trainerRequestData - { customerId, trainerId, message }
+ * @returns {boolean} true if sent, throws otherwise.
+ */
+export const sendTrainerRequestNotification = async (trainerRequestId, trainerRequestData) => {
+  try {
+    // Get SuperAdmin Role ID
+    const superAdminRole = await prisma.role.findUnique({
+      where: { name: RoleEnum.SUPERADMIN },
+      select: { id: true }
+    });
+
+    if (!superAdminRole) {
+      throw new Error("SuperAdmin role not found");
+    }
+
+    // Find all active superadmins
+    const superAdmins = await prisma.user.findMany({
+      where: {
+        roleId: superAdminRole.id,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        email: true,
+      }
+    });
+
+    if (!superAdmins || superAdmins.length === 0) {
+      throw new Error("No SuperAdmin users found");
+    }
+
+    // For each superadmin, get all their device tokens
+    const devicePromises = superAdmins.map(async (adminUser) => {
+      const devices = await prisma.userDevice.findMany({
+        where: {
+          userId: adminUser.id,
+          fcmToken: { not: null }
+        },
+        select: { fcmToken: true }
+      });
+      return {
+        adminUser,
+        deviceTokens: devices.map(d => d.fcmToken).filter(Boolean)
+      };
+    });
+
+    const adminDeviceList = await Promise.all(devicePromises);
+
+    // Compose notification message data
     const { customerId, trainerId, message } = trainerRequestData;
 
     const [customer, trainer] = await Promise.all([
@@ -120,38 +161,177 @@ export const sendTrainerRequestNotification = async (trainerRequestId, trainerRe
     const notifTitle = "New Trainer Request";
     const notifMsg = `A new trainer request from ${customer?.firstName || "Customer"} ${customer?.lastName || ""} to ${trainer?.firstName || "Trainer"} ${trainer?.lastName || ""}. ${message ? "Message: " + message : ""}`;
 
-    // 3. For each superadmin, send FCM notification and create Notification DB entry
-    const sendAndSavePromises = superAdmins.map(async (adminUser) => {
-      // Send FCM notification
-      const fcmMessage = {
-        token: adminUser.fcmToken,
-        data: {
-          type: "TRAINER_REQUEST",
-          trainerRequestId,
-          customerId,
-          trainerId,
-          message: notifMsg
-        },
-        android: { priority: "high" },
-        apns: { payload: { aps: { sound: "default" } } }
-      };
-      const { default: admin } = await import("../config/firebase.js");
-      await admin.messaging().send(fcmMessage);
+    // For each superadmin/user, send to each device and ALSO create one DB notification per user (not per device)
+    const sendPushPromises = [];
+    const createDbNotifyPromises = [];
 
-      // Create Notification DB entry
-      await prisma.notification.create({
-        data: {
-          userId: adminUser.id,
-          title: notifTitle,
-          message: notifMsg,
-          type: "TRAINER_REQUEST"
-        }
-      });
-    });
+    for (const { adminUser, deviceTokens } of adminDeviceList) {
+      // Send to all devices for this adminUser
+      for (const token of deviceTokens) {
+        const fcmMessage = {
+          token,
+          data: {
+            type: "TRAINER_REQUEST",
+            trainerRequestId,
+            customerId,
+            trainerId,
+            message: notifMsg
+          },
+          android: { priority: "high" },
+          apns: { payload: { aps: { sound: "default" } } }
+        };
+        sendPushPromises.push(
+          (async () => {
+            const { default: admin } = await import("../config/firebase.js");
+            return admin.messaging().send(fcmMessage);
+          })()
+        );
+      }
+      // Create only one notification db entry per user
+      createDbNotifyPromises.push(
+        prisma.notification.create({
+          data: {
+            userId: adminUser.id,
+            title: notifTitle,
+            message: notifMsg,
+            type: "TRAINER_REQUEST"
+          }
+        })
+      );
+    }
 
-    await Promise.all(sendAndSavePromises);
+    if (sendPushPromises.length === 0) {
+      throw new Error("No SuperAdmin devices found with FCM tokens");
+    }
+
+    // Wait for all push notifications to be sent and DB notifications to be created
+    await Promise.all([
+      Promise.all(sendPushPromises),
+      Promise.all(createDbNotifyPromises)
+    ]);
+
     return true;
   } catch (error) {
     throw new Error(`Failed to send trainer request notification: ${error.message}`);
+  }
+};
+
+
+export const sendTrainerAssignedNotification = async (customerId, trainerId) => {
+  try {
+
+    // Fetch customer and trainer details from the database
+    const customer = await prisma.user.findUnique({
+      where: { id: customerId },
+      select: { id: true, firstName: true, lastName: true }
+    });
+    if (!customer) {
+      throw new Error("Customer not found");
+    }
+
+    const trainer = await prisma.user.findUnique({
+      where: { id: trainerId },
+      select: { id: true, firstName: true, lastName: true }
+    });
+    if (!trainer) {
+      throw new Error("Trainer not found");
+    }
+
+    
+    const [trainerDevices, customerDevices] = await Promise.all([
+      prisma.userDevice.findMany({
+        where: { userId: trainer.id, fcmToken: { not: null } }
+      }),
+      prisma.userDevice.findMany({
+        where: { userId: customer.id, fcmToken: { not: null } }
+      })
+    ]);
+
+    const sendPushPromises = [];
+    const createDbNotifyPromises = [];
+
+    // Notification to Trainer
+    if (trainerDevices && trainerDevices.length > 0) {
+      const notifTitle = "New Customer Assigned";
+      const notifMsg = `You have been assigned to customer ${customer.firstName} ${customer.lastName}`;
+      
+      for (const device of trainerDevices) {
+        const fcmMessage = {
+          token: device.fcmToken,
+          data: {
+            type: "TRAINER_ASSIGNED",
+            trainerId: trainer.id,
+            customerId: customer.id,
+            message: notifMsg
+          },
+          notification: {
+            title: notifTitle,
+            body: notifMsg
+          },
+          android: { priority: "high" },
+          apns: { payload: { aps: { sound: "default" } } }
+        };
+        sendPushPromises.push(admin.messaging().send(fcmMessage));
+      }
+      // One DB notification for the trainer
+      createDbNotifyPromises.push(
+        prisma.notification.create({
+          data: {
+            userId: trainer.id,
+            title: notifTitle,
+            message: notifMsg,
+            type: "TRAINER_ASSIGNED"
+          }
+        })
+      );
+    }
+
+    // Notification to Customer
+    if (customerDevices && customerDevices.length > 0) {
+      const notifTitle = "Trainer Assigned";
+      const notifMsg = `Trainer ${trainer.firstName} ${trainer.lastName} has been assigned to you`;
+      for (const device of customerDevices) {
+        const fcmMessage = {
+          token: device.fcmToken,
+          data: {
+            type: "TRAINER_ASSIGNED",
+            trainerId: trainer.id,
+            customerId: customer.id,
+            message: notifMsg
+          },
+          notification: {
+            title: notifTitle,
+            body: notifMsg
+          },
+          android: { priority: "high" },
+          apns: { payload: { aps: { sound: "default" } } }
+        };
+        sendPushPromises.push(admin.messaging().send(fcmMessage));
+      }
+      // One DB notification for the customer
+      createDbNotifyPromises.push(
+        prisma.notification.create({
+          data: {
+            userId: customer.id,
+            title: notifTitle,
+            message: notifMsg,
+            type: "TRAINER_ASSIGNED"
+          }
+        })
+      );
+    }
+
+    if (sendPushPromises.length === 0) {
+      throw new Error("No devices found for trainer or customer with FCM tokens");
+    }
+
+    await Promise.all([
+      Promise.all(sendPushPromises),
+      Promise.all(createDbNotifyPromises)
+    ]);
+
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to send trainer assigned notification: ${error.message}`);
   }
 };
