@@ -66,6 +66,8 @@ model User {
 
   notifications Notification[] // Opposite relation: user has many notifications
 
+  userDevices UserDevice[] // Opposite relation: user has many user devices
+
   createdAt  DateTime @default(now())
 }
 
@@ -325,4 +327,14 @@ model Notification {
   createdAt DateTime @default(now())
 
   user      User @relation(fields: [userId], references: [id])
+}
+
+model UserDevice {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  fcmToken  String
+  device    String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }
