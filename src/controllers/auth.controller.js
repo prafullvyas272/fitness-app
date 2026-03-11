@@ -200,11 +200,28 @@ export const getUserProfileByIdHandler = async (req, res) => {
     const userId = req.user.userId;
     const user = await getUserProfileById(userId);
 
-    let formattedUser = { ...user };
+    const formattedUser = { ...user };
+
+    // Format userProfileDetails to a single object or null
     if (Array.isArray(formattedUser.userProfileDetails) && formattedUser.userProfileDetails.length > 0) {
       formattedUser.userProfileDetails = formattedUser.userProfileDetails[0];
     } else {
       formattedUser.userProfileDetails = null;
+    }
+
+    // assignedCustomersAsCustomer logic
+    // If user is Customer, return assignedTrainer (single object or null)
+    // If not Customer, return assignedCustomers as []
+    if (formattedUser.role?.name === "Customer") {
+      const assignedTrainer = Array.isArray(formattedUser.assignedCustomersAsCustomer) && formattedUser.assignedCustomersAsCustomer.length > 0
+        ? formattedUser.assignedCustomersAsCustomer[0]
+        : null;
+      formattedUser.assignedTrainer = assignedTrainer;
+      delete formattedUser.assignedCustomersAsCustomer;
+    } else {
+      // For trainers or others, assignedCustomers is always []
+      formattedUser.assignedCustomers = [];
+      delete formattedUser.assignedCustomersAsCustomer;
     }
 
     res.status(200).json({
