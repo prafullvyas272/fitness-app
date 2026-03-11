@@ -21,6 +21,7 @@ export const getUserAvailability = async (req, res) => {
         }
 
         const availability = await getUserAvailabilityDataByDate(userId, date);
+        console.log(availability)
 
         if (!availability) {
             return res.status(404).json({

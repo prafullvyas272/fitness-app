@@ -33,6 +33,7 @@ export const login = async (req, res) => {
     const { user } = data;
     const role = await getUserRoleByRoleId(user.roleId);
     const isCustomer = (role?.name === RoleEnum.CUSTOMER);
+    console.log(role, isCustomer)
 
     let response = {
       success: true,

@@ -18,6 +18,7 @@ export const getUserAvailabilityDataByDate = async (userId, date) => {
     });
 
     if (!dailyAvailability) {
+        // TODO: computed requiredMinutes, totalBookedMinutes
         return null;
     }
 
