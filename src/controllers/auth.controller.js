@@ -32,7 +32,7 @@ export const login = async (req, res) => {
     const data = await loginUser(email, password, fcmToken);
     const { user } = data;
     const role = await getUserRoleByRoleId(user.roleId);
-    const isCustomer = (role.name === RoleEnum.CUSTOMER);
+    const isCustomer = (role?.name === RoleEnum.CUSTOMER);
 
     let response = {
       success: true,
