@@ -7,6 +7,7 @@ import {
   getTrainerSessionsByMonthAndYearHandler,
   getAssignedCustomersByTrainerIdHandler,
 } from "../controllers/trainer.controller.js";
+import { trainerForgotPasswordHandler } from "../controllers/auth.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -354,6 +355,55 @@ router.get(
   "/api/trainer/assigned-customers",
   authMiddleware,
   getAssignedCustomersByTrainerIdHandler
+);
+
+/**
+ * @swagger
+ * /api/trainer/forgot-password:
+ *   post:
+ *     summary: Trainer forgot password
+ *     tags:
+ *       - Trainer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: trainer@example.com
+ *     responses:
+ *       200:
+ *         description: Password reset email sent successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Error occurred.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.post(
+  "/api/trainer/forgot-password",
+  trainerForgotPasswordHandler
 );
 
 export default router;

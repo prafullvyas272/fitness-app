@@ -28,3 +28,20 @@ export const sendOtpEmail = async (to, otp) => {
   });
 };
 
+export const sendForgotPasswordEmail = async (to, resetToken) => {
+  const subject = "Password Reset Request";
+  const text = `You requested to reset your password. Use this token to proceed: ${resetToken}`;
+  const html = `<p>You requested to reset your password.</p>
+  <p>Use the following token to proceed with resetting your password:</p>
+  <p><b>${resetToken}</b></p>`;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_USER,
+    to,
+    subject,
+    text,
+    html,
+  });
+};
+
+

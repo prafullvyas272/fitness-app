@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { signToken } from "../utils/jwt.js";
 import prisma from "../utils/prisma.js";
 import crypto from "crypto";
-import { sendOtpEmail } from "../utils/node-mailer.js";
+import { sendOtpEmail, sendForgotPasswordEmail } from "../utils/node-mailer.js";
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
 import jwt from "jsonwebtoken";
@@ -287,6 +287,45 @@ export const resendOtp = async (userId) => {
   return sendOtp(userId);
 };
 
+
+const generateResetToken = () => crypto.randomBytes(32).toString("hex");
+
+const requestPasswordReset = async (email, roleName) => {
+  const role = await prisma.role.findUnique({
+    where: { name: roleName },
+  });
+
+  if (!role) {
+    throw new Error("Role not found");
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      email,
+      roleId: role.id,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User with this email does not exist");
+  }
+
+  const resetToken = generateResetToken();
+
+  await sendForgotPasswordEmail(user.email, resetToken);
+
+  return {
+    success: true,
+  };
+};
+
+export const trainerForgotPassword = async (email) => {
+  return requestPasswordReset(email, RoleEnum.TRAINER);
+};
+
+export const customerForgotPassword = async (email) => {
+  return requestPasswordReset(email, RoleEnum.CUSTOMER);
+};
 
 export const googleLogin = async (idToken) => {
   // 1. Verify token

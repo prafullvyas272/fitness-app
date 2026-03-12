@@ -6,6 +6,7 @@ import {
   showCustomerProfileDataHandler,
   applyForUPTHandler,
 } from "../controllers/customer.controller.js";
+import { customerForgotPasswordHandler } from "../controllers/auth.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -253,6 +254,55 @@ router.post(
   "/api/customers/apply-upt",
   authMiddleware,
   applyForUPTHandler
+);
+
+/**
+ * @swagger
+ * /api/customer/forgot-password:
+ *   post:
+ *     summary: Customer forgot password
+ *     tags:
+ *       - Customer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: customer@example.com
+ *     responses:
+ *       200:
+ *         description: Password reset email sent successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Error occurred.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.post(
+  "/api/customer/forgot-password",
+  customerForgotPasswordHandler
 );
 
 export default router;

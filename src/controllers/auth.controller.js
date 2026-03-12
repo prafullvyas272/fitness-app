@@ -8,6 +8,8 @@ import {
   appleLogin,
   getUserProfileById,
   logoutUser,
+  trainerForgotPassword,
+  customerForgotPassword,
 } from "../services/auth.service.js";
 import { googleLogin } from "../services/auth.service.js";
 import prisma from "../utils/prisma.js";
@@ -273,6 +275,42 @@ export const logoutHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+export const trainerForgotPasswordHandler = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    await trainerForgotPassword(email);
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset email sent successfully",
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const customerForgotPasswordHandler = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    await customerForgotPassword(email);
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset email sent successfully",
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
     });
   }
 };
