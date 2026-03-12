@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import prisma from "../utils/prisma.js";
 
-export const authMiddleware = (req, res, next) => {
+export const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -22,6 +23,19 @@ export const authMiddleware = (req, res, next) => {
 
     const token = parts[1];
 
+    // 🔴 Check if token is blacklisted
+    const blacklistedToken = await prisma.blacklistedToken.findUnique({
+      where: { token }
+    });
+
+    if (blacklistedToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Token has been revoked. Please login again.",
+      });
+    }
+
+    // Verify JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = {

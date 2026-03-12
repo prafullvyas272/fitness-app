@@ -16,6 +16,7 @@ import {
   facebookLoginHandler,
   appleLoginHandler,
   getUserProfileByIdHandler,
+  logoutHandler,
 } from "../controllers/auth.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
@@ -402,6 +403,68 @@ router.get(
   authMiddleware,
   getUserProfileByIdHandler
 );
+
+
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Logout user
+ *     description: Logs out the authenticated user by invalidating their session/token.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fcmToken:
+ *                 type: string
+ *                 description: FCM token for push notifications (optional).
+ *                 example: fcmSampleTokenString
+ *     responses:
+ *       200:
+ *         description: User logged out successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: User logged out successfully
+ *                 data:
+ *                   type: object
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Error logging out
+ */
+router.post(
+  "/logout",
+  authMiddleware,
+  logoutHandler
+);
+
+
+
 
 
 export default router;

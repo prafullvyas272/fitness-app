@@ -496,3 +496,53 @@ export const getUserProfileById = async (userId) => {
   return user;
 };
 
+/**
+ * Method to logout user
+ * @param {*} userId 
+ * @param {*} token 
+ * @param {*} fcmToken 
+ * @returns 
+ */
+export const logoutUser = async (userId, token, fcmToken) => {
+  if (!userId) throw new Error("User ID required");
+
+  try {
+    const decoded = jwt.decode(token);
+
+    if (!decoded?.exp) {
+      throw new Error("Invalid token");
+    }
+
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    await prisma.$transaction([
+      prisma.blacklistedToken.create({
+        data: {
+          token,
+          userId,
+          expiresAt
+        }
+      }),
+
+      // prisma.userDevice.deleteMany({
+      //   where: {
+      //     userId,
+      //     fcmToken
+      //   }
+      // }),
+
+      // prisma.user.update({
+      //   where: { id: userId },
+      //   data: { fcmToken: null }
+      // })
+    ]);
+
+    return {
+      success: true,
+      message: "Logged out successfully"
+    };
+
+  } catch (error) {
+    throw new Error(`Logout failed: ${error.message}`);
+  }
+};

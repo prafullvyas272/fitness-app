@@ -7,6 +7,7 @@ import {
   facebookLogin,
   appleLogin,
   getUserProfileById,
+  logoutUser,
 } from "../services/auth.service.js";
 import { googleLogin } from "../services/auth.service.js";
 import prisma from "../utils/prisma.js";
@@ -255,5 +256,23 @@ export const getUserRoleByRoleId = async (roleId) => {
     return role;
   } catch (err) {
     console.log(err);
+  }
+};
+
+export const logoutHandler = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    const userId = req.user.userId;
+    const { fcmToken } = req.body;
+
+    const result = await logoutUser(userId, token, fcmToken);
+
+    res.status(200).json(result);
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };

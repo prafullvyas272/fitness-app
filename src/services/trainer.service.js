@@ -512,6 +512,7 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
         phone: ac.customer.phone,
         gender: ac.customer.gender,
         isActive: ac.customer.isActive,
+        fee: 0,  //TODO: later it will be dynamic
         createdAt: ac.customer.createdAt,
         userProfileDetail: ac.customer.userProfileDetails?.[0] || null,
       },
