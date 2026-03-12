@@ -290,7 +290,7 @@ export const resendOtp = async (userId) => {
 
 const generateResetToken = () => crypto.randomBytes(32).toString("hex");
 
-const requestPasswordReset = async (email, roleName) => {
+const findUserByEmailAndRole = async (email, roleName) => {
   const role = await prisma.role.findUnique({
     where: { name: roleName },
   });
@@ -310,13 +310,62 @@ const requestPasswordReset = async (email, roleName) => {
     throw new Error("User with this email does not exist");
   }
 
-  const resetToken = generateResetToken();
+  return { user, role };
+};
 
-  await sendForgotPasswordEmail(user.email, resetToken);
+const requestPasswordReset = async (email, roleName) => {
+  const { user } = await findUserByEmailAndRole(email, roleName);
+
+  // Reuse existing OTP mechanism for password reset
+  await sendOtp(user.id);
 
   return {
     success: true,
   };
+};
+
+const verifyPasswordResetOtp = async (email, roleName, otp) => {
+  const { user } = await findUserByEmailAndRole(email, roleName);
+
+  if (typeof otp === "number") {
+    otp = otp.toString();
+  }
+
+  const record = await prisma.otp.findFirst({
+    where: {
+      userId: user.id,
+      code: otp,
+      used: false,
+      expiresAt: { gt: new Date() },
+    },
+  });
+
+  if (!record) {
+    throw new Error("Invalid or expired OTP");
+  }
+
+  await prisma.otp.update({
+    where: { id: record.id },
+    data: { used: true },
+  });
+
+  return { success: true };
+};
+
+const resetUserPassword = async (email, roleName, password) => {
+  const { user } = await findUserByEmailAndRole(email, roleName);
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedPassword,
+      provider: "LOCAL",
+    },
+  });
+
+  return { success: true };
 };
 
 export const trainerForgotPassword = async (email) => {
@@ -325,6 +374,22 @@ export const trainerForgotPassword = async (email) => {
 
 export const customerForgotPassword = async (email) => {
   return requestPasswordReset(email, RoleEnum.CUSTOMER);
+};
+
+export const trainerVerifyPasswordResetOtp = async (email, otp) => {
+  return verifyPasswordResetOtp(email, RoleEnum.TRAINER, otp);
+};
+
+export const customerVerifyPasswordResetOtp = async (email, otp) => {
+  return verifyPasswordResetOtp(email, RoleEnum.CUSTOMER, otp);
+};
+
+export const trainerResetPasswordWithEmail = async (email, password) => {
+  return resetUserPassword(email, RoleEnum.TRAINER, password);
+};
+
+export const customerResetPasswordWithEmail = async (email, password) => {
+  return resetUserPassword(email, RoleEnum.CUSTOMER, password);
 };
 
 export const googleLogin = async (idToken) => {

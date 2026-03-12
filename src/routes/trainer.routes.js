@@ -7,7 +7,10 @@ import {
   getTrainerSessionsByMonthAndYearHandler,
   getAssignedCustomersByTrainerIdHandler,
 } from "../controllers/trainer.controller.js";
-import { trainerForgotPasswordHandler } from "../controllers/auth.controller.js";
+import {
+  trainerForgotPasswordHandler,
+  trainerResetPasswordHandler,
+} from "../controllers/auth.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -404,6 +407,50 @@ router.get(
 router.post(
   "/api/trainer/forgot-password",
   trainerForgotPasswordHandler
+);
+
+/**
+ * @swagger
+ * /api/trainer/reset-password:
+ *   post:
+ *     summary: Trainer reset password
+ *     tags:
+ *       - Trainer
+ *     description: |
+ *       Two-step reset flow using OTP:
+ *       1) First call with `email` and `otp` to verify OTP.
+ *       2) Second call with `email`, `password`, and `confirm_password` to change the password.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: trainer@example.com
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: NewStrong@123
+ *               confirm_password:
+ *                 type: string
+ *                 format: password
+ *                 example: NewStrong@123
+ *     responses:
+ *       200:
+ *         description: OTP verified or password reset successfully.
+ *       400:
+ *         description: Error occurred.
+ */
+router.post(
+  "/api/trainer/reset-password",
+  trainerResetPasswordHandler
 );
 
 export default router;
