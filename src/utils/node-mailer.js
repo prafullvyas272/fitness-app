@@ -15,9 +15,36 @@ export const transporter = nodemailer.createTransport({
 });
 
 export const sendOtpEmail = async (to, otp) => {
-  const subject = "Your OTP Code";
-  const text = `Your OTP code is: ${otp}`;
-  const html = `<p>Your OTP code is: <b>${otp}</b></p>`;
+  const subject = "Forgot Password Request";
+  const text = `
+    Dear user,
+
+    You requested a password reset for your account.
+
+    Please use the following OTP code to proceed with resetting your password:
+
+    OTP Code: ${otp}
+
+    If you did not request this, please ignore this email.
+
+    Thank you,
+    The Support Team
+  `;
+
+  const html = `
+    <div style="font-family: Arial, Helvetica, sans-serif; color: #222;">
+      <h2>Forgot Password Request</h2>
+      <p>Dear user,</p>
+      <p>You (or someone else) requested a password reset for your account.</p>
+      <p>Please use the following OTP code to proceed with resetting your password:</p>
+      <p style="font-size: 1.5em; font-weight: bold; color: #1976d2; letter-spacing: 4px;">
+        ${otp}
+      </p>
+      <p>If you did not request this, please ignore this email.</p>
+      <br />
+      <p>Thank you,<br/>The Support Team</p>
+    </div>
+  `;
 
   await transporter.sendMail({
     from: process.env.MAIL_USER,
