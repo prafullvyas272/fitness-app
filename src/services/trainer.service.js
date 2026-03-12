@@ -463,3 +463,64 @@ export const getTrainerSessionsByMonthAndYear = async (
     pastSessions
   };
 };
+
+
+
+/**
+ * Fetches all active assigned customers for a given trainer,
+ * including customer basic info and the first userProfileDetails.
+ *
+ * @param {string} trainerId - The ID of the trainer.
+ * @returns {Promise<Array>} List of assigned customers with relations.
+ */
+export const getAssignedCustomersByTrainerId = async (trainerId) => {
+  if (!trainerId) throw new Error("Trainer ID is required");
+
+  try {
+    // Fetch all active assignments for this trainer
+    const assignedCustomers = await prisma.assignedCustomer.findMany({
+      where: {
+        trainerId: trainerId,
+        isActive: true
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            gender: true,
+            isActive: true,
+            createdAt: true,
+            userProfileDetails: {
+              take: 1
+            }
+          }
+        }
+      }
+    });
+
+    return assignedCustomers.map(ac => ({
+      id: ac.id,
+      customer: {
+        id: ac.customer.id,
+        firstName: ac.customer.firstName,
+        lastName: ac.customer.lastName,
+        email: ac.customer.email,
+        phone: ac.customer.phone,
+        gender: ac.customer.gender,
+        isActive: ac.customer.isActive,
+        createdAt: ac.customer.createdAt,
+        userProfileDetail: ac.customer.userProfileDetails?.[0] || null,
+      },
+      startDate: ac.startDate,
+      endDate: ac.endDate,
+      isActive: ac.isActive,
+      createdAt: ac.createdAt
+    }));
+  } catch (err) {
+    throw new Error(`Failed to get assigned customers: ${err.message}`);
+  }
+};

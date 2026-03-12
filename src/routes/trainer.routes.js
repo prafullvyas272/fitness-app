@@ -5,6 +5,7 @@ import {
   deleteTrainerHandler,
   showTrainerProfileDataHandler,
   getTrainerSessionsByMonthAndYearHandler,
+  getAssignedCustomersByTrainerIdHandler,
 } from "../controllers/trainer.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -283,5 +284,76 @@ router.get(
   getTrainerSessionsByMonthAndYearHandler
 );
 
+/**
+ * @swagger
+ * /api/trainer/assigned-customers:
+ *   get:
+ *     summary: Get all customers currently assigned to the logged-in trainer
+ *     tags:
+ *       - Trainer
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Assigned customers fetched successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       customer:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           firstName:
+ *                             type: string
+ *                           lastName:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                           phone:
+ *                             type: string
+ *                           gender:
+ *                             type: string
+ *                           isActive:
+ *                             type: boolean
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                           userProfileDetail:
+ *                             type: object
+ *                             nullable: true
+ *                       startDate:
+ *                         type: string
+ *                         format: date
+ *                       endDate:
+ *                         type: string
+ *                         format: date
+ *                         nullable: true
+ *                       isActive:
+ *                         type: boolean
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *       400:
+ *         description: Error occurred.
+ */
+router.get(
+  "/api/trainer/assigned-customers",
+  authMiddleware,
+  getAssignedCustomersByTrainerIdHandler
+);
 
 export default router;

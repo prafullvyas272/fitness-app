@@ -4,6 +4,7 @@ import {
     deleteTrainer,
     showTrainerProfileData,
     getTrainerSessionsByMonthAndYear,
+    getAssignedCustomersByTrainerId,
 } from "../services/trainer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
@@ -131,6 +132,28 @@ export const getTrainerSessionsByMonthAndYearHandler = async (req, res) => {
             success: true,
             message: "Trainer sessions fetched successfully.",
             data: sessions,
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
+
+
+/**
+ * Method for fetching all assigned customers for a given trainer.
+ */
+export const getAssignedCustomersByTrainerIdHandler = async (req, res) => {
+    try {
+        const trainerId = req.user.userId;
+        const assignedCustomers = await getAssignedCustomersByTrainerId(trainerId);
+
+        res.status(200).json({
+            success: true,
+            message: "Assigned customers fetched successfully.",
+            data: assignedCustomers,
         });
     } catch (err) {
         res.status(400).json({
