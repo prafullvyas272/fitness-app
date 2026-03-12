@@ -260,22 +260,36 @@ router.post(
  * @swagger
  * /api/customer/forgot-password:
  *   post:
- *     summary: Customer forgot password
+ *     summary: Customer forgot/reset password (OTP based)
  *     tags:
  *       - Customer
+ *     description: |
+ *       Two-step OTP based password reset flow.
+ *       - First call with `email` only to receive an OTP via email.
+ *       - Second call with `email` and `otp` to verify the OTP.
+ *       - Third call with `email`, `password`, and `confirm_password` to change the password.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - email
  *             properties:
  *               email:
  *                 type: string
  *                 format: email
  *                 example: customer@example.com
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: NewStrong@123
+ *               confirm_password:
+ *                 type: string
+ *                 format: password
+ *                 example: NewStrong@123
  *     responses:
  *       200:
  *         description: Password reset email sent successfully.

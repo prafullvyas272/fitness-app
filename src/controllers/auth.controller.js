@@ -10,6 +10,10 @@ import {
   logoutUser,
   trainerForgotPassword,
   customerForgotPassword,
+  trainerVerifyPasswordResetOtp,
+  customerVerifyPasswordResetOtp,
+  trainerResetPasswordWithEmail,
+  customerResetPasswordWithEmail,
 } from "../services/auth.service.js";
 import { googleLogin } from "../services/auth.service.js";
 import prisma from "../utils/prisma.js";
@@ -299,13 +303,105 @@ export const trainerForgotPasswordHandler = async (req, res) => {
 
 export const customerForgotPasswordHandler = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, otp, password, confirm_password } = req.body;
 
-    await customerForgotPassword(email);
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
 
-    res.status(200).json({
-      success: true,
-      message: "Password reset email sent successfully",
+    // Step 1: Request OTP for password reset
+    if (!otp && !password && !confirm_password) {
+      await customerForgotPassword(email);
+
+      return res.status(200).json({
+        success: true,
+        message: "Password reset OTP sent successfully",
+      });
+    }
+
+    // Step 2a: Verify OTP
+    if (otp && !password && !confirm_password) {
+      await customerVerifyPasswordResetOtp(email, otp);
+
+      return res.status(200).json({
+        success: true,
+        message: "OTP verified successfully",
+      });
+    }
+
+    // Step 2b: Reset password
+    if (password && confirm_password) {
+      if (password !== confirm_password) {
+        return res.status(400).json({
+          success: false,
+          message: "Password and confirm_password do not match",
+        });
+      }
+
+      await customerResetPasswordWithEmail(email, password);
+
+      return res.status(200).json({
+        success: true,
+        message: "Password reset successfully",
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: "Invalid request payload",
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const trainerResetPasswordHandler = async (req, res) => {
+  try {
+    const { email, otp, password, confirm_password } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    // Step 1: Verify OTP only
+    if (otp && !password && !confirm_password) {
+      await trainerVerifyPasswordResetOtp(email, otp);
+
+      return res.status(200).json({
+        success: true,
+        message: "OTP verified successfully",
+      });
+    }
+
+    // Step 2: Reset password
+    if (password && confirm_password) {
+      if (password !== confirm_password) {
+        return res.status(400).json({
+          success: false,
+          message: "Password and confirm_password do not match",
+        });
+      }
+
+      await trainerResetPasswordWithEmail(email, password);
+
+      return res.status(200).json({
+        success: true,
+        message: "Password reset successfully",
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: "Invalid request payload",
     });
   } catch (err) {
     res.status(400).json({
