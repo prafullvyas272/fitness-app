@@ -6,7 +6,7 @@ import {
   showCustomerProfileDataHandler,
   applyForUPTHandler,
 } from "../controllers/customer.controller.js";
-import { customerForgotPasswordHandler } from "../controllers/auth.controller.js";
+import { customerForgotPasswordHandler, customerResetPasswordHandler } from "../controllers/auth.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -317,6 +317,72 @@ router.post(
 router.post(
   "/api/customer/forgot-password",
   customerForgotPasswordHandler
+);
+
+
+/**
+ * @swagger
+ * /api/customer/reset-password:
+ *   post:
+ *     summary: Reset password for customer (by OTP verification and new password)
+ *     tags:
+ *       - Customer
+ *     description: |
+ *       Step 1: Verify OTP (with email and otp only).<br>
+ *       Step 2: Submit new password (with email, otp, password, and confirm_password).
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: customer@example.com
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: NewStrong@123
+ *               confirm_password:
+ *                 type: string
+ *                 format: password
+ *                 example: NewStrong@123
+ *     responses:
+ *       200:
+ *         description: OTP verified or password reset successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: OTP verified successfully
+ *       400:
+ *         description: Error occurred.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: OTP invalid or mismatched passwords
+ */
+router.post(
+  "/api/customer/reset-password",
+  customerResetPasswordHandler
 );
 
 export default router;
