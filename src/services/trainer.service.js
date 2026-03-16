@@ -496,7 +496,8 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
             createdAt: true,
             userProfileDetails: {
               take: 1
-            }
+            },
+            questionnaire: true
           }
         }
       }
@@ -516,6 +517,7 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
         totalSessions: 0,  //TODO: later it will be dynamic
         createdAt: ac.customer.createdAt,
         userProfileDetail: ac.customer.userProfileDetails?.[0] || null,
+        questionnaire: ac.customer.questionnaire,
       },
       startDate: ac.startDate,
       endDate: ac.endDate,

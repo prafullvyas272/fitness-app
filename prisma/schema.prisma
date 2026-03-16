@@ -67,6 +67,7 @@ model User {
   notifications Notification[] // Opposite relation: user has many notifications
 
   userDevices UserDevice[] // Opposite relation: user has many user devices
+  questionnaire Questionnaire?
 
   createdAt  DateTime @default(now())
 }
@@ -348,4 +349,25 @@ model BlacklistedToken {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model Questionnaire {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId              String   @unique @db.ObjectId
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  clientName          String
+  age                 Int
+  heightCm            Int
+  weightKg            Float
+  dietaryRestrictions String?
+  goals               String?
+  medicalHistory      String?
+  exerciseExperience  String?
+  availability        String?
+  trainingPreferences String?
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }

@@ -22,6 +22,7 @@ import specialityRoutes from "./routes/speciality.routes.js";
 import workoutVideoRoutes from "./routes/workout-video.routes.js";
 import planRoutes from "./routes/plan.routes.js";
 import trainerRequestRoutes from "./routes/trainer-request.routes.js";
+import questionnaireRoutes from "./routes/questionnaire.routes.js";
 
 dotenv.config();
 
@@ -68,6 +69,7 @@ app.use("/api", specialityRoutes);
 app.use("/api", workoutVideoRoutes);
 app.use("/api", planRoutes);
 app.use("/api", trainerRequestRoutes);
+app.use("/api", questionnaireRoutes);
 
 
 app.use(errorHandler);
