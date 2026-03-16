@@ -97,6 +97,8 @@ export const addJournalEntryForDate = async ({
       });
     } else {
       // Create new
+      const totalJournalEntries = await getCustomerTotalJournalEntriesCount(userId);
+      const dayNumber = totalJournalEntries + 1;
       return await prisma.journalEntry.create({
         data: {
           userId,
@@ -109,7 +111,8 @@ export const addJournalEntryForDate = async ({
           physicalReadiness,
           motivation,
           stressLevel,
-          mentalFitness
+          mentalFitness,
+          dayNumber,
         }
       });
     }
@@ -117,6 +120,25 @@ export const addJournalEntryForDate = async ({
     throw new Error("Failed to add or update journal entry: " + err.message);
   }
 };
+
+
+/**
+ * Get the total number of journal entries for a given customer (user).
+ *
+ * @param {string} userId - The customer's user ID.
+ * @returns {Promise<number>} The total count of journal entries.
+ */
+export const getCustomerTotalJournalEntriesCount = async (userId) => {
+  if (!userId) throw new Error("User ID is required");
+  try {
+    return await prisma.journalEntry.count({
+      where: { userId }
+    });
+  } catch (err) {
+    throw new Error("Failed to get journal entries count: " + err.message);
+  }
+};
+
 
 /**
  * Retrieve a journal entry for a user for a specific date.
@@ -175,6 +197,13 @@ export const getJournalEntryByDate = async (userId, date) => {
       },
       orderBy: {
         date: "desc"
+      },
+      include: {
+        user: {
+          include: {
+            userProfileDetails: { take: 1 },
+          }
+        }
       }
     });
 
