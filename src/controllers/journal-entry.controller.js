@@ -67,7 +67,7 @@ export const getJournalEntryByDateHandler = async (req, res) => {
   try {
     const userId = req.user.userId;
     // Prefer req.query.date, fallback to req.body.date
-    const date = req.query.date || req.body.date;
+    const date = req.query?.date || req.body?.date;
     const entry = await getJournalEntryByDate(userId, date);
 
     res.status(200).json({

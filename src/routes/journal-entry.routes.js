@@ -104,7 +104,7 @@ router.post(
  *     parameters:
  *       - in: query
  *         name: date
- *         required: true
+ *         required: false
  *         schema:
  *           type: string
  *           format: date

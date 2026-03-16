@@ -128,7 +128,29 @@ export const addJournalEntryForDate = async ({
  */
 export const getJournalEntryByDate = async (userId, date) => {
   if (!userId) throw new Error("User ID is required");
-  if (!date) throw new Error("Date is required");
+
+  // If no date is provided, return all journal entries for this user
+  if (!date) {
+    try {
+      const entries = await prisma.journalEntry.findMany({
+        where: { userId },
+        orderBy: {
+            date: "desc"
+        }
+      });
+
+      // Attach dayNumber to each entry. Highest dayNumber for most recent.
+      const total = entries.length;
+      const entriesWithDayNumber = entries.map((entry, idx) => ({
+        ...entry,
+        dayNumber: total - idx
+      }));
+
+      return entriesWithDayNumber;
+    } catch (err) {
+      throw new Error("Failed to fetch journal entries: " + err.message);
+    }
+  }
 
   let parsedDate;
   try {
@@ -142,6 +164,7 @@ export const getJournalEntryByDate = async (userId, date) => {
   const nextDay = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
   try {
+    // Fetch the earliest journal entry for the user on the specific day
     const entry = await prisma.journalEntry.findFirst({
       where: {
         userId,
@@ -149,8 +172,13 @@ export const getJournalEntryByDate = async (userId, date) => {
           gte: dayStart,
           lt: nextDay
         }
+      },
+      orderBy: {
+        date: "desc"
       }
     });
+
+    console.log(entry)
     return entry;
   } catch (err) {
     throw new Error("Failed to fetch journal entry: " + err.message);
