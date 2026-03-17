@@ -136,3 +136,77 @@ export const markMessagesAsRead = async (conversationId, userId) => {
     throw new Error("Failed to mark messages as read");
   }
 };
+
+
+/**
+ * Create a new chat conversation between a trainer and a customer.
+ * If a conversation between these users exists, it will return the existing one.
+ * @param {String} trainerId 
+ * @param {String} customerId 
+ * @returns {Promise<Object>} The created or existing conversation
+ */
+export const createConversation = async (trainerId, customerId) => {
+  try {
+    // Check if conversation already exists
+    let conversation = await prisma.chatConversation.findFirst({
+      where: {
+        trainerId,
+        customerId,
+      },
+    });
+
+    if (conversation) {
+      return conversation;
+    }
+
+    // Create new conversation
+    let conversationId = customerId + '_' + trainerId;
+    conversation = await prisma.chatConversation.create({
+      data: {
+        trainerId,
+        customerId,
+        conversationId,
+        lastMessageTime: new Date(),
+      },
+    });
+
+    return conversation;
+  } catch (error) {
+    console.error("Error creating conversation:", error);
+    throw new Error("Failed to create conversation");
+  }
+};
+
+
+/**
+ * Get a chat conversation between a trainer and a customer, regardless of order of params.
+ * Checks both (trainerId, customerId) and (customerId, trainerId).
+ * @param {String} userId1 - First user id (can be trainer or customer)
+ * @param {String} userId2 - Second user id (can be customer or trainer)
+ * @returns {Promise<Object|null>}
+ */
+export const getConversationByUsers = async (userId1, userId2) => {
+  try {
+    // Try (userId1 as trainer, userId2 as customer)
+    let conversation = await prisma.chatConversation.findFirst({
+      where: {
+        trainerId: userId1,
+        customerId: userId2,
+      },
+    });
+    if (conversation) {
+      return conversation;
+    }
+    // Try (userId2 as trainer, userId1 as customer)
+    conversation = await prisma.chatConversation.findFirst({
+      where: {
+        trainerId: userId2,
+        customerId: userId1,
+      },
+    });
+    return conversation;
+  } catch (error) {
+    console.error("Error fetching conversation:", error);
+    throw new Error("Failed to fetch conversation");
+  }
+};

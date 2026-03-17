@@ -1,11 +1,13 @@
 import RoleEnum from "../enums/RoleEnum.js";
 import prisma from "../utils/prisma.js";
+import { getConversationByUsers } from "./chat.service.js";
 
 /**
  * Get all Trainers
  * Returns an array of users with Trainer role.
  */
-export const getAllTrainers = async () => {
+
+export const getAllTrainers = async (loggedInUserId = null) => {
   // Get the Trainer roleId
   const trainerRole = await prisma.role.findUnique({
     where: { name: "Trainer" },
@@ -80,6 +82,23 @@ export const getAllTrainers = async () => {
       }
     },
   });
+
+  // For each trainer, attach conversationId with loggedInUserId if it exists
+  if (loggedInUserId) {
+    // Use Promise.all for concurrent lookups
+    const trainersWithConversation = await Promise.all(
+      trainers.map(async (trainer) => {
+        if (trainer.id === loggedInUserId) {
+          // Don't need to look up conversation with self
+          return { ...trainer, conversationId: null };
+        }
+        const conversation = await getConversationByUsers(loggedInUserId, trainer.id);
+        // If found, attach conversationId, else null
+        return { ...trainer, conversationId: conversation ? conversation.conversationId : null };
+      })
+    );
+    return trainersWithConversation;
+  }
 
   return trainers;
 };

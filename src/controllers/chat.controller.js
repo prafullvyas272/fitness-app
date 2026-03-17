@@ -79,3 +79,25 @@ export const markMessagesAsReadHandler = async (req, res) => {
     });
   }
 };
+
+
+/**
+ * Create a new conversation between a trainer and a customer.
+ * Returns the existing conversation if one already exists.
+ */
+export const createConversationHandler = async (req, res) => {
+  try {
+    const { trainerId, customerId } = req.body;
+    const conversation = await chatService.createConversation(trainerId, customerId);
+    res.status(200).json({
+      success: true,
+      message: "Conversation created or already exists",
+      data: conversation,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};

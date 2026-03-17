@@ -3,7 +3,8 @@ import {
   sendMessageHandler, 
   getConversationHandler, 
   getChatListHandler, 
-  markMessagesAsReadHandler 
+  markMessagesAsReadHandler,
+  createConversationHandler,
 } from "../controllers/chat.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/upload.middleware.js";
@@ -230,6 +231,64 @@ router.post(
   "/chat/mark-read",
   authMiddleware,
   markMessagesAsReadHandler
+);
+
+
+/**
+ * @swagger
+ * /api/chat/conversation:
+ *   post:
+ *     summary: Create a new chat conversation between a trainer and a customer
+ *     tags:
+ *       - Chat
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               trainerId:
+ *                 type: string
+ *                 description: Trainer user ID
+ *               customerId:
+ *                 type: string
+ *                 description: Customer user ID
+ *             required:
+ *               - trainerId
+ *               - customerId
+ *     responses:
+ *       200:
+ *         description: Conversation created or already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Error creating conversation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.post(
+  "/chat/conversation",
+  authMiddleware,
+  createConversationHandler
 );
 
 export default router;

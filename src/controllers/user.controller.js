@@ -5,8 +5,11 @@ import { getAllTrainers, getAllCustomers, assignCustomer, toggleUserIsActive, un
  */
 export const getAllTrainersHandler = async (req, res) => {
     try {
-        const trainers = await getAllTrainers();
+        const authUserId = req.user.userId;
 
+        const trainers = await getAllTrainers(authUserId);
+
+        
         console.log(trainers)
         const formattedTrainers = trainers.map(
             ({ assignedCustomersAsTrainer, userProfileDetails, ...trainer }) => ({
