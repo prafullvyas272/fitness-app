@@ -1,6 +1,8 @@
 import prisma from "../utils/prisma.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import { sendChatNotification } from "./notification.service.js";
+import { pusher } from "../utils/pusher.js";
+
 
 /**
  * Send a chat message and upsert conversation.
@@ -60,6 +62,12 @@ export const sendMessage = async (data) => {
     });
 
     await sendChatNotification(receiverId, message);
+
+    await pusher.trigger(
+      `chat-${conversationId}`,   // channel
+      "new-message",              // event name
+      chatMessage                // data
+    );
 
     return chatMessage;
   } catch (error) {

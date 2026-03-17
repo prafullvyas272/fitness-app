@@ -1,0 +1,33 @@
+{
+  "default_branch": "main",
+  "branches": [
+    "feature/chat",
+    "feature/forgot-password",
+    "feature/plans",
+    "feature/push-notification",
+    "feature/questionaire",
+    "feature/rating-and-review",
+    "main",
+    "origin"
+  ],
+  "parent": {
+    "feature/chat": "main",
+    "feature/forgot-password": "main",
+    "feature/plans": "main",
+    "feature/push-notification": "main",
+    "feature/questionaire": "main",
+    "feature/rating-and-review": "main",
+    "main": null,
+    "origin": "main"
+  },
+  "order": [
+    "main",
+    "feature/chat",
+    "feature/forgot-password",
+    "feature/plans",
+    "feature/push-notification",
+    "feature/questionaire",
+    "feature/rating-and-review",
+    "origin"
+  ]
+}
