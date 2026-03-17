@@ -335,3 +335,35 @@ export const sendTrainerAssignedNotification = async (customerId, trainerId) => 
     throw new Error(`Failed to send trainer assigned notification: ${error.message}`);
   }
 };
+
+export const sendChatNotification = async (userId, message) => {
+  try {
+
+    const devices = await prisma.userDevice.findMany({
+      where: { userId }
+    });
+
+    const tokens = devices.map(d => d.fcmToken);
+    console.log(tokens, userId)
+
+    if (!tokens.length) return;
+
+    const payload = {
+      notification: {
+        title: "New Message",
+        body: message
+      },
+      data: {
+        type: "CHAT"
+      }
+    };
+
+    await admin.messaging().sendEachForMulticast({
+      tokens,
+      ...payload
+    });
+
+  } catch (err) {
+    console.error("FCM Error:", err);
+  }
+};

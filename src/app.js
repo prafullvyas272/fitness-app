@@ -2,11 +2,14 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
+import http from "http";
+
 // import swaggerUiDist from "swagger-ui-dist";
 // import swaggerSpec from "./swagger/swagger.js";
 
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger/swagger.js";
+import { Server } from "socket.io";
 
 import authRoutes from "./routes/auth.routes.js";
 import healthRoutes from "./routes/health.routes.js";
@@ -24,6 +27,9 @@ import planRoutes from "./routes/plan.routes.js";
 import trainerRequestRoutes from "./routes/trainer-request.routes.js";
 import questionnaireRoutes from "./routes/questionnaire.routes.js";
 import journalEntryRoutes from "./routes/journal-entry.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+
+import { initChatSocket } from "./sockets/chat.socket.js";
 
 dotenv.config();
 
@@ -32,6 +38,13 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
+
+initChatSocket(io);
 
 // ---------------------------
 // Serverless-safe Swagger UI
@@ -72,6 +85,8 @@ app.use("/api", planRoutes);
 app.use("/api", trainerRequestRoutes);
 app.use("/api", questionnaireRoutes);
 app.use("/api", journalEntryRoutes);
+app.use("/api", chatRoutes);
+
 
 
 app.use(errorHandler);

@@ -70,6 +70,14 @@ model User {
   questionnaire Questionnaire?
   journalEntries JournalEntry[]
 
+  // Opposite relation: user has many chat conversations as trainer and as customer
+  chatConversationsAsTrainer   ChatConversation[] @relation("ChatConversation_Trainer")
+  chatConversationsAsCustomer  ChatConversation[] @relation("ChatConversation_Customer")
+
+  // Opposite relation: user has many chat messages as sender and as receiver
+  sentChatMessages     ChatMessage[] @relation("ChatMessage_Sender")
+  receivedChatMessages ChatMessage[] @relation("ChatMessage_Receiver")
+
   createdAt  DateTime @default(now())
 }
 
@@ -398,5 +406,66 @@ model JournalEntry {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([createdAt])
+}
+
+
+// Chat schema
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  FILE
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+model ChatConversation {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId  String   @unique
+  trainerId       String   @db.ObjectId
+  customerId      String   @db.ObjectId
+
+  lastMessage     String?
+  lastMessageTime DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  trainer   User @relation("ChatConversation_Trainer", fields: [trainerId], references: [id])
+  customer  User @relation("ChatConversation_Customer", fields: [customerId], references: [id])
+
+  messages  ChatMessage[]
+
+  @@index([trainerId])
+  @@index([customerId])
+}
+
+model ChatMessage {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId  String
+  senderId        String   @db.ObjectId
+  receiverId      String   @db.ObjectId
+
+  message         String?
+  fileUrl         String?
+
+  type            MessageType
+  status          MessageStatus @default(SENT)
+
+  createdAt       DateTime @default(now())
+
+  conversation    ChatConversation @relation(fields: [conversationId], references: [conversationId])
+
+  sender          User @relation("ChatMessage_Sender", fields: [senderId], references: [id])
+  receiver        User @relation("ChatMessage_Receiver", fields: [receiverId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([receiverId])
   @@index([createdAt])
 }

@@ -110,30 +110,27 @@ export const loginUser = async (email, password, fcmToken) => {
 
   if (fcmToken) {
     // Update fcmToken in User table
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: user.id },
-        data: { fcmToken }
-      }),
-      
-      prisma.userDevice.upsert({
-        where: {
-          userId_fcmToken: {
-            userId: user.id,
-            fcmToken: fcmToken
-          }
-        },
-        update: {
-          fcmToken: fcmToken,
-          createdAt: new Date()
-        },
-        create: {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { fcmToken }
+    });
+
+    // Always create a new userDevice entry (avoid upsert race condition / primary on userId + fcmToken)
+    const deviceExists = await prisma.userDevice.findFirst({
+      where: {
+        userId: user.id,
+        fcmToken: fcmToken
+      }
+    });
+    if (!deviceExists) {
+      await prisma.userDevice.create({
+        data: {
           userId: user.id,
           fcmToken: fcmToken,
           createdAt: new Date()
         }
-      })
-    ]);
+      });
+    }
   }
 
   if (user.role && user.role.name === RoleEnum.SUPERADMIN) {
