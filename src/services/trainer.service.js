@@ -473,6 +473,8 @@ export const getTrainerSessionsByMonthAndYear = async (
  * @param {string} trainerId - The ID of the trainer.
  * @returns {Promise<Array>} List of assigned customers with relations.
  */
+import { getConversationByUsers } from "./chat.service.js";
+
 export const getAssignedCustomersByTrainerId = async (trainerId) => {
   if (!trainerId) throw new Error("Trainer ID is required");
 
@@ -503,27 +505,40 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
       }
     });
 
-    return assignedCustomers.map(ac => ({
-      id: ac.id,
-      customer: {
-        id: ac.customer.id,
-        firstName: ac.customer.firstName,
-        lastName: ac.customer.lastName,
-        email: ac.customer.email,
-        phone: ac.customer.phone,
-        gender: ac.customer.gender,
-        isActive: ac.customer.isActive,
-        fee: 0,  //TODO: later it will be dynamic
-        totalSessions: 0,  //TODO: later it will be dynamic
-        createdAt: ac.customer.createdAt,
-        userProfileDetail: ac.customer.userProfileDetails?.[0] || null,
-        questionnaire: ac.customer.questionnaire,
-      },
-      startDate: ac.startDate,
-      endDate: ac.endDate,
-      isActive: ac.isActive,
-      createdAt: ac.createdAt
-    }));
+    // For each customer, attach conversationId between trainer and customer (if exists)
+    const assignedCustomersWithConversations = await Promise.all(
+      assignedCustomers.map(async (ac) => {
+        let conversationId = null;
+        if (ac.customer && ac.customer.id && ac.customer.id !== trainerId) {
+          const conversation = await getConversationByUsers(trainerId, ac.customer.id);
+          conversationId = conversation ? conversation.conversationId : null;
+        }
+        return {
+          id: ac.id,
+          customer: {
+            id: ac.customer.id,
+            firstName: ac.customer.firstName,
+            lastName: ac.customer.lastName,
+            email: ac.customer.email,
+            phone: ac.customer.phone,
+            gender: ac.customer.gender,
+            isActive: ac.customer.isActive,
+            fee: 0, // TODO: later it will be dynamic
+            totalSessions: 0, // TODO: later it will be dynamic
+            createdAt: ac.customer.createdAt,
+            userProfileDetail: ac.customer.userProfileDetails?.[0] || null,
+            questionnaire: ac.customer.questionnaire,
+            conversationId: conversationId
+          },
+          startDate: ac.startDate,
+          endDate: ac.endDate,
+          isActive: ac.isActive,
+          createdAt: ac.createdAt
+        };
+      })
+    );
+
+    return assignedCustomersWithConversations;
   } catch (err) {
     throw new Error(`Failed to get assigned customers: ${err.message}`);
   }
