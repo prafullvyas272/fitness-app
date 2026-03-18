@@ -80,3 +80,58 @@ export const addQuestionnaireDetailsForClient = async (data) => {
     throw new Error(`Failed to add questionnaire details: ${err.message}`);
   }
 };
+
+
+/**
+ * Updates only the notes field for a questionnaire by userId.
+ *
+ * @param {Object} params - The parameters object.
+ * @param {string} params.userId - The ID of the user whose questionnaire should be updated.
+ * @param {string} params.notes - The new notes value.
+ * @returns {Promise<Object>} The updated questionnaire object.
+ */
+export const updateQuestionnaireNotes = async ({ userId, notes }) => {
+  if (!userId) {
+    throw new Error("User ID is required to update questionnaire notes.");
+  }
+  if (typeof notes !== "string") {
+    throw new Error("Notes must be a string.");
+  }
+
+  // Dummy values for demonstration purposes
+  const clientName = "Dummy Client";
+  const age = 25;
+  const heightCm = 170;
+  const weightKg = 70.0;
+
+  try {
+    let updated;
+    try {
+      // Try updating the questionnaire notes
+      updated = await prisma.questionnaire.update({
+        where: { userId },
+        data: { notes }
+      });
+    } catch (err) {
+      // If not found (Prisma throws), create with dummy values
+      if (err.code === "P2025") {
+        // Prisma error code for "Record to update not found."
+        updated = await prisma.questionnaire.create({
+          data: {
+            userId,
+            clientName: "",
+            age: 18,
+            heightCm: 0,
+            weightKg: 0.0,
+            notes
+          }
+        });
+      } else {
+        throw err;
+      }
+    }
+    return updated;
+  } catch (err) {
+    throw new Error(`Failed to update questionnaire notes: ${err.message}`);
+  }
+};
