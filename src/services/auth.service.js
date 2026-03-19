@@ -232,7 +232,7 @@ export const verifyOtp = async (userId, otp) => {
     throw new Error("Invalid or expired OTP");
   }
 
-  if (otp != TEMPORARY_SUPER_OTP) {
+  // if (otp != TEMPORARY_SUPER_OTP) {
     await prisma.$transaction(async (tx) => {
       await tx.otp.update({
         where: { id: record.id },
@@ -244,7 +244,7 @@ export const verifyOtp = async (userId, otp) => {
         data: { phoneVerified: true },
       });
     });
-  }
+  // }
 
   // const access_token = signToken({ userId: userId });
   // const refresh_token = signToken({ userId: userId }, { expiresIn: "30d", type: "refresh" });
