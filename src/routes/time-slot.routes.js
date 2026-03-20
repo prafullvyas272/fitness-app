@@ -9,6 +9,8 @@ import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
  *     summary: Get paginated time slots for a trainer on a specific date
  *     tags:
  *       - Customer
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: trainerId

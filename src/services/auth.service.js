@@ -233,6 +233,7 @@ export const verifyOtp = async (userId, otp) => {
   }
 
   // if (otp != TEMPORARY_SUPER_OTP) {
+   if (record) {
     await prisma.$transaction(async (tx) => {
       await tx.otp.update({
         where: { id: record.id },
@@ -244,6 +245,8 @@ export const verifyOtp = async (userId, otp) => {
         data: { phoneVerified: true },
       });
     });
+   }
+    
   // }
 
   // const access_token = signToken({ userId: userId });

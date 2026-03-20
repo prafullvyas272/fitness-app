@@ -388,6 +388,8 @@ export const getTrainerSessionsByMonthAndYear = async (
   const trainerName =
     [trainer.firstName, trainer.lastName].filter(Boolean).join(" ").trim();
 
+    console.log(trainerName)
+
   // Fetch all relevant bookings for the trainer within the date range, not cancelled
   const bookings = await prisma.trainerBooking.findMany({
     where: {
@@ -409,6 +411,7 @@ export const getTrainerSessionsByMonthAndYear = async (
   });
 
   const now = new Date();
+  console.log(bookings)
 
   // Map bookings to required format & split into upcoming/past
   const formattedSessions = bookings.map((booking) => {
@@ -442,6 +445,8 @@ export const getTrainerSessionsByMonthAndYear = async (
       title: "" // empty as per instructions
     };
   });
+
+  console.log(formattedSessions)
 
   const upcomingSessions = [];
   const pastSessions = [];
