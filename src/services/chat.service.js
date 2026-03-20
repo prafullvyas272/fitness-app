@@ -99,6 +99,7 @@ export const sendMessage = async (data) => {
 
     await sendChatNotification(receiverId, message);
 
+    console.log(conversationId);
     await pusher.trigger(
       `chat-${conversationId}`,
       "new-message",
