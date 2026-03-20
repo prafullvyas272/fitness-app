@@ -120,7 +120,6 @@ export const getConversation = async (conversationId) => {
       },
       orderBy: { createdAt: "asc" },
     });
-    console.log(finalData)
   } catch (error) {
     console.error("Error fetching conversation:", error);
     throw new Error("Failed to fetch conversation");
