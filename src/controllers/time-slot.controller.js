@@ -4,7 +4,8 @@ import {
   updateTimeSlot, 
   deleteTimeSlot, 
   showTimeSlot, 
-  getAllTimeSlot 
+  getAllTimeSlot ,
+  getTrainerAllTimeSlot
 } from "../services/time-slot.service.js";
 
 export const getTrainerSlotsByDateHandler = async (req, res) => {
@@ -130,6 +131,37 @@ export const getAllTimeSlotHandler = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Time slots fetched successfully.",
+      data: result,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+
+export const getTrainerAllTimeSlotHandler = async (req, res) => {
+  try {
+    const {
+      date,
+      trainerId,
+      page = 1,
+      pageSize = 20
+    } = req.query;
+    console.log(trainerId)
+
+    const result = await getTrainerAllTimeSlot({
+      date,
+      trainerId,
+      page: Number(page),
+      pageSize: Number(pageSize)
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Trainer Time slots fetched successfully.",
       data: result,
     });
   } catch (err) {

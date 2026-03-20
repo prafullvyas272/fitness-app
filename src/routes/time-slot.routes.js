@@ -1,5 +1,5 @@
 import express from "express";
-import { getTrainerSlotsByDateHandler, createTimeSlotHandler, updateTimeSlotHandler, deleteTimeSlotHandler, getAllTimeSlotHandler, showTimeSlotHandler } from "../controllers/time-slot.controller.js";
+import { getTrainerSlotsByDateHandler, createTimeSlotHandler, updateTimeSlotHandler, deleteTimeSlotHandler, getTrainerAllTimeSlotHandler, getAllTimeSlotHandler, showTimeSlotHandler } from "../controllers/time-slot.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 /**
@@ -445,5 +445,72 @@ router.get(
   getAllTimeSlotHandler
 );
 
+
+/**
+ * @swagger
+ * /api/trainer-time-slots:
+ *   get:
+ *     summary: Get all time slots for the trainer (with optional filtering & pagination)
+ *     tags:
+ *       - Trainer
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter by date (YYYY-MM-DD)
+ *       - in: query
+ *         name: trainerId
+ *         schema:
+ *           type: string
+ *         description: Filter by creator user ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Page size
+ *     responses:
+ *       200:
+ *         description: Trainer Time slots fetched successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Trainer Time slots fetched successfully.
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Error occurred.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
+router.get(
+  "/trainer-time-slots",
+  authMiddleware,
+  getTrainerAllTimeSlotHandler
+);
 
 export default router;

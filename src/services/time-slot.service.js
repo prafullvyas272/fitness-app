@@ -245,3 +245,70 @@ export const getAllTimeSlot = async (filter = {}) => {
   }
 };
 
+
+
+export const getTrainerAllTimeSlot = async (filter = {}) => {
+  try {
+    const {
+      date,
+      trainerId,
+      page = 1,
+      pageSize = 20,
+    } = filter;
+
+    // Strictly filter by trainerId - required for correct result!
+    if (!trainerId) {
+      throw new Error('trainerId is required to fetch trainer time slots');
+    }
+
+    const where = { trainerId };
+
+    if (date) {
+      const dayStart = new Date(date);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(date);
+      dayEnd.setHours(23, 59, 59, 999);
+      where.date = {
+        gte: dayStart,
+        lte: dayEnd,
+      };
+    }
+
+    const skip = (page - 1) * pageSize;
+    const [total, slots] = await Promise.all([
+      prisma.trainerTimeSlot.count({ where }),
+      prisma.trainerTimeSlot.findMany({
+        where,
+        orderBy: { startTime: 'asc' },
+        skip,
+        take: pageSize,
+      }),
+    ]);
+
+    const now = new Date();
+
+    // Separate upcoming and past sessions based on endTime
+    const upcomingSessions = [];
+    const pastSessions = [];
+    for (const slot of slots) {
+      if (slot.endTime >= now) {
+        upcomingSessions.push(slot);
+      } else {
+        pastSessions.push(slot);
+      }
+    }
+
+    return {
+      upcomingSessions,
+      pastSessions,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
+  } catch (err) {
+    throw new Error('Failed to fetch trainer time slots: ' + err.message);
+  }
+};
