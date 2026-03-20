@@ -145,7 +145,8 @@ export const getAllTimeSlotHandler = async (req, res) => {
 export const getTrainerAllTimeSlotHandler = async (req, res) => {
   try {
     const {
-      date,
+      month,
+      year,
       trainerId,
       page = 1,
       pageSize = 20
@@ -153,7 +154,8 @@ export const getTrainerAllTimeSlotHandler = async (req, res) => {
     console.log(trainerId)
 
     const result = await getTrainerAllTimeSlot({
-      date,
+      month,
+      year,
       trainerId,
       page: Number(page),
       pageSize: Number(pageSize)

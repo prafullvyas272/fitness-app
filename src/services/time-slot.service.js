@@ -250,48 +250,59 @@ export const getAllTimeSlot = async (filter = {}) => {
 export const getTrainerAllTimeSlot = async (filter = {}) => {
   try {
     const {
-      date,
+      month,
+      year,
       trainerId,
       page = 1,
       pageSize = 20,
     } = filter;
 
-    // Strictly filter by trainerId - required for correct result!
     if (!trainerId) {
-      throw new Error('trainerId is required to fetch trainer time slots');
+      throw new Error("trainerId is required to fetch trainer time slots");
     }
 
-    const where = { trainerId };
-
-    if (date) {
-      const dayStart = new Date(date);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(date);
-      dayEnd.setHours(23, 59, 59, 999);
-      where.date = {
-        gte: dayStart,
-        lte: dayEnd,
-      };
+    if (!month || !year) {
+      throw new Error("Both month and year are required to fetch trainer time slots");
     }
+
+    // Start & End of Month (UTC)
+    const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+    const endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+
+    const where = {
+      trainerId,
+      date: {
+        gte: startOfMonth,
+        lte: endOfMonth,
+      },
+    };
 
     const skip = (page - 1) * pageSize;
+
     const [total, slots] = await Promise.all([
       prisma.trainerTimeSlot.count({ where }),
       prisma.trainerTimeSlot.findMany({
         where,
-        orderBy: { startTime: 'asc' },
+        orderBy: { startTime: "asc" },
         skip,
         take: pageSize,
       }),
     ]);
 
-    const now = new Date();
+    // Use UTC time for comparison
+    const nowUtcMs = Date.now();
 
-    // Separate upcoming and past sessions based on endTime
     const upcomingSessions = [];
     const pastSessions = [];
+
     for (const slot of slots) {
-      if (slot.endTime >= now) {
+      const slotEndUtc = new Date(slot.endTime).getTime();
+      console.log('endtime', slotEndUtc)
+      console.log('nowUtcMs', nowUtcMs)
+
+      console.log(slot)
+
+      if (slotEndUtc >= nowUtcMs) {
         upcomingSessions.push(slot);
       } else {
         pastSessions.push(slot);
@@ -309,6 +320,6 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       },
     };
   } catch (err) {
-    throw new Error('Failed to fetch trainer time slots: ' + err.message);
+    throw new Error("Failed to fetch trainer time slots: " + err.message);
   }
 };

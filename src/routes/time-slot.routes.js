@@ -457,11 +457,19 @@ router.get(
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: date
+ *         name: month
  *         schema:
- *           type: string
- *           format: date
- *         description: Filter by date (YYYY-MM-DD)
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
+ *           example: 5
+ *         description: Filter by month (1-12)
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *           example: 2024
+ *         description: Filter by year (YYYY)
  *       - in: query
  *         name: trainerId
  *         schema:
