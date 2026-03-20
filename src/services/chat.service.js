@@ -13,18 +13,14 @@ import { pusher } from "../utils/pusher.js";
 export const sendMessage = async (data) => {
   const { senderId, receiverId, message, type, file } = data;
   try {
-    // Always generate the conversationId based on sender and receiver IDs lexicographically
-    const conversationId =
-      senderId < receiverId
-        ? `${senderId}_${receiverId}`
-        : `${receiverId}_${senderId}`;
+    // Always create conversationId lexicographically so "A_B" === "B_A"
+    const [userA, userB] = senderId < receiverId
+      ? [senderId, receiverId]
+      : [receiverId, senderId];
+    const conversationId = `${userA}_${userB}`;
 
     let mediaUrl = null;
-    console.log(file , type)
-
-    // If type is IMAGE or FILE or VIDEO, upload to Cloudinary and use resulting URL
     if (file && (type === "IMAGE" || type === "FILE" || type === "VIDEO")) {
-      // Determine resource_type for Cloudinary
       let resourceType = "auto";
       if (type === "IMAGE") resourceType = "image";
       if (type === "VIDEO") resourceType = "video";
@@ -33,23 +29,62 @@ export const sendMessage = async (data) => {
       mediaUrl = uploadResult?.secure_url || uploadResult?.url || null;
     }
 
-    // Upsert (create or update) the conversation
-    const conversation = await prisma.chatConversation.upsert({
-      where: { conversationId },
-      create: {
-        conversationId,
-        trainerId: senderId, // TODO: assign properly if needed
-        customerId: receiverId,
-        lastMessage: message || (mediaUrl ? `[${type}]` : ""),
-        lastMessageTime: new Date(),
-      },
-      update: {
-        lastMessage: message || (mediaUrl ? `[${type}]` : ""),
-        lastMessageTime: new Date(),
-      },
+    // Find existing conversation by conversationId
+    let conversation = await prisma.chatConversation.findUnique({
+      where: { conversationId }
     });
 
-    // Create the chat message within the conversation
+    let trainerId = null;
+    let customerId = null;
+
+    // Figure out who is trainer, who is customer (by role)
+    if (!conversation) {
+      // Need to know who is trainer and who is customer by role
+      // Fetch both users
+      const [userSender, userReceiver] = await Promise.all([
+        prisma.user.findUnique({ where: { id: senderId }, include: { role: true } }),
+        prisma.user.findUnique({ where: { id: receiverId }, include: { role: true } })
+      ]);
+      if (!userSender || !userReceiver) {
+        throw new Error("Sender or receiver not found");
+      }
+
+      // Assign ids accordingly
+      if (userSender.role.name === "Trainer" && userReceiver.role.name === "Customer") {
+        trainerId = senderId;
+        customerId = receiverId;
+      } else if (userSender.role.name === "Customer" && userReceiver.role.name === "Trainer") {
+        trainerId = receiverId;
+        customerId = senderId;
+      } else {
+        throw new Error("Invalid conversation. Must be Trainer and Customer.");
+      }
+
+      // Create conversation
+      conversation = await prisma.chatConversation.create({
+        data: {
+          conversationId,
+          trainerId,
+          customerId,
+          lastMessage: message || (mediaUrl ? `[${type}]` : ""),
+          lastMessageTime: new Date(),
+        },
+      });
+    } else {
+      // Conversation exists
+      trainerId = conversation.trainerId;
+      customerId = conversation.customerId;
+      // Update last message/time
+      await prisma.chatConversation.update({
+        where: { conversationId },
+        data: {
+          lastMessage: message || (mediaUrl ? `[${type}]` : ""),
+          lastMessageTime: new Date(),
+        }
+      });
+    }
+
+    // Always use correct sender/receiver, i.e. trainerId/customerId as stored in conversation
     const chatMessage = await prisma.chatMessage.create({
       data: {
         conversationId,
@@ -58,18 +93,30 @@ export const sendMessage = async (data) => {
         message: message || null,
         type,
         fileUrl: mediaUrl,
+        status: "SENT", // status field requirement
       },
     });
 
     await sendChatNotification(receiverId, message);
 
     await pusher.trigger(
-      `chat-${conversationId}`,   // channel
-      "new-message",              // event name
-      chatMessage                // data
+      `chat-${conversationId}`,
+      "new-message",
+      chatMessage
     );
 
-    return chatMessage;
+    // Return shape matches client expectation, including status and createdAt
+    return {
+      id: chatMessage.id,
+      conversationId: chatMessage.conversationId,
+      senderId: chatMessage.senderId,
+      receiverId: chatMessage.receiverId,
+      message: chatMessage.message,
+      fileUrl: chatMessage.fileUrl,
+      type: chatMessage.type,
+      status: chatMessage.status,
+      createdAt: chatMessage.createdAt,
+    };
   } catch (error) {
     console.error("Error sending message:", error);
     throw new Error("Failed to send message");
