@@ -96,10 +96,12 @@ export const sendMessage = async (data) => {
         status: "SENT", // status field requirement
       },
     });
+    console.log('hello', chatMessage) //chat msg log
+
+    console.log(123, conversationId)
 
     await sendChatNotification(receiverId, message);
 
-    console.log(conversationId);
     await pusher.trigger(
       `chat-${conversationId}`,
       "new-message",
