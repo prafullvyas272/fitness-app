@@ -83,8 +83,33 @@ export const sendMessage = async (data) => {
  */
 export const getConversation = async (conversationId) => {
   try {
+    // Split the conversationId by underscore to extract the two user IDs
+    const [userOne, userTwo] = conversationId.split("_");
+    if (!userOne || !userTwo) {
+      throw new Error("Invalid conversationId format");
+    }
+
+    // Find the conversation where:
+    // (trainerId = userOne AND customerId = userTwo)
+    //   OR
+    // (trainerId = userTwo AND customerId = userOne)
+    const conversation = await prisma.chatConversation.findFirst({
+      where: {
+        OR: [
+          { trainerId: userOne, customerId: userTwo },
+          { trainerId: userTwo, customerId: userOne }
+        ],
+        conversationId: conversationId
+      }
+    });
+
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    // Now fetch messages for this conversation
     return await prisma.chatMessage.findMany({
-      where: { conversationId },
+      where: { conversationId: conversation.conversationId },
       orderBy: { createdAt: "asc" },
     });
   } catch (error) {
