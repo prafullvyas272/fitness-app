@@ -256,19 +256,18 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       page = 1,
       pageSize = 20,
     } = filter;
-
+ 
     if (!trainerId) {
       throw new Error("trainerId is required to fetch trainer time slots");
     }
-
+ 
     if (!month || !year) {
       throw new Error("Both month and year are required to fetch trainer time slots");
     }
-
-    // Start & End of Month (UTC)
+ 
     const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
     const endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
-
+ 
     const where = {
       trainerId,
       date: {
@@ -276,9 +275,9 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         lte: endOfMonth,
       },
     };
-
+ 
     const skip = (page - 1) * pageSize;
-
+ 
     const [total, slots] = await Promise.all([
       prisma.trainerTimeSlot.count({ where }),
       prisma.trainerTimeSlot.findMany({
@@ -288,27 +287,26 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         take: pageSize,
       }),
     ]);
-
-    // Use UTC time for comparison
+ 
     const nowUtcMs = Date.now();
-
+ 
+    // IST is UTC+5:30 → 5.5 hours in milliseconds
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+ 
     const upcomingSessions = [];
     const pastSessions = [];
-
+ 
     for (const slot of slots) {
-      const slotEndUtc = new Date(slot.endTime).getTime();
-      console.log('endtime', slotEndUtc)
-      console.log('nowUtcMs', nowUtcMs)
-
-      console.log(slot)
-
+      // Subtract IST offset to treat slot time as local IST before comparing
+      const slotEndUtc = new Date(slot.endTime).getTime() - IST_OFFSET_MS;
+ 
       if (slotEndUtc >= nowUtcMs) {
         upcomingSessions.push(slot);
       } else {
         pastSessions.push(slot);
       }
     }
-
+ 
     return {
       upcomingSessions,
       pastSessions,
