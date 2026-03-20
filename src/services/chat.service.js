@@ -103,15 +103,24 @@ export const getConversation = async (conversationId) => {
       }
     });
 
+
     if (!conversation) {
       throw new Error("Conversation not found");
     }
 
     // Now fetch messages for this conversation
+    // Fetch messages for both the original and reversed conversationId (handles both ID orders)
+    const revConversationId = conversationId.split("_").reverse().join("_");
     return await prisma.chatMessage.findMany({
-      where: { conversationId: conversation.conversationId },
+      where: {
+        OR: [
+          { conversationId: conversationId },
+          { conversationId: revConversationId }
+        ]
+      },
       orderBy: { createdAt: "asc" },
     });
+    console.log(finalData)
   } catch (error) {
     console.error("Error fetching conversation:", error);
     throw new Error("Failed to fetch conversation");
