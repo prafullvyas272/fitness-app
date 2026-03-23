@@ -2,7 +2,7 @@ import prisma from "../utils/prisma.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import { sendChatNotification } from "./notification.service.js";
 import { pusher } from "../utils/pusher.js";
-
+import { generateConversationId } from "../utils/chat.js";
 
 /**
  * Send a chat message and upsert conversation.
@@ -14,11 +14,12 @@ export const sendMessage = async (data) => {
   const { senderId, receiverId, message, type, file } = data;
   try {
     // Always create conversationId lexicographically so "A_B" === "B_A"
-    const [userA, userB] = senderId < receiverId
-      ? [senderId, receiverId]
-      : [receiverId, senderId];
-    const conversationId = `${userA}_${userB}`;
+    // const [userA, userB] = senderId < receiverId
+    //   ? [senderId, receiverId]
+    //   : [receiverId, senderId];
+    // const conversationId = `${userA}_${userB}`;
 
+    const conversationId = generateConversationId(senderId, receiverId);
     let mediaUrl = null;
     if (file && (type === "IMAGE" || type === "FILE" || type === "VIDEO")) {
       let resourceType = "auto";
@@ -160,14 +161,18 @@ export const getConversation = async (conversationId) => {
 
     // Now fetch messages for this conversation
     // Fetch messages for both the original and reversed conversationId (handles both ID orders)
-    const revConversationId = conversationId.split("_").reverse().join("_");
+    // const revConversationId = conversationId.split("_").reverse().join("_");
+    // return await prisma.chatMessage.findMany({
+    //   where: {
+    //     OR: [
+    //       { conversationId: conversationId },
+    //       { conversationId: revConversationId }
+    //     ]
+    //   },
+    //   orderBy: { createdAt: "asc" },
+    // });
     return await prisma.chatMessage.findMany({
-      where: {
-        OR: [
-          { conversationId: conversationId },
-          { conversationId: revConversationId }
-        ]
-      },
+      where: { conversationId },
       orderBy: { createdAt: "asc" },
     });
   } catch (error) {
@@ -230,20 +235,17 @@ export const markMessagesAsRead = async (conversationId, userId) => {
  */
 export const createConversation = async (trainerId, customerId) => {
   try {
-    // Check if conversation already exists
-    let conversation = await prisma.chatConversation.findFirst({
-      where: {
-        trainerId,
-        customerId,
-      },
+
+    const conversationId = generateConversationId(trainerId, customerId);
+
+    let conversation = await prisma.chatConversation.findUnique({
+      where: { conversationId }
     });
 
     if (conversation) {
       return conversation;
     }
 
-    // Create new conversation
-    let conversationId = customerId + '_' + trainerId;
     conversation = await prisma.chatConversation.create({
       data: {
         trainerId,
@@ -254,6 +256,7 @@ export const createConversation = async (trainerId, customerId) => {
     });
 
     return conversation;
+
   } catch (error) {
     console.error("Error creating conversation:", error);
     throw new Error("Failed to create conversation");
