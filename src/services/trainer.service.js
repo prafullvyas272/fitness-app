@@ -149,6 +149,7 @@ export const updateTrainer = async (trainerId, data) => {
     bio,
     avatarUrl,
     avatar,
+    avatarPublicId,   // ✅ remove from safeData
     ...safeData
   } = data;
   console.log(data, avatarUrl, safeData)
