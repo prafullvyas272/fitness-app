@@ -28,6 +28,7 @@ import trainerRequestRoutes from "./routes/trainer-request.routes.js";
 import questionnaireRoutes from "./routes/questionnaire.routes.js";
 import journalEntryRoutes from "./routes/journal-entry.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import reviewRoutes from "./routes/review.routes.js";
 
 import { initChatSocket } from "./sockets/chat.socket.js";
 
@@ -86,7 +87,7 @@ app.use("/api", trainerRequestRoutes);
 app.use("/api", questionnaireRoutes);
 app.use("/api", journalEntryRoutes);
 app.use("/api", chatRoutes);
-
+app.use("/api", reviewRoutes);
 
 
 app.use(errorHandler);

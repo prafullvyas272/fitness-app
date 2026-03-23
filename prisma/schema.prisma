@@ -78,6 +78,10 @@ model User {
   sentChatMessages     ChatMessage[] @relation("ChatMessage_Sender")
   receivedChatMessages ChatMessage[] @relation("ChatMessage_Receiver")
 
+  // Opposite relation: user has many reviews as trainer and as customer
+  receivedReviewsAsTrainer   Review[] @relation("Review_Trainer")
+  receivedReviewsAsCustomer  Review[] @relation("Review_Customer")
+
   createdAt  DateTime @default(now())
 }
 
@@ -469,3 +473,29 @@ model ChatMessage {
   @@index([receiverId])
   @@index([createdAt])
 }
+
+
+enum ReviewType {
+  BUSINESS
+  TRAINER
+}
+
+model Review {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId    String?   @db.ObjectId
+  customerId   String?    @db.ObjectId
+  rating       Int
+  review       String?
+  type         ReviewType
+  createdAt    DateTime  @default(now())
+
+  // Relations
+  trainer      User?     @relation("Review_Trainer", fields: [trainerId], references: [id])
+  customer     User?      @relation("Review_Customer", fields: [customerId], references: [id])
+
+  @@unique([trainerId, customerId, type])
+  @@index([customerId])
+  @@index([trainerId])
+}
+
+
