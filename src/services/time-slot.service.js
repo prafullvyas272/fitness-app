@@ -294,7 +294,30 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
 
     // Exact date filter
     if (date) {
-      where.date = date;
+      const parsedDate = new Date(date);
+    
+      if (isNaN(parsedDate.getTime())) {
+        throw new Error("Invalid date provided");
+      }
+    
+      const startOfDay = new Date(Date.UTC(
+        parsedDate.getUTCFullYear(),
+        parsedDate.getUTCMonth(),
+        parsedDate.getUTCDate(),
+        0, 0, 0, 0
+      ));
+    
+      const endOfDay = new Date(Date.UTC(
+        parsedDate.getUTCFullYear(),
+        parsedDate.getUTCMonth(),
+        parsedDate.getUTCDate(),
+        23, 59, 59, 999
+      ));
+    
+      where.date = {
+        gte: startOfDay,
+        lte: endOfDay,
+      };
     }
 
     // Month filter
