@@ -257,101 +257,126 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       page = 1,
       pageSize = 20,
     } = filter;
- 
+
     if (!trainerId) {
       throw new Error("trainerId is required to fetch trainer time slots");
     }
- 
-    if (!month || !year) {
+
+    const safePage = Math.max(parseInt(page) || 1, 1);
+    const safePageSize = Math.min(Math.max(parseInt(pageSize) || 20, 1), 100);
+
+    let startOfMonth = null;
+    let endOfMonth = null;
+
+    // If month & year provided
+    if (month && year) {
+      startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+      endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+    }
+
+    // If date provided
+    if (date) {
       const parsedDate = new Date(date);
-      if (isNaN(parsedDate)) {
+      if (isNaN(parsedDate.getTime())) {
         throw new Error("Invalid date provided");
       }
+
       const yearVal = parsedDate.getUTCFullYear();
       const monthVal = parsedDate.getUTCMonth();
-      const startOfMonth = new Date(Date.UTC(yearVal, monthVal, 1, 0, 0, 0, 0));
-      const endOfMonth = new Date(Date.UTC(yearVal, monthVal + 1, 0, 23, 59, 59, 999));
-    } else {
-      const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
-      const endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
-    }
- 
-    let where;
 
+      startOfMonth = new Date(Date.UTC(yearVal, monthVal, 1, 0, 0, 0, 0));
+      endOfMonth = new Date(Date.UTC(yearVal, monthVal + 1, 0, 23, 59, 59, 999));
+    }
+
+    let where = {
+      trainerId,
+    };
+
+    // Exact date filter
     if (date) {
-      where = {
-        trainerId,
-        date,
-      };
-    } else {
-      where = {
-        trainerId,
-        date: {
-          gte: startOfMonth,
-          lte: endOfMonth,
-        },
+      where.date = date;
+    }
+
+    // Month filter
+    else if (startOfMonth && endOfMonth) {
+      where.date = {
+        gte: startOfMonth,
+        lte: endOfMonth,
       };
     }
- 
-    const skip = (page - 1) * pageSize;
- 
+
+    const skip = (safePage - 1) * safePageSize;
+
     const [total, slots] = await Promise.all([
       prisma.trainerTimeSlot.count({ where }),
       prisma.trainerTimeSlot.findMany({
         where,
         orderBy: { startTime: "asc" },
         skip,
-        take: pageSize,
+        take: safePageSize,
       }),
     ]);
- 
+
+    if (!slots.length) {
+      return {
+        upcomingSessions: [],
+        pastSessions: [],
+        pagination: {
+          total,
+          page: safePage,
+          pageSize: safePageSize,
+          totalPages: Math.ceil(total / safePageSize),
+        },
+      };
+    }
+
+    const slotIds = slots.map((s) => s.id);
+
+    // Fetch bookings in one query (fix N+1 problem)
+    const bookings = await prisma.trainerBooking.findMany({
+      where: {
+        timeSlotId: { in: slotIds },
+      },
+      select: {
+        timeSlotId: true,
+        bookingStatus: true,
+      },
+    });
+
+    const bookingMap = new Map();
+    bookings.forEach((b) => bookingMap.set(b.timeSlotId, b));
+
     const nowUtcMs = Date.now();
- 
-    // IST is UTC+5:30 → 5.5 hours in milliseconds
     const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
- 
+
     const upcomingSessions = [];
     const pastSessions = [];
- 
+
     for (const slot of slots) {
-      // Subtract IST offset to treat slot time as local IST before comparing
       const slotEndUtc = new Date(slot.endTime).getTime() - IST_OFFSET_MS;
- 
+
       if (slotEndUtc >= nowUtcMs) {
         upcomingSessions.push(slot);
       } else {
-        const { isBooked, ...slotWithoutIsBooked } = slot;
-        const booking = await prisma.trainerBooking.findFirst({
-          where: {
-            timeSlotId: slot.id,
-          },
-          select: {
-            bookingStatus: true,
-          },
-        });
+        const booking = bookingMap.get(slot.id);
 
-        let isAttended = false;
-        if (booking && booking.bookingStatus === "ATTENDED") {
-          isAttended = true;
-        }
+        const { isBooked, ...slotWithoutIsBooked } = slot;
 
         pastSessions.push({
           ...slotWithoutIsBooked,
-          isAttended,
+          isAttended: booking?.bookingStatus === "ATTENDED",
         });
       }
     }
 
-    
- 
     return {
       upcomingSessions,
       pastSessions,
       pagination: {
         total,
-        page,
-        pageSize,
-        totalPages: Math.ceil(total / pageSize),
+        page: safePage,
+        pageSize: safePageSize,
+        totalPages: Math.ceil(total / safePageSize),
       },
     };
   } catch (err) {
