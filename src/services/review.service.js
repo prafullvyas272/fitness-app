@@ -75,24 +75,25 @@ export const updateReview = async (where, data) => {
  */
 export const getAllReviews = async (filter = {}) => {
   try {
-    const { trainerId, customerId, type, skip, take } = filter;
+    const { trainerId, customerId, type } = filter;
 
     const where = {};
     if (trainerId) where.trainerId = trainerId;
     if (customerId) where.customerId = customerId;
     if (type) where.type = type;
 
-    const reviews = await prisma.review.findMany({
+    // Return only the single most recent review given the filters.
+    const review = await prisma.review.findFirst({
       where,
-      skip,
-      take,
       orderBy: { createdAt: "desc" },
       include: {
         trainer: true,
         customer: true
       }
     });
-    return reviews;
+
+    // Always return a single-element array or empty array for consistency
+    return review ? [review] : [];
   } catch (error) {
     throw new Error(`Failed to get reviews: ${error.message}`);
   }

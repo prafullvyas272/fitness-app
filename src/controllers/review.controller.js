@@ -98,7 +98,7 @@ export const getAllReviewsHandler = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Reviews retrieved successfully",
-      data: reviews
+      data: reviews[0]
     });
   } catch (err) {
     res.status(400).json({
