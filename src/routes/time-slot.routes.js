@@ -476,6 +476,12 @@ router.get(
  *           type: string
  *         description: Filter by creator user ID
  *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: 2024-05-01
+ *         description: Filter by specific date (YYYY-MM-DD)
  *         name: page
  *         schema:
  *           type: integer

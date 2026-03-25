@@ -250,6 +250,7 @@ export const getAllTimeSlot = async (filter = {}) => {
 export const getTrainerAllTimeSlot = async (filter = {}) => {
   try {
     const {
+      date,
       month,
       year,
       trainerId,
@@ -267,14 +268,22 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
  
     const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
     const endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
- 
-    const where = {
-      trainerId,
-      date: {
-        gte: startOfMonth,
-        lte: endOfMonth,
-      },
-    };
+
+    if (date) {
+      const where = {
+        trainerId,
+        date,
+      };
+    } else {
+      const where = {
+        trainerId,
+        date: {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        },
+      };
+    }
+    
  
     const skip = (page - 1) * pageSize;
  
