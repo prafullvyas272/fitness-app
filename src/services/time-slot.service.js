@@ -263,11 +263,20 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
     }
  
     if (!month || !year) {
-      throw new Error("Both month and year are required to fetch trainer time slots");
+      const parsedDate = new Date(date);
+      if (isNaN(parsedDate)) {
+        throw new Error("Invalid date provided");
+      }
+      const yearVal = parsedDate.getUTCFullYear();
+      const monthVal = parsedDate.getUTCMonth();
+      const startOfMonth = new Date(Date.UTC(yearVal, monthVal, 1, 0, 0, 0, 0));
+      const endOfMonth = new Date(Date.UTC(yearVal, monthVal + 1, 0, 23, 59, 59, 999));
+    } else {
+      const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+      const endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
     }
  
-    const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
-    const endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+    
 
     if (date) {
       const where = {
