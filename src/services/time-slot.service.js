@@ -309,7 +309,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
             timeSlotId: slot.id,
           },
           select: {
-            bookingStatus: 'ATTENDED',
+            bookingStatus: true,
           },
         });
 
