@@ -450,7 +450,7 @@ router.get(
  * @swagger
  * /api/trainer-time-slots:
  *   get:
- *     summary: Get all time slots for the trainer (with optional filtering & pagination)
+ *     summary: Get trainer time slots with filtering and pagination
  *     tags:
  *       - Trainer
  *     security:
@@ -464,17 +464,20 @@ router.get(
  *           maximum: 12
  *           example: 5
  *         description: Filter by month (1-12)
+ *
  *       - in: query
  *         name: year
  *         schema:
  *           type: integer
  *           example: 2024
  *         description: Filter by year (YYYY)
+ *
  *       - in: query
  *         name: trainerId
  *         schema:
  *           type: string
- *         description: Filter by creator user ID
+ *         description: Filter by trainer user ID
+ *
  *       - in: query
  *         name: date
  *         schema:
@@ -482,17 +485,21 @@ router.get(
  *           format: date
  *           example: 2024-05-01
  *         description: Filter by specific date (YYYY-MM-DD)
+ *
+ *       - in: query
  *         name: page
  *         schema:
  *           type: integer
  *           default: 1
  *         description: Page number
+ *
  *       - in: query
  *         name: pageSize
  *         schema:
  *           type: integer
  *           default: 20
- *         description: Page size
+ *         description: Number of records per page
+ *
  *     responses:
  *       200:
  *         description: Trainer Time slots fetched successfully.
@@ -509,6 +516,47 @@ router.get(
  *                   example: Trainer Time slots fetched successfully.
  *                 data:
  *                   type: object
+ *                   properties:
+ *                     upcomingSessions:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                             example: 69bce853116052a244abba4f
+ *                           trainerId:
+ *                             type: string
+ *                             example: 69bce66353f8c8dbbcc347d2
+ *                           date:
+ *                             type: string
+ *                             format: date
+ *                             example: 2026-03-20
+ *                           startTime:
+ *                             type: string
+ *                             example: 2026-03-20T20:00:00.000Z
+ *                           endTime:
+ *                             type: string
+ *                             example: 2026-03-20T21:00:00.000Z
+ *                           bookingStatus:
+ *                             type: string
+ *                             example: AVAILABLE
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         page:
+ *                           type: integer
+ *                           example: 1
+ *                         pageSize:
+ *                           type: integer
+ *                           example: 20
+ *                         totalRecords:
+ *                           type: integer
+ *                           example: 120
+ *                         totalPages:
+ *                           type: integer
+ *                           example: 6
+ *
  *       400:
  *         description: Error occurred.
  *         content:
@@ -518,13 +566,14 @@ router.get(
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: false
  *                 message:
  *                   type: string
+ *                   example: Failed to fetch trainer time slots
  */
 router.get(
   "/trainer-time-slots",
   authMiddleware,
   getTrainerAllTimeSlotHandler
 );
-
 export default router;
