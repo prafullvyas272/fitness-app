@@ -303,9 +303,29 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       if (slotEndUtc >= nowUtcMs) {
         upcomingSessions.push(slot);
       } else {
-        pastSessions.push(slot);
+        const { isBooked, ...slotWithoutIsBooked } = slot;
+        const booking = await prisma.trainerBooking.findFirst({
+          where: {
+            timeSlotId: slot.id,
+          },
+          select: {
+            bookingStatus: 'ATTENDED',
+          },
+        });
+
+        let isAttended = false;
+        if (booking && booking.bookingStatus === "ATTENDED") {
+          isAttended = true;
+        }
+
+        pastSessions.push({
+          ...slotWithoutIsBooked,
+          isAttended,
+        });
       }
     }
+
+    
  
     return {
       upcomingSessions,
