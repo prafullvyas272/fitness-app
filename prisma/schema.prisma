@@ -82,6 +82,8 @@ model User {
   receivedReviewsAsTrainer   Review[] @relation("Review_Trainer")
   receivedReviewsAsCustomer  Review[] @relation("Review_Customer")
 
+  customerQuestionaires CustomerQuestionaire[]
+
   createdAt  DateTime @default(now())
 }
 
@@ -499,3 +501,33 @@ model Review {
 }
 
 
+model CustomerQuestionaire {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  clientId  String   @db.ObjectId
+  client    User     @relation(fields: [clientId], references: [id])
+
+  clientName   String?
+  dateOfBirth  DateTime?
+  dateCompleted DateTime?
+
+  heartCondition                 Boolean
+  chestPainDuringActivity        Boolean
+  chestPainLastMonth             Boolean
+  dizzinessOrLossOfConsciousness Boolean
+  boneOrJointProblem             Boolean
+  bloodPressureMedication        Boolean
+  otherReasonNotToExercise       Boolean
+  pregnancyOrRecentBirth         Boolean
+  chronicMedicalCondition        Boolean
+
+  clientSignature   String?
+  clientSignedDate  DateTime?
+
+  trainerName       String?
+  trainerSignature  String?
+  trainerSignedDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

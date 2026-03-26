@@ -505,7 +505,8 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
             userProfileDetails: {
               take: 1
             },
-            questionnaire: true
+            questionnaire: true,
+            customerQuestionaires: true,
           }
         }
       }
@@ -534,6 +535,7 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
             createdAt: ac.customer.createdAt,
             userProfileDetail: ac.customer.userProfileDetails?.[0] || null,
             questionnaire: ac.customer.questionnaire,
+            customerQuestionaires: ac.customer.customerQuestionaires[0] || null,
             conversationId: conversationId
           },
           startDate: ac.startDate,
