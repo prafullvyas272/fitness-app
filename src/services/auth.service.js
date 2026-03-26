@@ -88,6 +88,7 @@ export const loginUser = async (email, password, fcmToken) => {
           }
         }
       },
+      customerQuestionaires: true,
     }
   });
 

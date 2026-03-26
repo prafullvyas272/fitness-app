@@ -59,6 +59,7 @@ export const login = async (req, res) => {
           createdAt: user.createdAt,
           provider: user.provider,
           specialities: user.specialities,
+          customerQuestionaires: Array.isArray(user.customerQuestionaires) && user.customerQuestionaires.length > 0 ? user.customerQuestionaires[0] : null,
           ...(isCustomer && { assignedTrainer: user.assignedCustomersAsCustomer[0] }),
         },
       },
