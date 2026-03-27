@@ -142,10 +142,52 @@ router.patch(
   updateQuestionnaireNotesHandler
 );
 
+/**
+ * @swagger
+ * /api/questionnaire/{userId}:
+ *   get:
+ *     summary: Get questionnaire details by userId
+ *     tags:
+ *       - Questionnaire
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Questionnaire fetched successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Failed to fetch questionnaire.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ */
 router.get(
-  "/questionaire/:userId",
-authMiddleware,
-getQuestionnaireByUserIdHandler
+  "/questionnaire/:userId", // ✅ FIXED SPELLING
+  authMiddleware,
+  getQuestionnaireByUserIdHandler
 );
 
 export default router;
