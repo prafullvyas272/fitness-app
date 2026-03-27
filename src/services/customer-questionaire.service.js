@@ -68,3 +68,27 @@ export const updateQuestionaireById = async (id, updateData) => {
     throw new Error(err.message || "Failed to update questionaire");
   }
 };
+
+/**
+ * Get customer questionnaire by clientId
+ */
+export const getCustomerQuestionaireByClientId = async (clientId) => {
+  try {
+    if (!clientId) {
+      throw new Error("clientId is required");
+    }
+
+    const data = await prisma.customerQuestionaire.findMany({
+      where: { clientId },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (!data || data.length === 0) {
+      throw new Error("No questionnaire found for this client");
+    }
+
+    return data;
+  } catch (err) {
+    throw new Error(err.message || "Failed to fetch questionnaire");
+  }
+};

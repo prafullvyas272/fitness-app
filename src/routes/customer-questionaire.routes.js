@@ -1,5 +1,5 @@
 import express from "express";
-import { addQuestionaireHandler, updateQuestionaireByIdHandler } from "../controllers/customer-questionaire.controller.js";
+import { addQuestionaireHandler, updateQuestionaireByIdHandler, getCustomerQuestionaireHandler } from "../controllers/customer-questionaire.controller.js";
 import {authMiddleware} from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -184,6 +184,35 @@ router.put(
   "/customer-questionaire/:id",
   authMiddleware,
   updateQuestionaireByIdHandler
+);
+
+
+/**
+ * @swagger
+ * /api/customer-questionaire/{clientId}:
+ *   get:
+ *     summary: Get customer questionnaire by clientId (for trainer)
+ *     tags:
+ *       - Customer Questionaire
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: clientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Customer (client) user ID
+ *     responses:
+ *       200:
+ *         description: Customer questionnaire fetched successfully.
+ *       400:
+ *         description: Failed to fetch questionnaire.
+ */
+router.get(
+  "/customer-questionaire/:clientId",
+  authMiddleware,
+  getCustomerQuestionaireHandler
 );
 
 export default router;

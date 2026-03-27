@@ -39,3 +39,27 @@ export const updateQuestionaireByIdHandler = async (req, res) => {
     });
   }
 };
+
+import { getCustomerQuestionaireByClientId } from "../services/customer-questionaire.service.js";
+
+/**
+ * Controller: get customer questionnaire by clientId (for trainer)
+ */
+export const getCustomerQuestionaireHandler = async (req, res) => {
+  try {
+    const { clientId } = req.params;
+
+    const result = await getCustomerQuestionaireByClientId(clientId);
+
+    res.status(200).json({
+      success: true,
+      message: "Customer questionnaire fetched successfully",
+      data: result,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
