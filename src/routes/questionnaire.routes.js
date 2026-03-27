@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addQuestionnaireDetailsForClientHandler, updateQuestionnaireNotesHandler } from "../controllers/questionnaire.controller.js";
+import { addQuestionnaireDetailsForClientHandler, updateQuestionnaireNotesHandler, getQuestionnaireByUserIdHandler } from "../controllers/questionnaire.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = Router();
@@ -140,6 +140,12 @@ router.patch(
   "/questionnaire/notes",
   authMiddleware,
   updateQuestionnaireNotesHandler
+);
+
+router.get(
+  "/questionaire/:userId",
+authMiddleware,
+getQuestionnaireByUserIdHandler
 );
 
 export default router;

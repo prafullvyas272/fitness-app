@@ -1,4 +1,4 @@
-import { addQuestionnaireDetailsForClient, updateQuestionnaireNotes } from "../services/questionnaire.service.js";
+import { addQuestionnaireDetailsForClient, updateQuestionnaireNotes, getQuestionnaireByUserId } from "../services/questionnaire.service.js";
 
 /**
  * Controller to add or update questionnaire details for a client (user).
@@ -70,6 +70,29 @@ export const updateQuestionnaireNotesHandler = async (req, res) => {
       success: true,
       message: "Questionnaire notes updated successfully.",
       data: updatedQuestionnaire
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+
+/**
+ * Controller to get questionnaire by userId
+ */
+export const getQuestionnaireByUserIdHandler = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const questionnaire = await getQuestionnaireByUserId(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Questionnaire fetched successfully.",
+      data: questionnaire
     });
   } catch (err) {
     res.status(400).json({

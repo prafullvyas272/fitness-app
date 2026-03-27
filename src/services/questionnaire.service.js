@@ -135,3 +135,29 @@ export const updateQuestionnaireNotes = async ({ userId, notes }) => {
     throw new Error(`Failed to update questionnaire notes: ${err.message}`);
   }
 };
+
+/**
+ * Get questionnaire details by userId
+ * 
+ * @param {string} userId
+ * @returns {Promise<Object>}
+ */
+export const getQuestionnaireByUserId = async (userId) => {
+  try {
+    if (!userId) {
+      throw new Error("User ID is required.");
+    }
+
+    const questionnaire = await prisma.questionnaire.findUnique({
+      where: { userId }
+    });
+
+    if (!questionnaire) {
+      throw new Error("Questionnaire not found.");
+    }
+
+    return questionnaire;
+  } catch (err) {
+    throw new Error(`Failed to fetch questionnaire: ${err.message}`);
+  }
+};
