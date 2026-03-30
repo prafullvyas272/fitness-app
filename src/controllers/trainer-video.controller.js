@@ -1,13 +1,18 @@
-import { createTrainerVideo, getVideosForClient } from "../services/trainer-video.service.js";
+import { 
+  createTrainerVideo, 
+  getTrainerVideo,
+  assignVideoToClients,
+  getVideoForClient   
+} from "../services/trainer-video.service.js";
 import { getYoutubeThumbnail } from "../utils/youtube.js";
 
 export const addTrainerVideoHandler = async (req, res) => {
   try {
-    const { title, description, tags, videoLink, clientIds } = req.body;
+    const { title, description, tags, videoLink } = req.body;
 
-    if (!title || !videoLink || !clientIds) {
+    if (!title || !videoLink) {
       return res.status(400).json({
-        message: "Title, videoLink and clientIds are required",
+        message: "Title and videoLink are required",
       });
     }
 
@@ -27,7 +32,6 @@ export const addTrainerVideoHandler = async (req, res) => {
       tags: parsedTags,
       videoLink,
       thumbnail,
-      clientIds,
       trainerId: req.user.userId,
     });
 
@@ -42,17 +46,60 @@ export const addTrainerVideoHandler = async (req, res) => {
 };
 
 
-export const getClientVideosHandler = async (req, res) => {
+export const getTrainerVideosHandler = async (req, res) => {
   try {
-    const clientId = req.user.userId;
+    console.log("USER:", req.user); // 👈 ADD THIS
 
-    const videos = await getVideosForClient(clientId);
+    const trainerId = req.user.userId;
+
+    const videos = await getTrainerVideo(trainerId);
 
     res.status(200).json({
       success: true,
       data: videos,
     });
   } catch (err) {
+    console.error("ERROR:", err); // 👈 ADD THIS
+    res.status(500).json({
+      message: "Failed to fetch videos",
+    });
+  }
+};
+
+export const assignVideoHandler = async (req, res) => {
+    try {
+        const { videoId, clientIds } = req.body;
+
+        if (!videoId || !clientIds || !clientIds.length === 0) {
+            return res.status(400).json({
+                message: "videoId and clientIds are required",
+            });
+        }
+        await assignVideoToClients(videoId, clientIds);
+
+        res.status(200).json({  
+            success: true,
+            message: "Video assigned to clients successfully",
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: "Failed to assign video",
+        });
+    }
+};
+
+export const getClientVideosHandler = async (req, res) => {
+  try {
+    const clientId = req.user.userId;
+
+    const data = await getVideoForClient(clientId);
+
+    const videos = data.map((item) => item.video);
+    res.status(200).json({
+      success: true,
+      data: videos,
+    });
+} catch (err) {
     res.status(500).json({
       message: "Failed to fetch videos",
     });

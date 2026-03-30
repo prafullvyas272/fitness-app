@@ -1,3 +1,4 @@
+import { assign } from "nodemailer/lib/shared/index.js";
 import prisma from "../utils/prisma.js";
 
 export const createTrainerVideo = async (data) => {
@@ -6,15 +7,32 @@ export const createTrainerVideo = async (data) => {
   });
 };
 
-export const getVideosForClient = async (clientId) => {
+export const getTrainerVideo = async (trainerId) => {
   return await prisma.trainerVideo.findMany({
-    where: {
-      clientIds: {
-        has: clientId, // 🔥 IMPORTANT
-      },
+    where: { trainerId },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
+export const assignVideoToClients = async (videoId, clientIds) => {
+    const data = clientIds.map((clientId) => ({
+        videoId,
+        clientId,
+    }));
+
+    return await prisma.trainerVideoAssignment.createMany({
+        data,
+    });
+};
+
+export const getVideoForClient = async (clientId) => {
+  return await prisma.trainerVideoAssignment.findMany({
+    where: { clientId },
+    include: {
+      video: true,
     },
     orderBy: {
-      createdAt: "desc",
+      assignedAt: "desc",
     },
   });
 };

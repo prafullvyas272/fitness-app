@@ -61,6 +61,8 @@ model User {
 
   trainerVideos   TrainerVideo[]
 
+  assignedVideos TrainerVideoAssignment[]
+
   plans      Plan[]   @relation("UserPlans")
 
   trainerRequests TrainerRequest[] @relation("CustomerRequests") // As the customer who made the request
@@ -309,9 +311,21 @@ model TrainerVideo {
   trainerId   String   @db.ObjectId
   trainer     User     @relation(fields: [trainerId], references: [id])
 
-  clientIds   String[] @db.ObjectId
+  assignments TrainerVideoAssignment[]   // ✅ ADD THIS
 
   createdAt   DateTime @default(now())
+}
+
+model TrainerVideoAssignment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  videoId   String   @db.ObjectId
+  clientId  String   @db.ObjectId
+
+  assignedAt DateTime @default(now())
+
+  video     TrainerVideo @relation(fields: [videoId], references: [id])
+  client    User         @relation(fields: [clientId], references: [id])
 }
 
 model Plan {
