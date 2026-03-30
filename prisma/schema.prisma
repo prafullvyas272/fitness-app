@@ -59,6 +59,8 @@ model User {
   userProfileDetails UserProfileDetail[] @relation("UserProfileDetailToUser")
   workoutVideos   WorkoutVideo[] @relation("UserWorkoutVideos")
 
+  trainerVideos   TrainerVideo[]
+
   plans      Plan[]   @relation("UserPlans")
 
   trainerRequests TrainerRequest[] @relation("CustomerRequests") // As the customer who made the request
@@ -293,6 +295,23 @@ model WorkoutVideo {
 
   uploader     User @relation("UserWorkoutVideos", fields: [uploadedBy], references: [id])
 
+}
+
+model TrainerVideo {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  tags        String[]
+
+  videoLink   String
+  thumbnail   String
+
+  trainerId   String   @db.ObjectId
+  trainer     User     @relation(fields: [trainerId], references: [id])
+
+  clientIds   String[] @db.ObjectId
+
+  createdAt   DateTime @default(now())
 }
 
 model Plan {

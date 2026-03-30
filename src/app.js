@@ -30,6 +30,7 @@ import journalEntryRoutes from "./routes/journal-entry.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
 import customerQuestionaireRoutes from "./routes/customer-questionaire.routes.js";
+import trainerVideoRoutes from "./routes/trainer-video.routes.js";
 
 
 import { initChatSocket } from "./sockets/chat.socket.js";
@@ -91,7 +92,7 @@ app.use("/api", journalEntryRoutes);
 app.use("/api", chatRoutes);
 app.use("/api", reviewRoutes);
 app.use("/api", customerQuestionaireRoutes);
-
+app.use("/api/trainer-video", trainerVideoRoutes);
 
 app.use(errorHandler);
 
