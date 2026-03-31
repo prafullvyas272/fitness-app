@@ -167,5 +167,11 @@ router.patch(
   updateTrainerRequestStatusHandler
 );
 
+// router.post(
+//   "/trainer-requests",
+//   authMiddleware,
+//   createTrainerRequestHandler
+// );
+
 
 export default router;

@@ -84,3 +84,34 @@ export const updateTrainerRequestStatus = async ({ requestId, status }) => {
     throw new Error("Failed to update trainer request: " + err.message);
   }
 };
+
+// export const createTrainerRequest = async ({ customerId, trainerId }) => {
+//   try {
+//     // Check if a pending request already exists
+//     const existingRequest = await prisma.trainerRequest.findFirst({
+//       where: {
+//         customerId,
+//         trainerId,
+//         status: "PENDING"
+//       }
+//     });
+
+//     if (existingRequest) {
+//       throw new Error("A pending request already exists for this customer and trainer.");
+//     }
+
+//     // Create the new trainer request
+//     const newRequest = await prisma.trainerRequest.create({
+//       data: {
+//         customerId,
+//         trainerId,
+//         message,
+//         status: "PENDING"
+//       },
+//     });
+
+//     return newRequest;
+//   } catch (err) {
+//     throw new Error("Failed to create trainer request: " + err.message);
+//   }
+// };

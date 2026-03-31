@@ -40,3 +40,30 @@ export const updateTrainerRequestStatusHandler = async (req, res) => {
     });
   }
 };
+
+// export const createTrainerRequestHandler = async (req, res) => {
+//   try {
+//     const customerId = req.user.userId; // Assuming authenticated user is the customer
+//     const { trainerId, message } = req.body;
+    
+//     if (!trainerId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Trainer ID is required"
+//       });
+//     }
+
+//     const request = await createTrainerRequest({ customerId, trainerId, message });
+    
+//     res.status(201).json({
+//       success: true,
+//       message: "Trainer request created successfully",
+//       data: request
+//     });
+//   } catch (err) {
+//     res.status(400).json({
+//       success: false,
+//       message: err.message
+//     });
+//   }
+// };

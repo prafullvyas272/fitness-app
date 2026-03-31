@@ -336,15 +336,21 @@ export const sendTrainerAssignedNotification = async (customerId, trainerId) => 
   }
 };
 
-export const sendChatNotification = async (userId, message) => {
+export const sendChatNotification = async ({
+  recieverId,
+  senderId,
+  conversationId,
+  chatMessageId,
+  message,
+}) => {
   try {
 
     const devices = await prisma.userDevice.findMany({
-      where: { userId }
+      where: { userId: recieverId }
     });
 
-    const tokens = devices.map(d => d.fcmToken);
-    console.log(tokens, userId)
+    const tokens = devices.map(d => d.fcmToken).filter(Boolean);
+    console.log(tokens, recieverId)
 
     if (!tokens.length) return;
 
@@ -354,8 +360,14 @@ export const sendChatNotification = async (userId, message) => {
         body: message
       },
       data: {
-        type: "CHAT"
-      }
+        type: "CHAT",
+        userId: String(recieverId),
+        senderId: String(senderId),
+        conversationId: String(conversationId),
+        chatMessageId: String(chatMessageId)
+      },
+      android: { priority: "high" },
+      apns: { payload: { aps: { sound: "default" } } }
     };
 
     await admin.messaging().sendEachForMulticast({
