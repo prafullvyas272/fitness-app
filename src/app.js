@@ -31,6 +31,13 @@ import chatRoutes from "./routes/chat.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
 import customerQuestionaireRoutes from "./routes/customer-questionaire.routes.js";
 import trainerVideoRoutes from "./routes/trainer-video.routes.js";
+import stepRoutes from "./routes/step.routes.js";
+import weightRoutes from "./routes/weight.routes.js";
+
+import { startReminderCron } from "../cron/reminder.cron.js";
+
+// Start the reminder cron job
+startReminderCron();
 
 
 import { initChatSocket } from "./sockets/chat.socket.js";
@@ -93,6 +100,8 @@ app.use("/api", chatRoutes);
 app.use("/api", reviewRoutes);
 app.use("/api", customerQuestionaireRoutes);
 app.use("/api/trainer-video", trainerVideoRoutes);
+app.use("/api/weight", weightRoutes);
+app.use("/api/steps", stepRoutes);
 
 
 app.use(errorHandler);

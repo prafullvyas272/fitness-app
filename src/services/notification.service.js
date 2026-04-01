@@ -1,5 +1,6 @@
 import prisma from "../utils/prisma.js";
 import RoleEnum from "../enums/RoleEnum.js";
+// import NotificationTypeEnum from "../enums/RoleEnum.js";
 
 import { default as admin } from "../config/firebase.js";
 
@@ -40,10 +41,8 @@ export const sendRegistrationNotification = async (user) => {
     const devicePromises = superAdmins.map(async (adminUser) => {
       const devices = await prisma.userDevice.findMany({
         where: {
-          userId: adminUser.id,
-          fcmToken: { not: null }
-        },
-        select: { fcmToken: true }
+          userId: adminUser.id, },
+          select: { fcmToken: true }
       });
       return {
         adminUser,
@@ -130,12 +129,11 @@ export const sendTrainerRequestNotification = async (trainerRequestId, trainerRe
     // For each superadmin, get all their device tokens
     const devicePromises = superAdmins.map(async (adminUser) => {
       const devices = await prisma.userDevice.findMany({
-        where: {
-          userId: adminUser.id,
-          fcmToken: { not: null }
-        },
-        select: { fcmToken: true }
-      });
+  where: {
+    userId: adminUser.id,
+  },
+  select: { fcmToken: true }
+});
       return {
         adminUser,
         deviceTokens: devices.map(d => d.fcmToken).filter(Boolean)
@@ -240,10 +238,10 @@ export const sendTrainerAssignedNotification = async (customerId, trainerId) => 
     
     const [trainerDevices, customerDevices] = await Promise.all([
       prisma.userDevice.findMany({
-        where: { userId: trainer.id, fcmToken: { not: null } }
+        where: { userId: trainer.id }
       }),
       prisma.userDevice.findMany({
-        where: { userId: customer.id, fcmToken: { not: null } }
+        where: { userId: customer.id }
       })
     ]);
 
@@ -349,6 +347,7 @@ export const sendChatNotification = async ({
       where: { userId: recieverId }
     });
 
+
     const tokens = devices.map(d => d.fcmToken).filter(Boolean);
     console.log(tokens, recieverId)
 
@@ -377,5 +376,57 @@ export const sendChatNotification = async ({
 
   } catch (err) {
     console.error("FCM Error:", err);
+  }
+};
+
+
+export const createReminderNotification = async ({
+  userId,
+  title,
+  message,
+}) => {
+  try {
+    const notification = await prisma.notification.create({
+      data: {
+        userId,
+        title,
+        message,
+        type: "REMINDER",
+      },
+    });
+
+   const devices = await prisma.userDevice.findMany({
+  where: {
+    userId,
+  },
+});
+
+    const tokens = devices
+  .map(d => d.fcmToken)
+  .filter(token => token);
+
+    if (!tokens.length) return notification;
+
+    const payload = {
+      notification: {
+        title,
+        body: message,
+      },
+      data: {
+        type: "REMINDER",
+        notificationId: String(notification.id),
+      },
+      android: { priority: "high" },
+      apns: { payload: { aps: { sound: "default" } } },
+    };
+
+    await admin.messaging().sendEachForMulticast({
+      tokens,
+      ...payload,
+    });
+
+    return notification;
+  } catch (error) {
+    throw new Error(`Failed to send reminder notification: ${error.message}`);
   }
 };

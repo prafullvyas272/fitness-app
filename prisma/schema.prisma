@@ -30,6 +30,10 @@ model User {
   firstName  String?
   lastName   String?
   email      String   @unique
+
+  stepGoal   StepGoal?
+  weightGoal WeightGoal?
+
   phone      String?
   password   String?
   provider   String   @default("LOCAL")
@@ -364,6 +368,7 @@ model TrainerRequest {
 enum NotificationType {
   TRAINER_REQUEST
   BOOKING
+  REMINDER
 }
 model Notification {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -563,4 +568,32 @@ model CustomerQuestionaire {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model StepGoal {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  goal      Int
+  reminder  String   // "20:00"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+}
+
+model WeightGoal {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  goal      Float
+  reminder  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
 }
