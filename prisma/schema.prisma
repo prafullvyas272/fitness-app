@@ -33,6 +33,7 @@ model User {
 
   stepGoal   StepGoal?
   weightGoal WeightGoal?
+  stepEntries StepEntry[]
 
   phone      String?
   password   String?
@@ -596,4 +597,16 @@ model WeightGoal {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId])
+}
+
+model StepEntry {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  steps     Int
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+ @@index([userId, date])
 }
