@@ -33,6 +33,7 @@ import customerQuestionaireRoutes from "./routes/customer-questionaire.routes.js
 import trainerVideoRoutes from "./routes/trainer-video.routes.js";
 import stepRoutes from "./routes/step.routes.js";
 import weightRoutes from "./routes/weight.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -102,6 +103,7 @@ app.use("/api", customerQuestionaireRoutes);
 app.use("/api/trainer-video", trainerVideoRoutes);
 app.use("/api/weight", weightRoutes);
 app.use("/api/steps", stepRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 
 app.use(errorHandler);

@@ -23,12 +23,6 @@ export const createOrUpdateWeightGoal = async (userId, data) => {
   });
 };
 
-export const getWeightGoal = async (userId) => {
-  return await prisma.weightGoal.findUnique({
-    where: { userId },
-  });
-};
-
 export const checkWeightGoal = async (userId, currentWeight) => {
   const goalData = await prisma.weightGoal.findUnique({
     where: { userId },
@@ -41,4 +35,32 @@ export const checkWeightGoal = async (userId, currentWeight) => {
   }
 
   return false; // Goal not yet achieved
+};
+
+// ✅ Add weight entry
+export const addWeightEntry = async (userId, weight) => {
+  return await prisma.weightEntry.create({
+    data: {
+      userId,
+      weight,
+      date: new Date(),
+    },
+  });
+};
+
+// ✅ Get latest weight (current weight)
+export const getCurrentWeight = async (userId) => {
+  const entry = await prisma.weightEntry.findFirst({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return entry?.weight || null;
+};
+
+// ✅ Get goal (already exists but keeping clean)
+export const getWeightGoal = async (userId) => {
+  return await prisma.weightGoal.findUnique({
+    where: { userId },
+  });
 };
