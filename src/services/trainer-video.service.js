@@ -1,5 +1,6 @@
 import { assign } from "nodemailer/lib/shared/index.js";
 import prisma from "../utils/prisma.js";
+import { email } from "zod";
 
 export const createTrainerVideo = async (data) => {
   return await prisma.trainerVideo.create({
@@ -36,3 +37,21 @@ export const getVideoForClient = async (clientId) => {
     },
   });
 };
+
+export const getAllTrainerVideos = async () => {
+  return await prisma.trainerVideo.findMany({
+    include: {
+      trainer: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc"
+    },
+  });
+}; 

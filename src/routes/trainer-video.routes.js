@@ -1,6 +1,7 @@
 import express from "express";
-import { addTrainerVideoHandler, getClientVideosHandler, getTrainerVideosHandler, assignVideoHandler } from "../controllers/trainer-video.controller.js";
+import { addTrainerVideoHandler, getClientVideosHandler, getTrainerVideosHandler, assignVideoHandler, getAllTrainerVideosHandler } from "../controllers/trainer-video.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
 const router = express.Router();
 
@@ -50,5 +51,8 @@ router.post("/assign", authMiddleware, assignVideoHandler);
  *         description: Server error
  */
 router.get("/client", authMiddleware, getClientVideosHandler);
+
+router.get("/admin", authMiddleware, superadminMiddleware, getAllTrainerVideosHandler);
+
 
 export default router;

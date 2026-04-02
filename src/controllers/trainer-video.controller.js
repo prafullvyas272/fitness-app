@@ -2,7 +2,8 @@ import {
   createTrainerVideo, 
   getTrainerVideo,
   assignVideoToClients,
-  getVideoForClient   
+  getVideoForClient,
+  getAllTrainerVideos 
 } from "../services/trainer-video.service.js";
 import { getYoutubeThumbnail } from "../utils/youtube.js";
 
@@ -100,6 +101,21 @@ export const getClientVideosHandler = async (req, res) => {
       data: videos,
     });
 } catch (err) {
+    res.status(500).json({
+      message: "Failed to fetch videos",
+    });
+  }
+};
+
+export const getAllTrainerVideosHandler = async (req, res) => {
+  try {
+    const videos = await getAllTrainerVideos();
+
+    res.status(200).json({
+      success: true,
+      data: videos,
+    });
+  } catch (err) {
     res.status(500).json({
       message: "Failed to fetch videos",
     });
