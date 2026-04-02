@@ -1,4 +1,4 @@
-import { createWorkoutVideo, updateWorkoutVideo, deleteWorkoutVideo, getAllWorkOutVideos, getWorkoutVideobyId, getAllWorkoutVideoTags } from "../services/workout-video.service.js";
+import { createWorkoutVideo, updateWorkoutVideo, deleteWorkoutVideo, getAllWorkOutVideos, getWorkoutVideobyId, getAllWorkoutVideoTags, assignTrainersToWorkout, getWorkoutsByTrainer } from "../services/workout-video.service.js";
 
 export const uploadWorkoutVideoHandler = async (req, res) => {
   try {
@@ -136,6 +136,49 @@ export const getAllWorkoutVideoTagsHandler = async (req, res) => {
     });
   } catch (err) {
     res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const assignTrainersHandler = async (req, res) => {
+  try {
+    const { workoutId, trainerIds } = req.body;
+
+    if (!workoutId || !trainerIds?.length) {
+      return res.status(400).json({
+        success: false,
+        message: "WorkoutId and trainerIds required",
+      });
+    }
+
+    await assignTrainersToWorkout(workoutId, trainerIds);
+
+    res.status(200).json({
+      success: true,
+      message: "Assigned successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getTrainerWorkoutsHandler = async (req, res) => {
+  try {
+    const { trainerId } = req.params;
+
+    const workouts = await getWorkoutsByTrainer(trainerId);
+
+    res.status(200).json({
+      success: true,
+      data: workouts,
+    });
+  } catch (err) {
+    res.status(500).json({
       success: false,
       message: err.message,
     });

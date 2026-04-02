@@ -36,6 +36,8 @@ model User {
   stepEntries StepEntry[]
   weightEntries WeightEntry[]
 
+  assignedWorkoutRelations WorkoutTrainerAssignment[]
+
   phone      String?
   password   String?
   provider   String   @default("LOCAL")
@@ -302,7 +304,7 @@ model WorkoutVideo {
   updatedAt    DateTime @updatedAt
 
   uploader     User @relation("UserWorkoutVideos", fields: [uploadedBy], references: [id])
-
+  assignments  WorkoutTrainerAssignment[]
 }
 
 model TrainerVideo {
@@ -622,4 +624,18 @@ model WeightEntry {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
+}
+
+model WorkoutTrainerAssignment {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  workoutId  String   @db.ObjectId
+  trainerId  String   @db.ObjectId
+
+  assignedAt DateTime @default(now())
+
+  workout    WorkoutVideo @relation(fields: [workoutId], references: [id])
+  trainer    User         @relation(fields: [trainerId], references: [id])
+
+  @@unique([workoutId, trainerId])
 }

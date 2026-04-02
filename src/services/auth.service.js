@@ -137,7 +137,7 @@ export const loginUser = async (email, password, fcmToken) => {
 
   if (user.role && user.role.name === RoleEnum.SUPERADMIN) {
     const access_token = signToken({ userId: user.id });
-    const refresh_token = signToken({ userId: user.id }, { expiresIn: "30d", type: "refresh" });
+    const refresh_token = signToken({ userId: user.id, type: "refresh" }, { expiresIn: "30d" });
     user.access_token = access_token;
     user.refresh_token = refresh_token;
   }
@@ -153,7 +153,7 @@ export const loginUser = async (email, password, fcmToken) => {
     return { user };
   } else {
     const access_token = signToken({ userId: user.id });
-    const refresh_token = signToken({ userId: user.id }, { expiresIn: "30d", type: "refresh" });
+    const refresh_token = signToken({ userId: user.id, type: "refresh" }, { expiresIn: "30d" });
     return { user, access_token, refresh_token };
   }
 };
@@ -277,10 +277,29 @@ export const verifyOtp = async (userId, otp) => {
   // Optional: clean response
   // delete user.password; // 'user' is not defined in this context
 
+  const shouldIssueTokens =
+    updatedUser?.phoneVerified &&
+    (
+      updatedUser?.role?.name === RoleEnum.CUSTOMER ||
+      updatedUser?.isActive
+    );
+
+  if (shouldIssueTokens) {
+    const access_token = signToken({ userId });
+    const refresh_token = signToken(
+      { userId, type: "refresh" },
+      { expiresIn: "30d" }
+    );
+
+    return {
+      user: updatedUser,
+      access_token,
+      refresh_token,
+    };
+  }
+
   return {
     user: updatedUser,
-    // access_token,
-    // refresh_token,
   };
 };
 

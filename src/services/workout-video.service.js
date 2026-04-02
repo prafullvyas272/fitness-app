@@ -152,3 +152,41 @@ export const getAllWorkoutVideoTags = async () => {
     throw new Error("Failed to fetch workout video tags");
   }
 };
+
+export const assignTrainersToWorkout = async (workoutId, trainerIds) => {
+  try {
+    // remove old
+    await prisma.workoutTrainerAssignment.deleteMany({
+      where: { workoutId },
+    });
+
+    // insert new
+    await prisma.workoutTrainerAssignment.createMany({
+      data: trainerIds.map((trainerId) => ({
+        workoutId,
+        trainerId,
+      })),
+    });
+
+    return true;
+  } catch (err) {
+    console.error(err);
+    throw new Error("Failed to assign trainers");
+  }
+};
+
+export const getWorkoutsByTrainer = async (trainerId) => {
+  try {
+    const data = await prisma.workoutTrainerAssignment.findMany({
+      where: { trainerId },
+      include: {
+        workout: true,
+      },
+    });
+
+    return data.map((item) => item.workout);
+  } catch (err) {
+    console.error(err);
+    throw new Error("Failed to fetch workouts");
+  }
+};

@@ -1,5 +1,5 @@
 import express from "express";
-import { uploadWorkoutVideoHandler, getAllWorkoutVideosHandler, getWorkoutVideoByIdHandler, deleteWorkoutVideoHandler, updateWorkoutVideoHandler, getAllWorkoutVideoTagsHandler } from "../controllers/workout-video.controller.js";
+import { uploadWorkoutVideoHandler, getAllWorkoutVideosHandler, getWorkoutVideoByIdHandler, deleteWorkoutVideoHandler, updateWorkoutVideoHandler, getAllWorkoutVideoTagsHandler, assignTrainersHandler, getTrainerWorkoutsHandler } from "../controllers/workout-video.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { videoUpload } from "../middlewares/upload.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -418,6 +418,19 @@ router.get(
   "/workout-videos-tags",
   authMiddleware,
   getAllWorkoutVideoTagsHandler
+);
+
+router.post(
+  "/workout-videos/assign-trainers",
+  authMiddleware,
+  superadminMiddleware,
+  assignTrainersHandler
+);
+
+router.get(
+  "/workout-videos/trainer/:trainerId",
+  authMiddleware,
+  getTrainerWorkoutsHandler
 );
 
 export default router;
