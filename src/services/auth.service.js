@@ -398,8 +398,81 @@ const verifyPasswordResetOtp = async (email, roleName, otp) => {
   return { success: true };
 };
 
+const requestPasswordResetByPhone = async (phone, roleName) => {
+  const role = await prisma.role.findUnique({
+    where: { name: roleName },
+  });
+
+  if (!role) {
+    throw new Error("Role not found");
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      phone,
+      roleId: role.id,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User with this phone number does not exist");
+  }
+
+  await prisma.otp.updateMany({
+    where: { userId: user.id, used: false },
+    data: { used: true },
+  });
+
+  await prisma.otp.create({
+    data: {
+      userId: user.id,
+      code: String(TEMPORARY_SUPER_OTP),
+      expiresAt: new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000),
+    },
+  });
+
+  return {
+    success: true,
+    userId: user.id,
+    otp: String(TEMPORARY_SUPER_OTP),
+  };
+};
+
 const resetUserPassword = async (email, roleName, password) => {
   const { user } = await findUserByEmailAndRole(email, roleName);
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedPassword,
+      provider: "LOCAL",
+    },
+  });
+
+  return { success: true };
+};
+
+const resetUserPasswordByPhone = async (phone, roleName, password) => {
+  const role = await prisma.role.findUnique({
+    where: { name: roleName },
+  });
+
+  if (!role) {
+    throw new Error("Role not found");
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      phone,
+      roleId: role.id,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User with this phone number does not exist");
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -422,6 +495,68 @@ export const customerForgotPassword = async (email) => {
   return requestPasswordReset(email, RoleEnum.CUSTOMER);
 };
 
+export const customerForgotPasswordByPhone = async (phone) => {
+  return requestPasswordResetByPhone(phone, RoleEnum.CUSTOMER);
+};
+
+export const trainerForgotPasswordByPhone = async (phone) => {
+  return requestPasswordResetByPhone(phone, RoleEnum.TRAINER);
+};
+
+export const customerVerifyForgotPasswordOtpByPhone = async (phone, otp) => {
+  return verifyForgotPasswordOtpByPhone(phone, RoleEnum.CUSTOMER, otp);
+};
+
+const verifyForgotPasswordOtpByPhone = async (phone, roleName, otp) => {
+  const role = await prisma.role.findUnique({
+    where: { name: roleName },
+  });
+
+  if (!role) {
+    throw new Error("Role not found");
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      phone,
+      roleId: role.id,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User with this phone number does not exist");
+  }
+
+  const normalizedOtp = typeof otp === "number" ? otp.toString() : String(otp);
+
+  const record = await prisma.otp.findFirst({
+    where: {
+      userId: user.id,
+      code: normalizedOtp,
+      used: false,
+      expiresAt: { gt: new Date() },
+    },
+  });
+
+  if (!record) {
+    throw new Error("Invalid or expired OTP");
+  }
+
+  await prisma.otp.update({
+    where: { id: record.id },
+    data: { used: true },
+  });
+
+  return {
+    success: true,
+    userId: user.id,
+  };
+};
+
+export const trainerVerifyForgotPasswordOtpByPhone = async (phone, otp) => {
+  return verifyForgotPasswordOtpByPhone(phone, RoleEnum.TRAINER, otp);
+};
+
 export const trainerVerifyPasswordResetOtp = async (email, otp) => {
   return verifyPasswordResetOtp(email, RoleEnum.TRAINER, otp);
 };
@@ -436,6 +571,14 @@ export const trainerResetPasswordWithEmail = async (email, password) => {
 
 export const customerResetPasswordWithEmail = async (email, password) => {
   return resetUserPassword(email, RoleEnum.CUSTOMER, password);
+};
+
+export const customerResetPasswordWithPhone = async (phone, password) => {
+  return resetUserPasswordByPhone(phone, RoleEnum.CUSTOMER, password);
+};
+
+export const trainerResetPasswordWithPhone = async (phone, password) => {
+  return resetUserPasswordByPhone(phone, RoleEnum.TRAINER, password);
 };
 
 export const googleLogin = async (idToken) => {

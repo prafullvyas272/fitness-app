@@ -9,6 +9,8 @@ import {
 } from "../controllers/trainer.controller.js";
 import {
   trainerForgotPasswordHandler,
+  trainerMobileForgotPasswordHandler,
+  trainerMobileVerifyOtpHandler,
   trainerResetPasswordHandler,
 } from "../controllers/auth.controller.js";
 
@@ -411,15 +413,81 @@ router.post(
 
 /**
  * @swagger
+ * /api/trainer/mobile/forgot-password:
+ *   post:
+ *     summary: Trainer mobile forgot password OTP
+ *     tags:
+ *       - Trainer
+ *     description: |
+ *       Generates a temporary OTP for trainer password reset using mobile number.
+ *       For now, SMS sending is disabled and the OTP used is always `123456`.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - phone
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "+919876543210"
+ *     responses:
+ *       200:
+ *         description: Mobile OTP generated successfully.
+ *       400:
+ *         description: Error occurred.
+ */
+router.post(
+  "/api/trainer/mobile/forgot-password",
+  trainerMobileForgotPasswordHandler
+);
+
+/**
+ * @swagger
+ * /api/trainer/mobile/verify-otp:
+ *   post:
+ *     summary: Verify trainer mobile forgot password OTP
+ *     tags:
+ *       - Trainer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - phone
+ *               - otp
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "+919876543210"
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully.
+ *       400:
+ *         description: Error occurred.
+ */
+router.post(
+  "/api/trainer/mobile/verify-otp",
+  trainerMobileVerifyOtpHandler
+);
+
+/**
+ * @swagger
  * /api/trainer/reset-password:
  *   post:
  *     summary: Trainer reset password
  *     tags:
  *       - Trainer
  *     description: |
- *       Two-step reset flow using OTP:
- *       1) First call with `email` and `otp` to verify OTP.
- *       2) Second call with `email`, `password`, and `confirm_password` to change the password.
+ *       Supports both email OTP flow and mobile OTP flow.
+ *       After OTP verification, submit either `email` or `phone` with `password` and `confirm_password`.
  *     requestBody:
  *       required: true
  *       content:
@@ -431,6 +499,9 @@ router.post(
  *                 type: string
  *                 format: email
  *                 example: trainer@example.com
+ *               phone:
+ *                 type: string
+ *                 example: "+919876543210"
  *               otp:
  *                 type: string
  *                 example: "123456"

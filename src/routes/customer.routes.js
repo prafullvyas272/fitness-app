@@ -6,7 +6,12 @@ import {
   showCustomerProfileDataHandler,
   applyForUPTHandler,
 } from "../controllers/customer.controller.js";
-import { customerForgotPasswordHandler, customerResetPasswordHandler } from "../controllers/auth.controller.js";
+import {
+  customerForgotPasswordHandler,
+  customerMobileForgotPasswordHandler,
+  customerMobileVerifyOtpHandler,
+  customerResetPasswordHandler
+} from "../controllers/auth.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -319,6 +324,105 @@ router.post(
   customerForgotPasswordHandler
 );
 
+/**
+ * @swagger
+ * /api/customer/mobile/forgot-password:
+ *   post:
+ *     summary: Customer mobile forgot password OTP
+ *     tags:
+ *       - Customer
+ *     description: |
+ *       Generates a temporary OTP for customer password reset using mobile number.
+ *       For now, SMS sending is disabled and the OTP used is always `123456`.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - phone
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "+919876543210"
+ *     responses:
+ *       200:
+ *         description: Mobile OTP generated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                     otp:
+ *                       type: string
+ *                       example: "123456"
+ *       400:
+ *         description: Error occurred.
+ */
+router.post(
+  "/api/customer/mobile/forgot-password",
+  customerMobileForgotPasswordHandler
+);
+
+/**
+ * @swagger
+ * /api/customer/mobile/verify-otp:
+ *   post:
+ *     summary: Verify customer mobile forgot password OTP
+ *     tags:
+ *       - Customer
+ *     description: Verifies the OTP generated for customer mobile forgot password flow.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - phone
+ *               - otp
+ *             properties:
+ *               phone:
+ *                 type: string
+ *                 example: "+919876543210"
+ *               otp:
+ *                 type: string
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *       400:
+ *         description: Error occurred.
+ */
+router.post(
+  "/api/customer/mobile/verify-otp",
+  customerMobileVerifyOtpHandler
+);
+
 
 /**
  * @swagger
@@ -328,8 +432,8 @@ router.post(
  *     tags:
  *       - Customer
  *     description: |
- *       Step 1: Verify OTP (with email and otp only).<br>
- *       Step 2: Submit new password (with email, otp, password, and confirm_password).
+ *       Supports both email OTP flow and mobile OTP flow.<br>
+ *       After OTP verification, submit either `email` or `phone` with `password` and `confirm_password`.
  *     requestBody:
  *       required: true
  *       content:
@@ -341,6 +445,9 @@ router.post(
  *                 type: string
  *                 format: email
  *                 example: customer@example.com
+ *               phone:
+ *                 type: string
+ *                 example: "+919876543210"
  *               otp:
  *                 type: string
  *                 example: "123456"

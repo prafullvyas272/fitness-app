@@ -9,11 +9,17 @@ import {
   getUserProfileById,
   logoutUser,
   trainerForgotPassword,
+  trainerForgotPasswordByPhone,
   customerForgotPassword,
+  customerForgotPasswordByPhone,
+  customerVerifyForgotPasswordOtpByPhone,
+  trainerVerifyForgotPasswordOtpByPhone,
   trainerVerifyPasswordResetOtp,
   customerVerifyPasswordResetOtp,
   trainerResetPasswordWithEmail,
+  trainerResetPasswordWithPhone,
   customerResetPasswordWithEmail,
+  customerResetPasswordWithPhone,
 } from "../services/auth.service.js";
 import { googleLogin } from "../services/auth.service.js";
 import prisma from "../utils/prisma.js";
@@ -382,19 +388,137 @@ export const customerForgotPasswordHandler = async (req, res) => {
   }
 };
 
-export const trainerResetPasswordHandler = async (req, res) => {
+export const customerMobileForgotPasswordHandler = async (req, res) => {
   try {
-    const { email, otp, password, confirm_password } = req.body;
+    const { phone } = req.body;
 
-    if (!email) {
+    if (!phone) {
       return res.status(400).json({
         success: false,
-        message: "Email is required",
+        message: "Phone number is required",
       });
     }
 
-    // Step 1: Verify OTP only
-    if (otp && !password && !confirm_password) {
+    const data = await customerForgotPasswordByPhone(phone);
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP generated successfully for mobile forgot password",
+      data,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const customerMobileVerifyOtpHandler = async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number is required",
+      });
+    }
+
+    if (!otp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP is required",
+      });
+    }
+
+    const data = await customerVerifyForgotPasswordOtpByPhone(phone, otp);
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully",
+      data,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const trainerMobileForgotPasswordHandler = async (req, res) => {
+  try {
+    const { phone } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number is required",
+      });
+    }
+
+    const data = await trainerForgotPasswordByPhone(phone);
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP generated successfully for mobile forgot password",
+      data,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const trainerMobileVerifyOtpHandler = async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number is required",
+      });
+    }
+
+    if (!otp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP is required",
+      });
+    }
+
+    const data = await trainerVerifyForgotPasswordOtpByPhone(phone, otp);
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully",
+      data,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const trainerResetPasswordHandler = async (req, res) => {
+  try {
+    const { email, phone, otp, password, confirm_password } = req.body;
+
+    if (!email && !phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Email or phone is required",
+      });
+    }
+
+    // Email flow: verify OTP only
+    if (email && otp && !password && !confirm_password) {
       await trainerVerifyPasswordResetOtp(email, otp);
 
       return res.status(200).json({
@@ -412,7 +536,11 @@ export const trainerResetPasswordHandler = async (req, res) => {
         });
       }
 
-      await trainerResetPasswordWithEmail(email, password);
+      if (email) {
+        await trainerResetPasswordWithEmail(email, password);
+      } else {
+        await trainerResetPasswordWithPhone(phone, password);
+      }
 
       return res.status(200).json({
         success: true,
@@ -434,17 +562,17 @@ export const trainerResetPasswordHandler = async (req, res) => {
 
 export const customerResetPasswordHandler = async (req, res) => {
   try {
-    const { email, otp, password, confirm_password } = req.body;
+    const { email, phone, otp, password, confirm_password } = req.body;
 
-    if (!email) {
+    if (!email && !phone) {
       return res.status(400).json({
         success: false,
-        message: "Email is required",
+        message: "Email or phone is required",
       });
     }
 
-    // Step 1: Verify OTP only
-    if (otp && !password && !confirm_password) {
+    // Email flow: verify OTP only
+    if (email && otp && !password && !confirm_password) {
       await customerVerifyPasswordResetOtp(email, otp);
 
       return res.status(200).json({
@@ -453,7 +581,7 @@ export const customerResetPasswordHandler = async (req, res) => {
       });
     }
 
-    // Step 2: Reset password
+    // Reset password by email or phone after OTP verification flow
     if (password && confirm_password) {
       if (password !== confirm_password) {
         return res.status(400).json({
@@ -462,7 +590,11 @@ export const customerResetPasswordHandler = async (req, res) => {
         });
       }
 
-      await customerResetPasswordWithEmail(email, password);
+      if (email) {
+        await customerResetPasswordWithEmail(email, password);
+      } else {
+        await customerResetPasswordWithPhone(phone, password);
+      }
 
       return res.status(200).json({
         success: true,
