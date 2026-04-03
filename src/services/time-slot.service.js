@@ -251,6 +251,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
   try {
     const {
       date,
+      day,
       month,
       year,
       trainerId,
@@ -268,10 +269,38 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
     let startOfMonth = null;
     let endOfMonth = null;
 
+    if (day && (!month || !year)) {
+      throw new Error("day filter requires both month and year");
+    }
+
+    if (day && month && year) {
+      const dayNum = Number(day);
+      const monthNum = Number(month);
+      const yearNum = Number(year);
+
+      const startOfDay = new Date(Date.UTC(yearNum, monthNum - 1, dayNum, 0, 0, 0, 0));
+      const endOfDay = new Date(Date.UTC(yearNum, monthNum - 1, dayNum, 23, 59, 59, 999));
+
+      if (
+        Number.isNaN(startOfDay.getTime()) ||
+        startOfDay.getUTCFullYear() !== yearNum ||
+        startOfDay.getUTCMonth() !== monthNum - 1 ||
+        startOfDay.getUTCDate() !== dayNum
+      ) {
+        throw new Error("Invalid day, month, or year provided");
+      }
+
+      startOfMonth = startOfDay;
+      endOfMonth = endOfDay;
+    }
+
     // If month & year provided
-    if (month && year) {
-      startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
-      endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+    else if (month && year) {
+      const monthNum = Number(month);
+      const yearNum = Number(year);
+
+      startOfMonth = new Date(Date.UTC(yearNum, monthNum - 1, 1, 0, 0, 0, 0));
+      endOfMonth = new Date(Date.UTC(yearNum, monthNum, 0, 23, 59, 59, 999));
     }
 
     // If date provided

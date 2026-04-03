@@ -457,6 +457,15 @@ router.get(
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: day
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 31
+ *           example: 3
+ *         description: Filter by day of the month. Use together with month and year.
+ *
+ *       - in: query
  *         name: month
  *         schema:
  *           type: integer
