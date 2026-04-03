@@ -25,6 +25,16 @@ export const registerSchema = z
         errorMap: () => ({ message: "Gender is required. It must be either MALE, FEMALE, OTHER" }),
       }),
 
+    hostGymName: z
+      .string()
+      .min(1, "Host gym name cannot be empty")
+      .optional(),
+
+    hostGymAddress: z
+      .string()
+      .min(1, "Host gym address cannot be empty")
+      .optional(),
+
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")

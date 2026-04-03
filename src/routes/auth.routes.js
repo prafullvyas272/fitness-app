@@ -73,6 +73,12 @@ const router = Router();
  *                   - MALE
  *                   - FEMALE
  *                   - OTHER
+ *               hostGymName:
+ *                 type: string
+ *                 example: Uptown Fitness Studio
+ *               hostGymAddress:
+ *                 type: string
+ *                 example: 221B Baker Street, London
  *           examples:
  *             TrainerSignup:
  *               summary: Trainer registration
@@ -84,6 +90,8 @@ const router = Router();
  *                 password: Strong@123
  *                 role: Trainer
  *                 gender: MALE
+ *                 hostGymName: Uptown Fitness Studio
+ *                 hostGymAddress: 221B Baker Street, London
  *             CustomerSignup:
  *               summary: Customer registration
  *               value:

@@ -14,7 +14,17 @@ const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 const OTP_EXPIRY_MINUTES = 5;
 
 
-export const registerUser = async (firstName, lastName, email, phone, password, role, gender = null) => {
+export const registerUser = async (
+  firstName,
+  lastName,
+  email,
+  phone,
+  password,
+  role,
+  gender = null,
+  hostGymName,
+  hostGymAddress
+) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   console.log(role)
@@ -26,6 +36,10 @@ export const registerUser = async (firstName, lastName, email, phone, password, 
     throw new Error("Invalid Role. The role not found in the database.");
   }
 
+  const shouldCreateProfile =
+    hostGymName !== undefined ||
+    hostGymAddress !== undefined;
+
   const user = await prisma.user.create({
     data: {
       firstName,
@@ -36,6 +50,17 @@ export const registerUser = async (firstName, lastName, email, phone, password, 
       phoneVerified: true,
       password: hashedPassword,
       roleId: roleData.id,
+      ...(shouldCreateProfile && {
+        userProfileDetails: {
+          create: {
+            ...(hostGymName !== undefined ? { hostGymName } : {}),
+            ...(hostGymAddress !== undefined ? { hostGymAddress } : {}),
+          },
+        },
+      }),
+    },
+    include: {
+      userProfileDetails: true,
     },
   });
 

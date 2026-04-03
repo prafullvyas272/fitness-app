@@ -20,8 +20,28 @@ import prisma from "../utils/prisma.js";
 
 export const register = async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, password, role, gender } = req.body;
-    const data = await registerUser(firstName, lastName, email, phone, password, role, gender);
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      role,
+      gender,
+      hostGymName,
+      hostGymAddress,
+    } = req.body;
+    const data = await registerUser(
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      role,
+      gender,
+      hostGymName,
+      hostGymAddress
+    );
 
     console.log('role')
     res.status(201).json({
@@ -87,7 +107,7 @@ export const login = async (req, res) => {
 
     // Not active, but phone verified
     if (!user.isActive && user.phoneVerified) {
-      response.message = "Your account needs approval from admin.";
+      response.message = "Your account is under review.";
       return res.status(200).json(response);
     }
 
