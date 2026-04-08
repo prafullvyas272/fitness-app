@@ -1,5 +1,6 @@
 import {
     getUserAvailabilityDataByDate,
+    getUserWeeklyAvailabilitySummary,
     setUserAvailabilityForDate,
     canTrainerApplyLeave,
     applyLeave,
@@ -78,6 +79,35 @@ export const setUserAvailability = async (req, res) => {
         res.status(200).json({
             success: true,
             data,
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
+
+/**
+ * Get a trainer's weekly availability summary for the week containing a specific date
+ */
+export const getUserWeeklyAvailability = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { date } = req.query;
+
+        if (!date) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required query parameter: date",
+            });
+        }
+
+        const weeklyData = await getUserWeeklyAvailabilitySummary(userId, date);
+
+        res.status(200).json({
+            success: true,
+            data: weeklyData,
         });
     } catch (err) {
         res.status(400).json({

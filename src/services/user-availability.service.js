@@ -510,3 +510,75 @@ export const calculateAndDeletePeakSlots = async (
         throw new Error(`Failed to calculate and delete peak slots: ${err.message}`);
     }
 };
+
+/**
+ * Get user's weekly availability summary.
+ * @param {string} userId
+ * @param {string|Date} date - Any date within the target week
+ * @returns {Promise<object>}
+ */
+export const getUserWeeklyAvailabilitySummary = async (userId, date) => {
+    if (!date) {
+        throw new Error("Date is required");
+    }
+
+    const inputDate = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(inputDate.getTime())) {
+        throw new Error("Invalid date format");
+    }
+
+    const { weekStartDate, weekEndDate } = getWeekStartAndEndDates(inputDate);
+
+    const [weekDoc, dailyAvailabilities] = await Promise.all([
+        prisma.trainerWeeklyAvailability.findFirst({
+            where: {
+                trainerId: userId,
+                weekStartDate,
+                weekEndDate,
+            },
+        }),
+        prisma.trainerDailyAvailability.findMany({
+            where: {
+                trainerId: userId,
+                date: {
+                    gte: weekStartDate,
+                    lte: weekEndDate,
+                },
+            },
+            include: {
+                timeSlots: true,
+            },
+            orderBy: {
+                date: "asc",
+            },
+        }),
+    ]);
+
+    const requiredMinutes = weekDoc?.requiredMinutes ?? 2700;
+    const totalPlannedMinutes = dailyAvailabilities.reduce(
+        (sum, day) => sum + (day.totalDayMinutes || 0),
+        0
+    );
+    const remainingMinutes = Math.max(requiredMinutes - totalPlannedMinutes, 0);
+
+    const days = dailyAvailabilities.map((day) => ({
+        date: day.date.toISOString().slice(0, 10),
+        dayOfWeek: day.dayOfWeek,
+        isAvailable: day.isAvailable,
+        totalDayMinutes: day.totalDayMinutes,
+        peakSlotsCount: day.timeSlots.filter((slot) => slot.slotType === "PEAK").length,
+        alternativeSlotsCount: day.timeSlots.filter((slot) => slot.slotType === "ALTERNATIVE").length,
+    }));
+
+    return {
+        weekStartDate: weekStartDate.toISOString().slice(0, 10),
+        weekEndDate: weekEndDate.toISOString().slice(0, 10),
+        requiredMinutes,
+        requiredHours: Number((requiredMinutes / 60).toFixed(2)),
+        totalPlannedMinutes,
+        totalPlannedHours: Number((totalPlannedMinutes / 60).toFixed(2)),
+        remainingMinutes,
+        remainingHours: Number((remainingMinutes / 60).toFixed(2)),
+        days,
+    };
+};

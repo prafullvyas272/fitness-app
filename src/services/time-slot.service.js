@@ -249,142 +249,45 @@ export const getAllTimeSlot = async (filter = {}) => {
 
 export const getTrainerAllTimeSlot = async (filter = {}) => {
   try {
-    const {
-      date,
-      day,
-      month,
-      year,
-      trainerId,
-      page = 1,
-      pageSize = 20,
-    } = filter;
+    const { trainerId, page = 1, pageSize = 20 } = filter;
 
     if (!trainerId) {
-      throw new Error("trainerId is required to fetch trainer time slots");
+      throw new Error("trainerId is required");
     }
 
     const safePage = Math.max(parseInt(page) || 1, 1);
     const safePageSize = Math.min(Math.max(parseInt(pageSize) || 20, 1), 100);
-
-    let startOfMonth = null;
-    let endOfMonth = null;
-
-    if (day && (!month || !year)) {
-      throw new Error("day filter requires both month and year");
-    }
-
-    if (day && month && year) {
-      const dayNum = Number(day);
-      const monthNum = Number(month);
-      const yearNum = Number(year);
-
-      const startOfDay = new Date(Date.UTC(yearNum, monthNum - 1, dayNum, 0, 0, 0, 0));
-      const endOfDay = new Date(Date.UTC(yearNum, monthNum - 1, dayNum, 23, 59, 59, 999));
-
-      if (
-        Number.isNaN(startOfDay.getTime()) ||
-        startOfDay.getUTCFullYear() !== yearNum ||
-        startOfDay.getUTCMonth() !== monthNum - 1 ||
-        startOfDay.getUTCDate() !== dayNum
-      ) {
-        throw new Error("Invalid day, month, or year provided");
-      }
-
-      startOfMonth = startOfDay;
-      endOfMonth = endOfDay;
-    }
-
-    // If month & year provided
-    else if (month && year) {
-      const monthNum = Number(month);
-      const yearNum = Number(year);
-
-      startOfMonth = new Date(Date.UTC(yearNum, monthNum - 1, 1, 0, 0, 0, 0));
-      endOfMonth = new Date(Date.UTC(yearNum, monthNum, 0, 23, 59, 59, 999));
-    }
-
-    // If date provided
-    if (date) {
-      const parsedDate = new Date(date);
-      if (isNaN(parsedDate.getTime())) {
-        throw new Error("Invalid date provided");
-      }
-
-      const yearVal = parsedDate.getUTCFullYear();
-      const monthVal = parsedDate.getUTCMonth();
-
-      startOfMonth = new Date(Date.UTC(yearVal, monthVal, 1, 0, 0, 0, 0));
-      endOfMonth = new Date(Date.UTC(yearVal, monthVal + 1, 0, 23, 59, 59, 999));
-    }
-
-    let where = {
-      trainerId,
-    };
-
-    // Exact date filter
-    if (date) {
-      const parsedDate = new Date(date);
-    
-      if (isNaN(parsedDate.getTime())) {
-        throw new Error("Invalid date provided");
-      }
-    
-      const startOfDay = new Date(Date.UTC(
-        parsedDate.getUTCFullYear(),
-        parsedDate.getUTCMonth(),
-        parsedDate.getUTCDate(),
-        0, 0, 0, 0
-      ));
-    
-      const endOfDay = new Date(Date.UTC(
-        parsedDate.getUTCFullYear(),
-        parsedDate.getUTCMonth(),
-        parsedDate.getUTCDate(),
-        23, 59, 59, 999
-      ));
-    
-      where.date = {
-        gte: startOfDay,
-        lte: endOfDay,
-      };
-    }
-
-    // Month filter
-    else if (startOfMonth && endOfMonth) {
-      where.date = {
-        gte: startOfMonth,
-        lte: endOfMonth,
-      };
-    }
-
     const skip = (safePage - 1) * safePageSize;
 
-    const [total, slots] = await Promise.all([
-      prisma.trainerTimeSlot.count({ where }),
+    const [trainerSlots, adminSlots] = await Promise.all([
       prisma.trainerTimeSlot.findMany({
-        where,
+        where: { trainerId },
         orderBy: { startTime: "asc" },
-        skip,
-        take: safePageSize,
+      }),
+      prisma.timeSlot.findMany({
+        orderBy: { startTime: "asc" },
       }),
     ]);
 
-    if (!slots.length) {
-      return {
-        upcomingSessions: [],
-        pastSessions: [],
-        pagination: {
-          total,
-          page: safePage,
-          pageSize: safePageSize,
-          totalPages: Math.ceil(total / safePageSize),
-        },
-      };
-    }
+    // TrainerTimeSlot records linked to a TimeSlot are admin-derived copies/links.
+    // Only standalone TrainerTimeSlot records are trainer-created slots.
+    const trainerCreatedSlots = trainerSlots.filter((slot) => !slot.timeSlotId);
 
-    const slotIds = slots.map((s) => s.id);
+    const formattedTrainerSlots = trainerCreatedSlots.map((slot) => ({
+      ...slot,
+      source: "TRAINER",
+    }));
 
-    // Fetch bookings in one query (fix N+1 problem)
+    const formattedAdminSlots = adminSlots.map((slot) => ({
+        ...slot,
+        source: "ADMIN",
+      }));
+
+    const filteredSlots = [...formattedTrainerSlots, ...formattedAdminSlots].sort(
+      (a, b) => new Date(a.startTime) - new Date(b.startTime)
+    );
+
+    const slotIds = trainerCreatedSlots.map((slot) => slot.id);
     const bookings = await prisma.trainerBooking.findMany({
       where: {
         timeSlotId: { in: slotIds },
@@ -396,39 +299,47 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
     });
 
     const bookingMap = new Map();
-    bookings.forEach((b) => bookingMap.set(b.timeSlotId, b));
+    bookings.forEach((booking) => bookingMap.set(booking.timeSlotId, booking));
 
-    const nowUtcMs = Date.now();
-    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
-
+    const now = new Date();
     const upcomingSessions = [];
     const pastSessions = [];
 
-    for (const slot of slots) {
-      const slotEndUtc = new Date(slot.endTime).getTime() - IST_OFFSET_MS;
+    for (const slot of filteredSlots) {
+      const slotEnd = new Date(slot.endTime);
 
-      if (slotEndUtc >= nowUtcMs) {
+      if (slot.source === "ADMIN") {
+        if (slotEnd >= now) {
+          upcomingSessions.push(slot);
+        } else {
+          pastSessions.push({
+            ...slot,
+            isAttended: false,
+          });
+        }
+        continue;
+      }
+
+      const booking = bookingMap.get(slot.id);
+
+      if (slotEnd >= now) {
         upcomingSessions.push(slot);
       } else {
-        const booking = bookingMap.get(slot.id);
-
-        const { isBooked, ...slotWithoutIsBooked } = slot;
-
         pastSessions.push({
-          ...slotWithoutIsBooked,
+          ...slot,
           isAttended: booking?.bookingStatus === "ATTENDED",
         });
       }
     }
 
     return {
-      upcomingSessions,
-      pastSessions,
+      upcomingSessions: upcomingSessions.slice(skip, skip + safePageSize),
+      pastSessions: pastSessions.slice(skip, skip + safePageSize),
       pagination: {
-        total,
+        total: filteredSlots.length,
         page: safePage,
         pageSize: safePageSize,
-        totalPages: Math.ceil(total / safePageSize),
+        totalPages: Math.ceil(filteredSlots.length / safePageSize),
       },
     };
   } catch (err) {

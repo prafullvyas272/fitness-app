@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getUserAvailability } from "../controllers/user-availability.controller.js";
+import { getUserWeeklyAvailability } from "../controllers/user-availability.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { setUserAvailability } from "../controllers/user-availability.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
@@ -33,6 +34,7 @@ const router = Router();
  *         description: No availability found for this date
  */
 router.get("/availability", authMiddleware, getUserAvailability);
+router.get("/availability/weekly", authMiddleware, getUserWeeklyAvailability);
 
 
 /**
