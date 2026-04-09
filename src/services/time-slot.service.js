@@ -1,5 +1,65 @@
 import prisma from "../utils/prisma.js";
 
+const IST_OFFSET_MINUTES = 330; // Asia/Kolkata (+05:30)
+
+const parseYyyyMmDd = (dateStr) => {
+  const [yearStr, monthStr, dayStr] = String(dateStr).split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day)
+  ) {
+    throw new Error("Invalid date format. Use YYYY-MM-DD.");
+  }
+
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    throw new Error("Invalid date value.");
+  }
+
+  return { year, month, day };
+};
+
+const getUtcRangeForIstDate = (dateStr) => {
+  const { year, month, day } = parseYyyyMmDd(dateStr);
+  const startUtcMs =
+    Date.UTC(year, month - 1, day, 0, 0, 0, 0) - IST_OFFSET_MINUTES * 60 * 1000;
+  const endUtcMs =
+    Date.UTC(year, month - 1, day, 23, 59, 59, 999) - IST_OFFSET_MINUTES * 60 * 1000;
+
+  return {
+    start: new Date(startUtcMs),
+    end: new Date(endUtcMs),
+  };
+};
+
+const getUtcDateTimeForIstDateAndTime = (dateStr, hhmm) => {
+  const { year, month, day } = parseYyyyMmDd(dateStr);
+  const [hourStr, minuteStr] = String(hhmm).split(":");
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    throw new Error("Invalid time format. Use HH:mm.");
+  }
+
+  const utcMs =
+    Date.UTC(year, month - 1, day, hour, minute, 0, 0) -
+    IST_OFFSET_MINUTES * 60 * 1000;
+
+  return new Date(utcMs);
+};
+
 /**
  * Get a paginated list of TrainerTimeSlot entries by trainerId and date.
  * 
@@ -11,15 +71,7 @@ export const getTrainerSlotsByDate = async ( trainerId, date, page = 1, pageSize
   if (!date) {
     throw new Error("Date is required");
   }
-  let startOfDay, endOfDay;
-  try {
-    startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-  } catch {
-    throw new Error("Invalid date format");
-  }
+  const { start: startOfDay, end: endOfDay } = getUtcRangeForIstDate(date);
   const skip = (page - 1) * pageSize;
   const whereQuery = {
     trainerId,
@@ -67,7 +119,7 @@ export const createTimeSlot = async (data) => {
   }
 
   try {
-    const dateOnly = new Date(date);
+    const { start: istDateStartUtc } = getUtcRangeForIstDate(date);
     const createdSlots = [];
 
     for (const slot of peakSlots) {
@@ -75,15 +127,8 @@ export const createTimeSlot = async (data) => {
         throw new Error('Each peakSlot must have start and end');
       }
 
-      // Combine the date and time strings
-      const [startHour, startMinute] = slot.start.split(':').map(Number);
-      const [endHour, endMinute] = slot.end.split(':').map(Number);
-
-      const startDateTime = new Date(dateOnly);
-      startDateTime.setHours(startHour, startMinute, 0, 0);
-
-      const endDateTime = new Date(dateOnly);
-      endDateTime.setHours(endHour, endMinute, 0, 0);
+      const startDateTime = getUtcDateTimeForIstDateAndTime(date, slot.start);
+      const endDateTime = getUtcDateTimeForIstDateAndTime(date, slot.end);
 
       const durationMinutes = Math.round((endDateTime - startDateTime) / (60 * 1000));
       if (durationMinutes <= 0) {
@@ -92,7 +137,7 @@ export const createTimeSlot = async (data) => {
 
       const timeSlot = await prisma.timeSlot.create({
         data: {
-          date: new Date(dateOnly),
+          date: istDateStartUtc,
           startTime: startDateTime,
           endTime: endDateTime,
           slotType: 'PEAK',
@@ -208,10 +253,7 @@ export const getAllTimeSlot = async (filter = {}) => {
 
     const where = {};
     if (date) {
-      const dayStart = new Date(date);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(date);
-      dayEnd.setHours(23, 59, 59, 999);
+      const { start: dayStart, end: dayEnd } = getUtcRangeForIstDate(date);
       where.date = {
         gte: dayStart,
         lte: dayEnd,
@@ -249,7 +291,7 @@ export const getAllTimeSlot = async (filter = {}) => {
 
 export const getTrainerAllTimeSlot = async (filter = {}) => {
   try {
-    const { trainerId, page = 1, pageSize = 20 } = filter;
+    const { trainerId, date, day, month, year, page = 1, pageSize = 20 } = filter;
 
     if (!trainerId) {
       throw new Error("trainerId is required");
@@ -259,12 +301,96 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
     const safePageSize = Math.min(Math.max(parseInt(pageSize) || 20, 1), 100);
     const skip = (safePage - 1) * safePageSize;
 
+    // Determine selected reference date for week-based past-session slicing.
+    let selectedDateForWeek = new Date();
+    if (date) {
+      const parsed = new Date(date);
+      if (!Number.isNaN(parsed.getTime())) {
+        selectedDateForWeek = parsed;
+      }
+    } else if (day && month && year) {
+      const d = parseInt(day, 10);
+      const m = parseInt(month, 10);
+      const y = parseInt(year, 10);
+      const parsed = new Date(y, m - 1, d);
+      if (!Number.isNaN(parsed.getTime())) {
+        selectedDateForWeek = parsed;
+      }
+    }
+
+    // Week starts on Sunday (as requested: e.g. 05-04-2026 for selected date 09-04-2026).
+    const weekStart = new Date(selectedDateForWeek);
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    let dateFilter = null;
+
+    if (date) {
+      const { start, end } = getUtcRangeForIstDate(date);
+      dateFilter = { gte: start, lte: end };
+    } else if (month && year) {
+      const monthNum = parseInt(month, 10);
+      const yearNum = parseInt(year, 10);
+      const dayNum = day ? parseInt(day, 10) : null;
+
+      if (
+        Number.isNaN(monthNum) ||
+        Number.isNaN(yearNum) ||
+        monthNum < 1 ||
+        monthNum > 12
+      ) {
+        throw new Error("Invalid month/year values.");
+      }
+
+      if (day && (Number.isNaN(dayNum) || dayNum < 1 || dayNum > 31)) {
+        throw new Error("Invalid day value.");
+      }
+
+      if (dayNum) {
+        const dd = String(dayNum).padStart(2, "0");
+        const mm = String(monthNum).padStart(2, "0");
+        const { start, end } = getUtcRangeForIstDate(`${yearNum}-${mm}-${dd}`);
+
+        if (
+          new Date(yearNum, monthNum - 1, dayNum).getMonth() !== monthNum - 1 ||
+          new Date(yearNum, monthNum - 1, dayNum).getDate() !== dayNum
+        ) {
+          throw new Error("Invalid day for the provided month/year.");
+        }
+
+        dateFilter = { gte: start, lte: end };
+      } else {
+        const { start } = getUtcRangeForIstDate(
+          `${yearNum}-${String(monthNum).padStart(2, "0")}-01`
+        );
+        const lastDay = new Date(yearNum, monthNum, 0).getDate();
+        const { end } = getUtcRangeForIstDate(
+          `${yearNum}-${String(monthNum).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
+        );
+        dateFilter = { gte: start, lte: end };
+      }
+    } else if (day && (!month || !year)) {
+      throw new Error("day filter requires both month and year.");
+    }
+
+    const trainerWhere = { trainerId };
+    const adminWhere = {};
+    if (dateFilter) {
+      trainerWhere.date = dateFilter;
+      adminWhere.date = dateFilter;
+    }
+
     const [trainerSlots, adminSlots] = await Promise.all([
       prisma.trainerTimeSlot.findMany({
-        where: { trainerId },
+        where: trainerWhere,
         orderBy: { startTime: "asc" },
       }),
       prisma.timeSlot.findMany({
+        where: adminWhere,
         orderBy: { startTime: "asc" },
       }),
     ]);
@@ -303,7 +429,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
 
     const now = new Date();
     const upcomingSessions = [];
-    const pastSessions = [];
+    const allPastSessions = [];
 
     for (const slot of filteredSlots) {
       const slotEnd = new Date(slot.endTime);
@@ -312,7 +438,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         if (slotEnd >= now) {
           upcomingSessions.push(slot);
         } else {
-          pastSessions.push({
+          allPastSessions.push({
             ...slot,
             isAttended: false,
           });
@@ -325,12 +451,17 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       if (slotEnd >= now) {
         upcomingSessions.push(slot);
       } else {
-        pastSessions.push({
+        allPastSessions.push({
           ...slot,
           isAttended: booking?.bookingStatus === "ATTENDED",
         });
       }
     }
+
+    const pastSessions = allPastSessions.filter((slot) => {
+      const slotStart = new Date(slot.startTime);
+      return slotStart >= weekStart && slotStart <= weekEnd;
+    });
 
     return {
       upcomingSessions: upcomingSessions.slice(skip, skip + safePageSize),
