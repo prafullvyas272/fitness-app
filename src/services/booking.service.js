@@ -99,13 +99,23 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
     throw new Error("customerId, trainerId, and timeSlotId are required");
   }
 
-  // Check if the time slot exists and is not already booked
-  const slot = await prisma.trainerTimeSlot.findUnique({
-    where: { 
-      id: timeSlotId,
-    }
-  });
-  console.log(slot)
+  const normalizedTimeSlotId = String(timeSlotId).trim();
+
+  // Primary lookup: trainer slot id.
+  // Fallback lookup: admin timeslot id mapped in trainerTimeSlot.timeSlotId.
+  const slot =
+    await prisma.trainerTimeSlot.findFirst({
+      where: {
+        trainerId,
+        id: normalizedTimeSlotId,
+      },
+    }) ||
+    await prisma.trainerTimeSlot.findFirst({
+      where: {
+        trainerId,
+        timeSlotId: normalizedTimeSlotId,
+      },
+    });
 
   if (!slot) {
     throw new Error("Time slot not found");
@@ -124,13 +134,13 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
         data: {
           customerId,
           trainerId,
-          timeSlotId,
-          originalTimeSlotId: timeSlotId,
+          timeSlotId: slot.id,
+          originalTimeSlotId: slot.id,
         }
       });
 
       await tx.trainerTimeSlot.update({
-        where: { id: timeSlotId },
+        where: { id: slot.id },
         data: { isBooked: true }
       });
 
