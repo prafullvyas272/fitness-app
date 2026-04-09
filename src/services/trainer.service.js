@@ -138,8 +138,9 @@ export const updateTrainer = async (trainerId, data) => {
   }
 
   if (!trainer) throw new Error("Trainer not found");
-  if (trainer.role.name !== "Trainer")
+  if (trainer.role.name !== "Trainer") {
     throw new Error("User is not a trainer");
+  }
 
   const {
     roleId,
@@ -149,30 +150,23 @@ export const updateTrainer = async (trainerId, data) => {
     bio,
     avatarUrl,
     avatar,
-    avatarPublicId,   // ✅ remove from safeData
+    avatarPublicId,
     ...safeData
   } = data;
-  console.log(data, avatarUrl, safeData)
+
+  const userUpdateData = Object.fromEntries(
+    Object.entries(safeData).filter(([, value]) => value !== undefined)
+  );
 
   const result = await prisma.$transaction(async (tx) => {
-    // ✅ Update User table only with valid fields
-    const updatedTrainer = await tx.user.update({
-      where: { id: trainerId },
-      data: safeData,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        isActive: true,
-        roleId: true,
-        createdAt: true,
-        userProfileDetails: true
-      },
-    });
+    // Allow avatar-only/profile-only updates without forcing a User table update.
+    if (Object.keys(userUpdateData).length > 0) {
+      await tx.user.update({
+        where: { id: trainerId },
+        data: userUpdateData,
+      });
+    }
 
-    // ✅ Handle profile fields separately
     const profileFields = {};
 
     if (hostGymName !== undefined) profileFields.hostGymName = hostGymName;
@@ -180,12 +174,12 @@ export const updateTrainer = async (trainerId, data) => {
     if (address !== undefined) profileFields.address = address;
     if (bio !== undefined) profileFields.bio = bio;
     if (avatarUrl !== undefined) profileFields.avatarUrl = avatarUrl;
-
+    if (avatarPublicId !== undefined) profileFields.avatarPublicId = avatarPublicId;
 
     if (Object.keys(profileFields).length > 0) {
       const existingProfile = await tx.userProfileDetail.findFirst({
         where: { userId: trainerId },
-        select: { id: true, userId: true }
+        select: { id: true }
       });
 
       if (existingProfile) {

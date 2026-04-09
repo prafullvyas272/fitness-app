@@ -8,15 +8,27 @@ import {
 } from "../services/trainer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
+const getAvatarFileFromRequest = (req) => {
+    if (req.file) return req.file;
+    if (!req.files) return null;
+    return (
+        req.files?.avatar?.[0] ||
+        req.files?.photo?.[0] ||
+        req.files?.trainerPhoto?.[0] ||
+        null
+    );
+};
+
 /**
  * Controller for creating a new trainer user.
  */
 export const createTrainerHandler = async (req, res) => {
     try {
         const trainerData = req.body;
+        const avatarFile = getAvatarFileFromRequest(req);
 
-        if (req.file) {
-            const uploadResult = await uploadToCloudinary(req.file.buffer, "trainer_avatars");
+        if (avatarFile) {
+            const uploadResult = await uploadToCloudinary(avatarFile.buffer, "trainer_avatars");
             trainerData.avatarUrl = uploadResult.secure_url;
             trainerData.avatarPublicId = uploadResult.public_id;
         }
@@ -49,9 +61,10 @@ export const updateTrainerHandler = async (req, res) => {
     try {
         const trainerId = req.params.id;
         const updateData = req.body;
+        const avatarFile = getAvatarFileFromRequest(req);
 
-        if (req.file) {
-            const uploadResult = await uploadToCloudinary(req.file.buffer, "trainer_avatars");
+        if (avatarFile) {
+            const uploadResult = await uploadToCloudinary(avatarFile.buffer, "trainer_avatars");
             updateData.avatarUrl = uploadResult.secure_url;
             updateData.avatarPublicId = uploadResult.public_id;
         }

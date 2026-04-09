@@ -97,7 +97,11 @@ router.post(
   "/api/trainers",
   authMiddleware,
   superadminMiddleware,
-  upload.single("avatar"),
+  upload.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "photo", maxCount: 1 },
+    { name: "trainerPhoto", maxCount: 1 },
+  ]),
   createTrainerHandler
 );
 
@@ -188,7 +192,11 @@ router.post(
 router.put(
   "/api/trainers/:id",
   authMiddleware,
-  upload.single("avatar"),
+  upload.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "photo", maxCount: 1 },
+    { name: "trainerPhoto", maxCount: 1 },
+  ]),
   updateTrainerHandler
 );
 
