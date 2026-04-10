@@ -208,31 +208,36 @@ export const updateCustomer = async (customerId, data) => {
 export const deleteCustomer = async (customerId) => {
   if (!customerId) throw new Error("Customer ID is required");
 
-  // Ensure user exists and is a customer
   const customer = await prisma.user.findUnique({
     where: { id: customerId },
     select: { id: true, role: { select: { name: true } } }
   });
-  if (!customer) {
-    throw new Error("Customer not found");
-  }
-  if (customer.role.name !== "Customer") {
-    throw new Error("User is not a customer");
-  }
+  if (!customer) throw new Error("Customer not found");
+  if (customer.role.name !== "Customer") throw new Error("User is not a customer");
 
-  // Delete the customer user
-  const deletedCustomer = await prisma.user.delete({
-    where: { id: customerId },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      phone: true,
-      isActive: true,
-      roleId: true,
-      createdAt: true,
-    },
+  const deletedCustomer = await prisma.$transaction(async (tx) => {
+    // Delete related records first
+    await tx.userDevice.deleteMany({ where: { userId: customerId } });
+    await tx.assignedCustomer.deleteMany({ where: { customerId: customerId } });
+    await tx.userProfileDetail.deleteMany({ where: { userId: customerId } });
+    await tx.trainerRequest.deleteMany({ where: { customerId: customerId } });
+
+    // Now safe to delete
+    return await tx.user.delete({
+      where: { id: customerId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        isActive: true,
+        roleId: true,
+        createdAt: true,
+      },
+    });
+  }, {
+    timeout: 15000  // 15 seconds timeout
   });
 
   return deletedCustomer;
