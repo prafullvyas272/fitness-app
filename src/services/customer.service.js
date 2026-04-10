@@ -217,10 +217,11 @@ export const deleteCustomer = async (customerId) => {
 
   const deletedCustomer = await prisma.$transaction(async (tx) => {
     // Delete related records first
-    await tx.userDevice.deleteMany({ where: { userId: customerId } });
-    await tx.assignedCustomer.deleteMany({ where: { customerId: customerId } });
-    await tx.userProfileDetail.deleteMany({ where: { userId: customerId } });
-    await tx.trainerRequest.deleteMany({ where: { customerId: customerId } });
+await tx.userDevice.deleteMany({ where: { userId: customerId } });
+await tx.assignedCustomer.deleteMany({ where: { customerId: customerId } });
+await tx.userProfileDetail.deleteMany({ where: { userId: customerId } });
+await tx.trainerRequest.deleteMany({ where: { customerId: customerId } });
+await tx.chatConversation.deleteMany({ where: { customerId: customerId } }); // 👈 add this
 
     // Now safe to delete
     return await tx.user.delete({
