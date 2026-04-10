@@ -163,7 +163,8 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
                 where: { id: slot.timeSlotId },
                 data: {
                     startTime,
-                    endTime
+                    endTime,
+                    durationMinutes,
                 },
             });
         }
@@ -186,8 +187,22 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
         }
     }
 
-    // 6. Update totalDayMinutes field in dailyDoc with sum of slot durations
-    const totalDayMinutes = slots.reduce((sum, slot) => sum + slot.durationMinutes, 0);
+    // 6. Update totalDayMinutes using all slots for the day (PEAK + ALTERNATIVE)
+    const allDaySlots = await prisma.trainerTimeSlot.findMany({
+        where: {
+            dailyAvailabilityId: dailyDoc.id,
+            trainerId: userId,
+            date: new Date(date),
+        },
+        select: {
+            durationMinutes: true,
+        },
+    });
+
+    const totalDayMinutes = allDaySlots.reduce(
+        (sum, slot) => sum + (slot.durationMinutes || 0),
+        0
+    );
 
     dailyDoc = await prisma.trainerDailyAvailability.update({
         where: { id: dailyDoc.id },
