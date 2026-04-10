@@ -1,6 +1,61 @@
 import prisma from "../utils/prisma.js";
 import { getWeekStartAndEndDates, getMonthStartAndEndDates } from "../utils/date.js";
 
+const IST_OFFSET_MINUTES = 330; // Asia/Kolkata (+05:30)
+
+const parseYyyyMmDd = (dateStr) => {
+    const [yearStr, monthStr, dayStr] = String(dateStr).split("-");
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+
+    if (
+        !Number.isInteger(year) ||
+        !Number.isInteger(month) ||
+        !Number.isInteger(day) ||
+        month < 1 ||
+        month > 12 ||
+        day < 1 ||
+        day > 31
+    ) {
+        throw new Error("Invalid date format. Use YYYY-MM-DD.");
+    }
+
+    return { year, month, day };
+};
+
+const getUtcDateTimeForIstDateAndTime = (dateStr, hhmm) => {
+    const { year, month, day } = parseYyyyMmDd(dateStr);
+    const [hourStr, minuteStr] = String(hhmm).split(":");
+    const hour = Number(hourStr);
+    const minute = Number(minuteStr);
+
+    if (
+        !Number.isInteger(hour) ||
+        !Number.isInteger(minute) ||
+        hour < 0 ||
+        hour > 23 ||
+        minute < 0 ||
+        minute > 59
+    ) {
+        throw new Error("Invalid time format. Use HH:mm.");
+    }
+
+    const utcMs =
+        Date.UTC(year, month - 1, day, hour, minute, 0, 0) -
+        IST_OFFSET_MINUTES * 60 * 1000;
+
+    return new Date(utcMs);
+};
+
+const formatIstHhmm = (dateObj) => {
+    const istMs = new Date(dateObj).getTime() + IST_OFFSET_MINUTES * 60 * 1000;
+    const istDate = new Date(istMs);
+    const hh = String(istDate.getUTCHours()).padStart(2, "0");
+    const mm = String(istDate.getUTCMinutes()).padStart(2, "0");
+    return `${hh}:${mm}`;
+};
+
 /**
  * Get user's daily availability
  */
@@ -32,8 +87,8 @@ export const getUserAvailabilityDataByDate = async (userId, date) => {
     const alternativeSlots = [];
 
     for (const slot of dailyAvailability.timeSlots) {
-        const start = slot.startTime.toISOString().substr(11, 5);
-        const end = slot.endTime.toISOString().substr(11, 5);
+        const start = formatIstHhmm(slot.startTime);
+        const end = formatIstHhmm(slot.endTime);
         const timeSlotId = slot.id;
 
         if (slot.slotType === "PEAK") {
@@ -60,15 +115,6 @@ export const getUserAvailabilityDataByDate = async (userId, date) => {
  * @returns {Promise<object>} The created or updated daily availability doc
  */
 export const setUserAvailabilityForDate = async (userId, availability) => {
-    // Helper: Parse input date as start of day in UTC (avoid timezone bug)
-    const makeDateAt = (dateStr, timeStr) => {
-        // dateStr: "2026-01-29", timeStr: "10:30"
-        const [hours, minutes] = timeStr.split(":").map(Number);
-        let d = new Date(dateStr);
-        d.setHours(hours, minutes, 0, 0);
-        return d;
-    };
-
     const { date, isAvailable, peakSlots = [], alternativeSlots = [] } = availability;
 
     const { weekStartDate, weekEndDate } = getWeekStartAndEndDates(date);
@@ -85,8 +131,8 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
     const slots = [];
 
     for (const slot of peakSlots) {
-        const startTime = makeDateAt(date, slot.start);
-        const endTime = makeDateAt(date, slot.end);
+        const startTime = getUtcDateTimeForIstDateAndTime(date, slot.start);
+        const endTime = getUtcDateTimeForIstDateAndTime(date, slot.end);
         const durationMinutes = Math.round((endTime - startTime) / 60000);
         slots.push({
             dailyAvailabilityId: dailyDoc.id,
@@ -134,8 +180,8 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
     }
 
     for (const slot of alternativeSlots) {
-        const startTime = makeDateAt(date, slot.start);
-        const endTime = makeDateAt(date, slot.end);
+        const startTime = getUtcDateTimeForIstDateAndTime(date, slot.start);
+        const endTime = getUtcDateTimeForIstDateAndTime(date, slot.end);
         const durationMinutes = Math.round((endTime - startTime) / 60000);
 
         if (!slot?.timeSlotId) {

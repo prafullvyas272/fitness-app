@@ -228,31 +228,34 @@ export const updateTrainer = async (trainerId, data) => {
 export const deleteTrainer = async (trainerId) => {
   if (!trainerId) throw new Error("Trainer ID is required");
 
-  // Ensure user exists and is a trainer
   const trainer = await prisma.user.findUnique({
     where: { id: trainerId },
     select: { id: true, role: { select: { name: true } } }
   });
-  if (!trainer) {
-    throw new Error("Trainer not found");
-  }
-  if (trainer.role.name !== "Trainer") {
-    throw new Error("User is not a trainer");
-  }
+  if (!trainer) throw new Error("Trainer not found");
+  if (trainer.role.name !== "Trainer") throw new Error("User is not a trainer");
 
-  // Delete the trainer user
-  const deletedTrainer = await prisma.user.delete({
-    where: { id: trainerId },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      phone: true,
-      isActive: true,
-      roleId: true,
-      createdAt: true,
-    },
+  const deletedTrainer = await prisma.$transaction(async (tx) => {
+    // Delete related records first
+    await tx.userDevice.deleteMany({ where: { userId: trainerId } });
+    await tx.assignedCustomer.deleteMany({ where: { trainerId: trainerId } });
+    await tx.userProfileDetail.deleteMany({ where: { userId: trainerId } });
+    await tx.userSpeciality.deleteMany({ where: { userId: trainerId } });
+
+    // Now safe to delete the user
+    return await tx.user.delete({
+      where: { id: trainerId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        isActive: true,
+        roleId: true,
+        createdAt: true,
+      },
+    });
   });
 
   return deletedTrainer;
