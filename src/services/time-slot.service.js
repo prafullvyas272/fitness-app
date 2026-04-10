@@ -395,19 +395,28 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       }),
     ]);
 
+    const trainerSlotByAdminTimeSlotId = new Map();
+    trainerSlots.forEach((slot) => {
+      if (slot.timeSlotId && !trainerSlotByAdminTimeSlotId.has(slot.timeSlotId)) {
+        trainerSlotByAdminTimeSlotId.set(slot.timeSlotId, slot);
+      }
+    });
+
     // TrainerTimeSlot records linked to a TimeSlot are admin-derived copies/links.
     // Only standalone TrainerTimeSlot records are trainer-created slots.
     const trainerCreatedSlots = trainerSlots.filter((slot) => !slot.timeSlotId);
 
     const formattedTrainerSlots = trainerCreatedSlots.map((slot) => ({
       ...slot,
+      isBooked: Boolean(slot.isBooked),
       source: "TRAINER",
     }));
 
     const formattedAdminSlots = adminSlots.map((slot) => ({
-        ...slot,
-        source: "ADMIN",
-      }));
+      ...slot,
+      isBooked: Boolean(trainerSlotByAdminTimeSlotId.get(slot.id)?.isBooked),
+      source: "ADMIN",
+    }));
 
     const filteredSlots = [...formattedTrainerSlots, ...formattedAdminSlots].sort(
       (a, b) => new Date(a.startTime) - new Date(b.startTime)
