@@ -205,6 +205,7 @@ export const updateCustomer = async (customerId, data) => {
  * @param {string} customerId - The ID of the customer to delete.
  * @returns {object} The deleted customer user.
  */
+
 export const deleteCustomer = async (customerId) => {
   if (!customerId) throw new Error("Customer ID is required");
 
@@ -216,14 +217,36 @@ export const deleteCustomer = async (customerId) => {
   if (customer.role.name !== "Customer") throw new Error("User is not a customer");
 
   const deletedCustomer = await prisma.$transaction(async (tx) => {
-    // Delete related records first
-await tx.userDevice.deleteMany({ where: { userId: customerId } });
-await tx.assignedCustomer.deleteMany({ where: { customerId: customerId } });
-await tx.userProfileDetail.deleteMany({ where: { userId: customerId } });
-await tx.trainerRequest.deleteMany({ where: { customerId: customerId } });
-await tx.chatConversation.deleteMany({ where: { customerId: customerId } }); // 👈 add this
+    // Get all conversations to delete messages first
+    const conversations = await tx.chatConversation.findMany({
+      where: { customerId },
+      select: { conversationId: true }
+    });
+    const conversationIds = conversations.map((c) => c.conversationId);
 
-    // Now safe to delete
+    // Delete chat messages first (before conversations)
+    if (conversationIds.length > 0) {
+      await tx.chatMessage.deleteMany({
+        where: { conversationId: { in: conversationIds } }
+      });
+    }
+
+    // Delete all related records
+    await tx.chatConversation.deleteMany({ where: { customerId } });
+    await tx.chatMessage.deleteMany({ where: { senderId: customerId } });
+    await tx.chatMessage.deleteMany({ where: { receiverId: customerId } });
+    await tx.trainerRequest.deleteMany({ where: { customerId } });
+    await tx.assignedCustomer.deleteMany({ where: { customerId } });
+    await tx.trainerBooking.deleteMany({ where: { customerId } });
+    await tx.userDevice.deleteMany({ where: { userId: customerId } });
+    await tx.userProfileDetail.deleteMany({ where: { userId: customerId } });
+    await tx.notification.deleteMany({ where: { userId: customerId } });
+    await tx.review.deleteMany({ where: { customerId } });
+    await tx.customerQuestionaire.deleteMany({ where: { clientId: customerId } });
+    await tx.trainerVideoAssignment.deleteMany({ where: { clientId: customerId } });
+    await tx.journalEntry.deleteMany({ where: { userId: customerId } });
+
+    // Now delete the user
     return await tx.user.delete({
       where: { id: customerId },
       select: {
@@ -238,11 +261,12 @@ await tx.chatConversation.deleteMany({ where: { customerId: customerId } }); // 
       },
     });
   }, {
-    timeout: 15000  // 15 seconds timeout
+    timeout: 15000
   });
 
   return deletedCustomer;
 };
+
 
 /**
  * Get the profile data for a specific Customer.
