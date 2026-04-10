@@ -294,6 +294,16 @@ router.post(
  *         schema:
  *           type: string
  *         description: Booking ID to cancel
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               remarks:
+ *                 type: string
+ *                 example: Cancelled by trainer due to emergency
  *     responses:
  *       200:
  *         description: Booking cancelled successfully

@@ -187,9 +187,10 @@ export const markAsAttended = async (bookingId, bookingStatus) => {
 /**
  * Cancel a booking by its ID.
  * @param {string} bookingId - The booking ID to cancel.
+ * @param {string} [remarks] - Optional cancellation remarks.
  * @returns {Promise<object>} - The cancelled booking object.
  */
-export const cancelBookingById = async (bookingId) => {
+export const cancelBookingById = async (bookingId, remarks) => {
   if (!bookingId) {
     throw new Error("bookingId is required");
   }
@@ -207,11 +208,17 @@ export const cancelBookingById = async (bookingId) => {
   }
 
   try {
+    const normalizedRemarks =
+      typeof remarks === "string" ? remarks.trim() : undefined;
+
     const updatedBooking = await prisma.$transaction(async (tx) => {
       // Mark booking as cancelled
       const cancelledBooking = await tx.trainerBooking.update({
         where: { id: bookingId },
-        data: { isCancelled: true }
+        data: {
+          isCancelled: true,
+          ...(normalizedRemarks !== undefined ? { remarks: normalizedRemarks } : {}),
+        }
       });
 
       // Mark timeslot as available

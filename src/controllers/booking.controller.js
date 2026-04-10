@@ -140,6 +140,7 @@ export const markAsAttendedHandler = async (req, res) => {
 export const cancelBookingByIdHandler = async (req, res) => {
   try {
     const { bookingId } = req.params;
+    const { remarks } = req.body || {};
 
     if (!bookingId) {
       return res.status(400).json({
@@ -148,7 +149,7 @@ export const cancelBookingByIdHandler = async (req, res) => {
       });
     }
 
-    const cancelledBooking = await cancelBookingById(bookingId);
+    const cancelledBooking = await cancelBookingById(bookingId, remarks);
 
     res.status(200).json({
       success: true,

@@ -221,6 +221,7 @@ model TrainerBooking {
   trainerId             String   @db.ObjectId
   timeSlotId            String   @db.ObjectId
   isCancelled           Boolean  @default(false)
+  remarks               String?
   bookingStatus         BookingStatus @default(PENDING)
 
   personalTrainingSession String?
