@@ -256,7 +256,10 @@ export const deleteTrainer = async (trainerId) => {
         createdAt: true,
       },
     });
-  });
+  }, {
+    timeout: 15000 
+  }
+);
 
   return deletedTrainer;
 };
