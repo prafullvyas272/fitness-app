@@ -12,6 +12,8 @@ import { TEMPORARY_SUPER_OTP } from "../constants/constants.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 const OTP_EXPIRY_MINUTES = 5;
+const USE_TEMPORARY_OTP =
+  String(process.env.USE_TEMPORARY_OTP).toLowerCase() === "true";
 
 
 export const registerUser = async (
@@ -189,7 +191,9 @@ const generateOtp = () =>
 
 /* SEND OTP */
 export const sendOtp = async (userId) => {
-  const code = generateOtp();
+  const code = USE_TEMPORARY_OTP
+    ? String(TEMPORARY_SUPER_OTP)
+    : generateOtp();
 
   // invalidate previous OTPs
   await prisma.otp.updateMany({
@@ -208,7 +212,18 @@ export const sendOtp = async (userId) => {
   // Send OTP to user's email
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (user && user.email) {
-    await sendOtpEmail(user.email, code);
+    try {
+      await sendOtpEmail(user.email, code);
+    } catch (err) {
+      if (USE_TEMPORARY_OTP) {
+        console.warn(
+          "sendOtpEmail failed in temporary OTP mode. Continuing without email delivery:",
+          err.message
+        );
+      } else {
+        throw err;
+      }
+    }
   } else {
     console.log("OTP (no email found):", code);
   }
