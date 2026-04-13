@@ -19,6 +19,7 @@ export const getAllTrainersHandler = async (req, res) => {
 
                 plan: plan
                 ? {
+                    id: plan.id,
                     name: plan.name,
                     price: plan.price,
                     }
