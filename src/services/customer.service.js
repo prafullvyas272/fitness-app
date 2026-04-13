@@ -389,3 +389,44 @@ export const applyForUPT = async (data) => {
     throw error;
   }
 };
+
+/**
+ * Get the assigned trainer and trainer plan for the authenticated customer.
+ * @param {string} customerId
+ * @returns {object}
+ */
+export const getTrainerPlanForCustomer = async (customerId) => {
+  if (!customerId) throw new Error("customerId is required");
+
+  const assignment = await prisma.assignedCustomer.findFirst({
+    where: {
+      customerId,
+      isActive: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      trainerId: true,
+      startDate: true,
+      endDate: true,
+      trainer: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          plan: true,
+        },
+      },
+    },
+  });
+
+  if (!assignment) {
+    throw new Error("No active trainer assigned to this customer.");
+  }
+
+  return assignment;
+};

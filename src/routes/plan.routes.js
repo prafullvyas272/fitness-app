@@ -5,6 +5,7 @@ import {
   deletePlanHandler,
   listAllPlansHandler,
   getPlanByIdHandler,
+  assignPlanToTrainer,
 } from "../controllers/plan.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -315,4 +316,6 @@ router.get(
   getPlanByIdHandler
 );
 
+
+router.put("/admin-assign-plan", assignPlanToTrainer);
 export default router;

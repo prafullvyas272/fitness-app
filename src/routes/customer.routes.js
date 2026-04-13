@@ -5,6 +5,7 @@ import {
   deleteCustomerHandler,
   showCustomerProfileDataHandler,
   applyForUPTHandler,
+  getTrainerPlanForCustomer,
 } from "../controllers/customer.controller.js";
 import {
   customerForgotPasswordHandler,
@@ -491,5 +492,8 @@ router.post(
   "/api/customer/reset-password",
   customerResetPasswordHandler
 );
+
+// router.get("/customer-trainer-plan", authMiddleware, getTrainerPlanForCustomer);
+router.get("/api/customer-trainer-plan", authMiddleware, getTrainerPlanForCustomer);
 
 export default router;

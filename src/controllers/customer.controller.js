@@ -4,6 +4,7 @@ import {
     deleteCustomer,
     showCustomerProfileData,
     applyForUPT,
+    getTrainerPlanForCustomer as getTrainerPlanForCustomerService,
 } from "../services/customer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
@@ -143,6 +144,27 @@ export const applyForUPTHandler = async (req, res) => {
         res.status(400).json({
             success: false,
             message: err.message
+        });
+    }
+};
+
+/**
+ * Controller to get assigned trainer and trainer plan for logged-in customer.
+ */
+export const getTrainerPlanForCustomer = async (req, res) => {
+    try {
+        const customerId = req.user?.userId;
+        const data = await getTrainerPlanForCustomerService(customerId);
+
+        res.status(200).json({
+            success: true,
+            message: "Trainer plan fetched successfully.",
+            data,
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message,
         });
     }
 };

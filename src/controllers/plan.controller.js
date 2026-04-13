@@ -1,3 +1,4 @@
+import { includes } from "zod";
 import {
   createPlan,
   updatePlan,
@@ -150,6 +151,41 @@ export const getPlanByIdHandler = async (req, res) => {
     });
   } catch (err) {
     res.status(404).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+
+export const assignPlanToTrainer = async (req, res) => {
+  try {
+    const { trainerId, planId } = req.body;
+
+    if (!trainerId || !planId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields: trainerId or planId",
+      });
+    }
+
+    const updatedTrainer = await prisma.user.update({
+      where: { id: trainerId },
+      data: {
+        planId: planId,
+      },
+      include: {
+        plan: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Plan assigned to trainer successfully",
+      data: updatedTrainer,
+    });
+  } catch (err) {
+    res.status(400).json({
       success: false,
       message: err.message,
     });

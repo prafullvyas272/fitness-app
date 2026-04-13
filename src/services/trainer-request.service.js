@@ -50,12 +50,29 @@ export const updateTrainerRequestStatus = async ({ requestId, status }) => {
     // If approved, create an AssignedCustomer entry
     let assignedCustomer = null;
     if (status === "APPROVED") {
+
+      //step1
+      const trainer = await prisma.user.findUnique({
+        where: { id: trainerRequest.trainerId },
+        select: { planId: true }
+      });
+      if (!trainer) {
+        throw new Error("Trainer not found.");
+      }
+
+      if (!trainer.planId) {
+        console.log("Trainer plan not assigned");
+        // Optionally, you can choose to reject the request if the trainer doesn't have a plan assigned
+        // throw new Error("Trainer does not have a plan assigned. Cannot approve request.");
+      }
       // Check for existing assignment to avoid duplicates
       const existingAssignment = await prisma.assignedCustomer.findUnique({
         where: {
           customerId_trainerId: {
             customerId: trainerRequest.customerId,
             trainerId: trainerRequest.trainerId,
+            isActive: true,
+            startDate: new Date(),
           },
         },
       });

@@ -38,6 +38,9 @@ model User {
 
   assignedWorkoutRelations WorkoutTrainerAssignment[]
 
+  planId String? @db.ObjectId
+  plan   Plan?   @relation("TrainerPlan", fields: [planId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
   phone      String?
   password   String?
   provider   String   @default("LOCAL")
@@ -346,6 +349,7 @@ model Plan {
   createdBy  String   @db.ObjectId
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  assignedTrainers User[] @relation("TrainerPlan")
 
   creator    User     @relation("UserPlans", fields: [createdBy], references: [id])
 }
