@@ -6,6 +6,7 @@ import {
   listAllPlans,
   getPlanById,
 } from "../services/plan.service.js";
+import prisma from "../utils/prisma.js";
 
 /**
  * Controller to create a new plan.
