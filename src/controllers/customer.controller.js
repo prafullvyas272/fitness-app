@@ -185,3 +185,114 @@ export const getTrainerPlanForCustomer = async (req, res) => {
     });
 }
 };
+
+export const buyPlan = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { planId } = req.body;
+
+    if (!planId) {
+      return res.status(400).json({
+        success: false,
+        message: "planId is required"
+      });
+    }
+
+    // 🔥 Check if already active subscription
+    const existing = await prisma.subscription.findFirst({
+      where: {
+        userId,
+        status: "ACTIVE"
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "You already have an active plan"
+      });
+    }
+
+    // 🔥 Create subscription
+    const subscription = await prisma.subscription.create({
+      data: {
+        userId,
+        planId,
+        status: "ACTIVE"
+      },
+      include: {
+        plan: true
+      }
+    });
+
+    // 🔥 Mark user premium
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isPremiumMember: true
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Plan purchased successfully",
+      data: subscription
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+export const cancelPlan = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // 🔥 Find active subscription
+    const subscription = await prisma.subscription.findFirst({
+      where: {
+        userId,
+        status: "ACTIVE"
+      }
+    });
+
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        message: "No active subscription found"
+      });
+    }
+
+    // 🔥 Cancel it
+    const updated = await prisma.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        status: "CANCELLED",
+        endDate: new Date()
+      }
+    });
+
+    // 🔥 Remove premium access
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isPremiumMember: false
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Plan cancelled successfully",
+      data: updated
+    });
+
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};

@@ -6,6 +6,8 @@ import {
   showCustomerProfileDataHandler,
   applyForUPTHandler,
   getTrainerPlanForCustomer,
+  buyPlan,
+  cancelPlan,
 } from "../controllers/customer.controller.js";
 import {
   customerForgotPasswordHandler,
@@ -495,5 +497,8 @@ router.post(
 
 // router.get("/customer-trainer-plan", authMiddleware, getTrainerPlanForCustomer);
 router.get("/api/customer-trainer-plan", authMiddleware, getTrainerPlanForCustomer);
+
+router.post("/api/customer/buy-plan", authMiddleware, buyPlan);
+router.post("/api/customer/cancel-plan", authMiddleware, cancelPlan);
 
 export default router;

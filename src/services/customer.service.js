@@ -285,6 +285,7 @@ export const showCustomerProfileData = async (customerId) => {
       email: true,
       phone: true,
       isActive: true,
+      isPremiumMember: true,
       roleId: true,
       gender: true,
       createdAt: true,
@@ -307,6 +308,32 @@ export const showCustomerProfileData = async (customerId) => {
         }
       },
       userProfileDetails: true,
+      subscriptions: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 1,
+        select: {
+          id: true,
+          planId: true,
+          status: true,
+          startDate: true,
+          endDate: true,
+          createdAt: true,
+          updatedAt: true,
+          plan: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              features: true,
+              isPopular: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      },
     }
   });
 
@@ -314,9 +341,11 @@ export const showCustomerProfileData = async (customerId) => {
     throw new Error("Customer not found");
   }
 
-  // Optionally, format goals array to flatten or format as needed
+  const latestSubscription = customer.subscriptions?.[0] || null;
+
   return {
     ...customer,
+    subscription: latestSubscription,
     goals: customer.goals ? customer.goals.map(g => ({
       id: g.id,
       text: g.text,
