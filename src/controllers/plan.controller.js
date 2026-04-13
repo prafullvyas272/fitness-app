@@ -162,32 +162,42 @@ export const assignPlanToTrainer = async (req, res) => {
   try {
     const { trainerIds, planId } = req.body;
 
-    if (!trainerIds || !planId) {
+    if (!trainerIds || !Array.isArray(trainerIds) || trainerIds.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "trainerIds and planId required",
+        message: "trainerIds must be a non-empty array"
       });
     }
 
-    // 🔥 Update multiple trainers
-    await prisma.user.updateMany({
+    if (!planId) {
+      return res.status(400).json({
+        success: false,
+        message: "planId is required"
+      });
+    }
+
+    // 🔥 Update multiple trainers at once
+    const result = await prisma.user.updateMany({
       where: {
-        id: { in: trainerIds },
+        id: {
+          in: trainerIds
+        }
       },
       data: {
-        planId: planId,
-      },
+        planId: planId
+      }
     });
 
     res.status(200).json({
       success: true,
-      message: "Plan assigned to trainers successfully",
+      message: "Plan assigned to multiple trainers",
+      updatedCount: result.count
     });
 
   } catch (err) {
     res.status(400).json({
       success: false,
-      message: err.message,
+      message: err.message
     });
   }
 };
