@@ -4,7 +4,6 @@ import {
     deleteCustomer,
     showCustomerProfileData,
     applyForUPT,
-    getTrainerPlanForCustomer as getTrainerPlanForCustomerService,
 } from "../services/customer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
@@ -148,23 +147,40 @@ export const applyForUPTHandler = async (req, res) => {
     }
 };
 
-/**
- * Controller to get assigned trainer and trainer plan for logged-in customer.
- */
 export const getTrainerPlanForCustomer = async (req, res) => {
     try {
-        const customerId = req.user?.userId;
-        const data = await getTrainerPlanForCustomerService(customerId);
+        const customerId = req.user.userId;
+
+        const assigned = await prisma.assignedCustomer.findFirst({
+            where: {
+                customerId,
+                isActive: true,
+            },
+            include: {
+                trainer: {
+                    include: {
+                        plan: true,
+                    },
+                },
+            },
+        });
+
+        if (!assigned) {
+            return res.status(404).json({
+                success: false,
+                message: "No active trainer assignment found for this customer.",
+            });
+        }
 
         res.status(200).json({
             success: true,
-            message: "Trainer plan fetched successfully.",
-            data,
-        });
-    } catch (err) {
-        res.status(400).json({
-            success: false,
-            message: err.message,
+            data: assigned.trainer.plan,
         });
     }
+        catch (err) {
+    res.status(400).json({
+        success: false,
+        message: err.message,
+    });
+}
 };

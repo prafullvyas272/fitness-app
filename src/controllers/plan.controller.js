@@ -160,30 +160,30 @@ export const getPlanByIdHandler = async (req, res) => {
 
 export const assignPlanToTrainer = async (req, res) => {
   try {
-    const { trainerId, planId } = req.body;
+    const { trainerIds, planId } = req.body;
 
-    if (!trainerId || !planId) {
+    if (!trainerIds || !planId) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: trainerId or planId",
+        message: "trainerIds and planId required",
       });
     }
 
-    const updatedTrainer = await prisma.user.update({
-      where: { id: trainerId },
+    // 🔥 Update multiple trainers
+    await prisma.user.updateMany({
+      where: {
+        id: { in: trainerIds },
+      },
       data: {
         planId: planId,
-      },
-      include: {
-        plan: true,
       },
     });
 
     res.status(200).json({
       success: true,
-      message: "Plan assigned to trainer successfully",
-      data: updatedTrainer,
+      message: "Plan assigned to trainers successfully",
     });
+
   } catch (err) {
     res.status(400).json({
       success: false,
