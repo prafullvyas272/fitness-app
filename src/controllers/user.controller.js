@@ -12,10 +12,17 @@ export const getAllTrainersHandler = async (req, res) => {
         
         console.log(trainers)
         const formattedTrainers = trainers.map(
-            ({ assignedCustomersAsTrainer, userProfileDetails, ...trainer }) => ({
+            ({ assignedCustomersAsTrainer, userProfileDetails, plan, ...trainer }) => ({
                 ...trainer,
                 assignedCustomers: assignedCustomersAsTrainer,
-                userProfileDetails: Array.isArray(userProfileDetails) && userProfileDetails.length > 0 ? userProfileDetails[0] : null
+                userProfileDetails: Array.isArray(userProfileDetails) && userProfileDetails.length > 0 ? userProfileDetails[0] : null,
+
+                plan: plan
+                ? {
+                    name: plan.name,
+                    price: plan.price,
+                    }
+                : null
             })
         );
         res.status(200).json({
