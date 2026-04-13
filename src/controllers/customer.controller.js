@@ -6,6 +6,7 @@ import {
     applyForUPT,
 } from "../services/customer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
+import prisma from "../utils/prisma.js";
 
 /**
  * Controller for creating a new customer user.
