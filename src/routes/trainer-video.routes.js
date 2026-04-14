@@ -20,6 +20,7 @@ const router = express.Router();
  *           example:
  *             title: Chest Workout
  *             description: Do daily
+ *             type: link
  *             tags: chest,fitness
  *             videoLink: https://www.youtube.com/watch?v=abc123
  *             clientIds: ["clientId1"]

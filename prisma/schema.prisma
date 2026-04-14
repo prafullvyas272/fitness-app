@@ -312,11 +312,17 @@ model WorkoutVideo {
   assignments  WorkoutTrainerAssignment[]
 }
 
+enum TrainerVideoType {
+  LINK
+  VIDEO
+}
+
 model TrainerVideo {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
   tags        String[]
+  type        TrainerVideoType @default(LINK)
 
   videoLink   String
   thumbnail   String

@@ -9,11 +9,19 @@ import { getYoutubeThumbnail } from "../utils/youtube.js";
 
 export const addTrainerVideoHandler = async (req, res) => {
   try {
-    const { title, description, tags, videoLink } = req.body;
+    const { title, description, tags, videoLink, type } = req.body;
+    const normalizedType = String(type || "link").trim().toUpperCase();
+    const allowedTypes = ["LINK", "VIDEO"];
 
     if (!title || !videoLink) {
       return res.status(400).json({
         message: "Title and videoLink are required",
+      });
+    }
+
+    if (!allowedTypes.includes(normalizedType)) {
+      return res.status(400).json({
+        message: "type must be either 'link' or 'video'",
       });
     }
 
@@ -31,6 +39,7 @@ export const addTrainerVideoHandler = async (req, res) => {
       title,
       description,
       tags: parsedTags,
+      type: normalizedType,
       videoLink,
       thumbnail,
       trainerId: req.user.userId,
