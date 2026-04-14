@@ -1,7 +1,7 @@
 import prisma from "../utils/prisma.js";
 
 export const createOrUpdateWeightGoal = async (userId, data) => {
-  const { goal, reminder } = data;
+  const { goal, reminder, notify } = data;  // ✅ added notify
 
   const existing = await prisma.weightGoal.findUnique({
     where: { userId },
@@ -10,7 +10,7 @@ export const createOrUpdateWeightGoal = async (userId, data) => {
   if (existing) {
     return await prisma.weightGoal.update({
       where: { userId },
-      data: { goal, reminder },
+      data: { goal, reminder, notify },  // ✅ added notify
     });
   }
 
@@ -19,7 +19,24 @@ export const createOrUpdateWeightGoal = async (userId, data) => {
       userId,
       goal,
       reminder,
+      notify,  // ✅ added notify
     },
+  });
+};
+
+// ✅ PATCH — partial update
+export const patchWeightGoal = async (userId, updates) => {
+  const existing = await prisma.weightGoal.findUnique({
+    where: { userId },
+  });
+
+  if (!existing) {
+    throw new Error("Weight goal not found. Please create one first.");
+  }
+
+  return await prisma.weightGoal.update({
+    where: { userId },
+    data: updates,
   });
 };
 
@@ -29,15 +46,9 @@ export const checkWeightGoal = async (userId, currentWeight) => {
   });
 
   if (!goalData) return null;
-
-  if (currentWeight <= goalData.goal) {
-    return true; // Goal achieved
-  }
-
-  return false; // Goal not yet achieved
+  return currentWeight <= goalData.goal;
 };
 
-// ✅ Add weight entry
 export const addWeightEntry = async (userId, weight) => {
   return await prisma.weightEntry.create({
     data: {
@@ -48,7 +59,6 @@ export const addWeightEntry = async (userId, weight) => {
   });
 };
 
-// ✅ Get latest weight (current weight)
 export const getCurrentWeight = async (userId) => {
   const entry = await prisma.weightEntry.findFirst({
     where: { userId },
@@ -58,9 +68,78 @@ export const getCurrentWeight = async (userId) => {
   return entry?.weight || null;
 };
 
-// ✅ Get goal (already exists but keeping clean)
 export const getWeightGoal = async (userId) => {
   return await prisma.weightGoal.findUnique({
     where: { userId },
   });
+};
+
+// ✅ Last 7 days chart + best day + average
+export const getLast7DaysWeightProgress = async (userId) => {
+  const today = new Date();
+
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() - (6 - i));
+    return date;
+  });
+
+  const start = new Date(last7Days[0]);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(last7Days[6]);
+  end.setHours(23, 59, 59, 999);
+
+  const entries = await prisma.weightEntry.findMany({
+    where: {
+      userId,
+      date: {
+        gte: start,
+        lte: end,
+      },
+    },
+    orderBy: { date: "asc" },
+  });
+
+  // Group by date — take latest entry per day (most recent log)
+  const weightByDate = {};
+  for (const entry of entries) {
+    const key = entry.date.toISOString().split("T")[0];
+    weightByDate[key] = entry.weight; // latest overwrites earlier same-day
+  }
+
+  // Build chart data
+  const chartData = last7Days.map((date) => {
+    const key = date.toISOString().split("T")[0];
+    const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
+    return {
+      day: dayName,
+      date: key,
+      weight: weightByDate[key] || null, // null = no entry that day
+    };
+  });
+
+  // Best day = lowest weight logged (closest to goal)
+  const daysWithData = chartData.filter((d) => d.weight !== null);
+
+  const bestDay = daysWithData.length > 0
+    ? daysWithData.reduce((best, cur) => cur.weight < best.weight ? cur : best)
+    : null;
+
+  // Average = sum of logged weights / number of logged days
+  const average = daysWithData.length > 0
+    ? Math.round(
+        (daysWithData.reduce((sum, d) => sum + d.weight, 0) / daysWithData.length)
+        * 10
+      ) / 10  // round to 1 decimal e.g 72.4
+    : null;
+
+  return {
+    chartData,
+    bestDay: bestDay
+      ? { weight: bestDay.weight, day: bestDay.day, date: bestDay.date }
+      : null,
+    average,
+    totalEntriesDays: daysWithData.length,
+  };
 };

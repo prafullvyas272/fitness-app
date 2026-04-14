@@ -602,6 +602,7 @@ model WeightGoal {
   userId    String   @db.ObjectId
   goal      Float
   reminder  String
+  notify    Boolean  @default(true) 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
