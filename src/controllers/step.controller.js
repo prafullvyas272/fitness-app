@@ -10,15 +10,21 @@ import { createReminderNotification } from "../services/notification.service.js"
 export const saveStepGoal = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { goal, reminder } = req.body;
+    const { goal, reminder, notify } = req.body;  // ✅ added notify
+
+    // ✅ Validate required fields
+    if (!goal || goal <= 0) {
+      return res.status(400).json({ error: "Goal must be greater than 0" });
+    }
 
     const data = await createOrUpdateStepGoal(userId, {
       goal,
       reminder,
+      notify,  // ✅ passed to service
     });
 
-    // 🔔 create notification
-    if (reminder) {
+    // ✅ Only send notification if notify is explicitly true
+    if (notify === true && reminder) {
       await createReminderNotification({
         userId,
         title: "Steps Reminder",
@@ -35,9 +41,7 @@ export const saveStepGoal = async (req, res) => {
 export const getSteps = async (req, res) => {
   try {
     const userId = req.user.userId;
-
     const data = await getStepGoal(userId);
-
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -63,11 +67,14 @@ export const addUserSteps = async (req, res) => {
     if (goalData && totalSteps >= goalData.goal) {
       goalReached = true;
 
-      await createReminderNotification({
-        userId,
-        title: "Congratulations goal achieved!",
-        message: `You've reached your step goal for today!`,
-      });
+      // ✅ Respect notify flag when goal is reached too
+      if (goalData.notify !== false) {
+        await createReminderNotification({
+          userId,
+          title: "Congratulations goal achieved!",
+          message: `You've reached your step goal for today!`,
+        });
+      }
     }
 
     res.json({
@@ -90,10 +97,7 @@ export const getStepsProgress = async (req, res) => {
 
     const goal = goalData?.goal || 0;
     const remaining = goal - totalSteps > 0 ? goal - totalSteps : 0;
-
-    const percentage = goal > 0
-      ? Math.min((totalSteps / goal) * 100, 100)
-      : 0;
+    const percentage = goal > 0 ? Math.min((totalSteps / goal) * 100, 100) : 0;
 
     res.json({
       success: true,
@@ -103,7 +107,6 @@ export const getStepsProgress = async (req, res) => {
       percentage: Math.round(percentage),
       goalReached: totalSteps >= goal,
     });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

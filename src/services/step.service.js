@@ -2,7 +2,7 @@ import { da } from "zod/locales";
 import prisma from "../utils/prisma.js";
 
 export const createOrUpdateStepGoal = async (userId, data) => {
-  const { goal, reminder } = data;
+  const { goal, reminder, notify } = data;  // ✅ added notify
 
   const existing = await prisma.stepGoal.findUnique({
     where: { userId },
@@ -11,7 +11,7 @@ export const createOrUpdateStepGoal = async (userId, data) => {
   if (existing) {
     return await prisma.stepGoal.update({
       where: { userId },
-      data: { goal, reminder },
+      data: { goal, reminder, notify },  // ✅ added notify
     });
   }
 
@@ -20,6 +20,7 @@ export const createOrUpdateStepGoal = async (userId, data) => {
       userId,
       goal,
       reminder,
+      notify,  // ✅ added notify
     },
   });
 };
@@ -41,8 +42,6 @@ const getTodayRange = () => {
 
   return { start, end };
 };
-
-//add steps
 
 export const addSteps = async (userId, steps) => {
   return await prisma.stepEntry.create({
@@ -66,6 +65,5 @@ export const getTodaySteps = async (userId) => {
     },
   });
 
-  const totalSteps = entries.reduce((seum, e) => seum + e.steps, 0);
-  return totalSteps;
+  return entries.reduce((sum, e) => sum + e.steps, 0);  // ✅ fixed typo "seum" → "sum"
 };
