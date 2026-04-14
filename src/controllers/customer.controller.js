@@ -4,6 +4,7 @@ import {
     deleteCustomer,
     showCustomerProfileData,
     applyForUPT,
+    updateMyProfile,
 } from "../services/customer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import prisma from "../utils/prisma.js";
@@ -293,6 +294,54 @@ export const cancelPlan = async (req, res) => {
     res.status(400).json({
       success: false,
       message: err.message
+    });
+  }
+};
+
+// ... all existing controllers stay same ...
+
+/**
+ * Customer updates their OWN profile.
+ * ID comes from JWT token — not from params.
+ */
+export const updateMyProfileHandler = async (req, res) => {
+  try {
+    const customerId = req.user.userId;  // ✅ from token
+    const updateData = { ...req.body };
+
+    // ✅ Handle avatar upload
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(
+        req.file.buffer,
+        "customer_avatars"
+      );
+      updateData.avatarUrl = uploadResult.secure_url;
+      updateData.avatarPublicId = uploadResult.public_id;
+    }
+
+    const updatedCustomer = await updateMyProfile(customerId, updateData);
+
+    // ✅ Flatten userProfileDetails for clean response
+    let profileDetails = null;
+    if (
+      Array.isArray(updatedCustomer.userProfileDetails) &&
+      updatedCustomer.userProfileDetails.length > 0
+    ) {
+      profileDetails = updatedCustomer.userProfileDetails[0];
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully.",
+      data: {
+        ...updatedCustomer,
+        userProfileDetails: profileDetails,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
     });
   }
 };

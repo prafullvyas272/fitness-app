@@ -459,3 +459,26 @@ export const getTrainerPlanForCustomer = async (customerId) => {
 
   return assignment;
 };
+
+
+/**
+ * Customer updates their own profile.
+ * Reuses updateCustomer but strips sensitive fields before calling.
+ */
+export const updateMyProfile = async (userId, data) => {
+  // ✅ Strip all fields customer must NOT touch
+  const {
+    isActive,
+    isPremiumMember,
+    role,
+    roleId,
+    password,
+    provider,
+    providerId,
+    fcmToken,
+    phoneVerified,
+    ...safeData
+  } = data;
+
+  return await updateCustomer(userId, safeData);
+};

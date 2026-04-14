@@ -8,6 +8,7 @@ import {
   getTrainerPlanForCustomer,
   buyPlan,
   cancelPlan,
+  updateMyProfileHandler,
 } from "../controllers/customer.controller.js";
 import {
   customerForgotPasswordHandler,
@@ -500,5 +501,7 @@ router.get("/api/customer-trainer-plan", authMiddleware, getTrainerPlanForCustom
 
 router.post("/api/customer/buy-plan", authMiddleware, buyPlan);
 router.post("/api/customer/cancel-plan", authMiddleware, cancelPlan);
+
+router.patch("/api/customer/me", authMiddleware, upload.single("avatar"), updateMyProfileHandler); //update my profile 
 
 export default router;
