@@ -8,6 +8,8 @@ import {
   getLast7DaysWeightProgress,      // ✅
 } from "../services/weight.service.js";
 
+import prisma from "../utils/prisma.js";
+
 import { createReminderNotification } from "../services/notification.service.js";
 
 export const saveWeightGoal = async (req, res) => {
