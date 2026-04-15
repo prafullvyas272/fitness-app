@@ -201,11 +201,41 @@ export const getWeightProgress = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const data = await getLast7DaysWeightProgress(userId);
+    const latestWeight = await prisma.weightEntry.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const goalData = await prisma.weightGoal.findUnique({
+      where: { userId },
+    });
+
+    const current = latestWeight?.weight || 0;
+    const goal = goalData?.goal || 0;
+
+    let remaining = 0;
+    let percentage = 0;
+    let goalReached = false;
+
+    if (goal > 0) {
+      remaining = Math.max(current - goal, 0); // for weight loss
+
+      percentage = Math.min((current / goal) * 100, 100);
+
+      if (current <= goal) {
+        goalReached = true;
+        percentage = 100;
+        remaining = 0;
+      }
+    }
 
     res.json({
       success: true,
-      data,
+      goal,
+      current,
+      remaining,
+      percentage: Math.round(percentage),
+      goalReached,
     });
 
   } catch (error) {
