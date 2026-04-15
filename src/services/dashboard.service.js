@@ -43,6 +43,9 @@ export const getStepsDashboard = async (userId) => {
     steps: totalSteps,
     goal,
     percentage: Math.round(percentage),
+
+    notify: goalData?.notify || true, // include notify flag
+    reminder: goalData?.reminder || null, // include reminder time
   };
 };
 
@@ -57,9 +60,21 @@ export const getWeightDashboard = async (userId) => {
     where: { userId },
   });
 
+  const current = latestWeight?.weight || null;
+  const goal = goalData?.goal || null;
+
+  let percentage = 0;
+  if (current !== null && goal !== null && goal > 0) {
+    percentage = Math.min((current / goal) * 100, 100);
+  }
+
   return {
     current: latestWeight?.weight || null,
     goal: goalData?.goal || null,
+    percentage: Math.round(percentage),
+
+    notify: goalData?.notify || true, // include notify flag
+    reminder: goalData?.reminder || null, // include reminder time
   };
 };
 

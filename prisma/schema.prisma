@@ -607,7 +607,7 @@ model WeightGoal {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
   goal      Float
-  reminder  String
+  reminder  String?
   notify    Boolean  @default(true) 
 
   createdAt DateTime @default(now())
