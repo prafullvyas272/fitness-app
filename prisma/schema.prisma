@@ -592,7 +592,7 @@ model StepGoal {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
   goal      Int
-  reminder  String   // "20:00"
+  reminder String?   // ✅ make optional
   notify    Boolean  @default(true)
 
   createdAt DateTime @default(now())
