@@ -1,3 +1,4 @@
+import { DownscopedClient } from "google-auth-library";
 import prisma from "../utils/prisma.js";
 
 export const createOrUpdateWeightGoal = async (userId, data) => {
@@ -134,6 +135,33 @@ export const getLast7DaysWeightProgress = async (userId) => {
       ) / 10  // round to 1 decimal e.g 72.4
     : null;
 
+
+    //new goal
+    const goalData = await prisma.weightGoal.findUnique({
+      where: { userId },
+    });
+
+    const goal = goalData?.goal || null;
+
+    //new progress
+    let progresspercentage = 0;
+
+    if (goal && daysWithData.length > 0) {
+      const latest = daysWithData[daysWithData.length - 1].weight;
+      progresspercentage = Math.min((latest / goal) * 100, 100);
+    }
+
+    //trend
+    let trend = "stable";
+    if (daysWithData.length > 2) {
+      const first = daysWithData[0].weight;
+      const last = daysWithData[daysWithData.length-1].weight;
+
+      if (last < first) trend = "down";
+      else if (last > first) trend = "up";
+    }
+      
+
   return {
     chartData,
     bestDay: bestDay
@@ -141,5 +169,9 @@ export const getLast7DaysWeightProgress = async (userId) => {
       : null,
     average,
     totalEntriesDays: daysWithData.length,
+
+    goal,
+    progresspercentage: Math.round(progresspercentage),
+    trend,
   };
 };

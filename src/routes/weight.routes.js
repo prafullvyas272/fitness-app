@@ -1,5 +1,5 @@
 import express from "express";
-import { saveWeightGoal, getWeight, updateWeight, getCurrentWeightData, updateWeightGoal, getWeeklyWeightProgress } from "../controllers/weight.controller.js";
+import { saveWeightGoal, getWeight, updateWeight, getCurrentWeightData, updateWeightGoal, getWeeklyWeightProgress, getWeightProgress } from "../controllers/weight.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -13,5 +13,6 @@ router.post("/update", authMiddleware, updateWeight);
 
 router.get("/current", authMiddleware, getCurrentWeightData);
 router.get("/weekly", authMiddleware, getWeeklyWeightProgress);
+router.get("/progress", authMiddleware, getWeightProgress);
 
 export default router;

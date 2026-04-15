@@ -352,6 +352,7 @@ model Plan {
   name       String
   price      Float
   features   String[]
+  description String?  
   isPopular  Boolean  @default(false)
   createdBy  String   @db.ObjectId
   createdAt  DateTime @default(now())

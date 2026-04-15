@@ -196,3 +196,20 @@ export const getWeeklyWeightProgress = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getWeightProgress = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const data = await getLast7DaysWeightProgress(userId);
+
+    res.json({
+      success: true,
+      data,
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
