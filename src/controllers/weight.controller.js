@@ -15,22 +15,36 @@ export const saveWeightGoal = async (req, res) => {
     const userId = req.user.userId;
     const { goal, reminder, notify } = req.body;  // ✅ added notify
 
-    if (!goal || goal <= 0) {
-      return res.status(400).json({ error: "Goal must be greater than 0" });
+    if (goal === undefined && reminder === undefined && notify === undefined) {
+      return res.status(400).json({ error: "At least one field required: goal, reminder, or notify" });
     }
 
-    const data = await createOrUpdateWeightGoal(userId, {
-      goal,
-      reminder,
-      notify,
-    });
+    const updates = {};
+
+    if (goal !== undefined) {
+      if (goal <= 0) {
+        return res.status(400).json({ error: "Goal must be greater than 0" });
+      }
+      updates.goal = goal;
+    }
+
+    if (reminder !== undefined) updates.reminder = reminder;
+
+    if (notify !== undefined) {
+      if (typeof notify !== "boolean") {
+        return res.status(400).json({ error: "notify must be true or false" });
+      }
+      updates.notify = notify;
+    }
+
+    const data = await createOrUpdateWeightGoal(userId, updates);
 
     // ✅ Only notify if notify is true AND reminder exists
-    if (notify === true && reminder) {
+    if (updates.notify === true && updates.reminder) {
       await createReminderNotification({
         userId,
         title: "Weight Reminder",
-        message: `Track your weight goal (${goal} kg)`,
+        message: `Track your weight goal (${updates.goal || data.goal} kg)`,
       });
     }
 
