@@ -97,9 +97,11 @@ export const getStepsProgress = async (req, res) => {
     const totalSteps = await getTodaySteps(userId);
     const goalData = await getStepGoal(userId);
 
-    const goal = goalData?.goal || 0;
-    const remaining = goal - totalSteps > 0 ? goal - totalSteps : 0;
-    const percentage = goal > 0 ? Math.min((totalSteps / goal) * 100, 100) : 0;
+    const goal = goalData?.goal ?? null;
+
+    const remaining = goal !== null ? Math.max(goal - totalSteps, 0) : 0;
+    const percentage = goal !== null && goal > 0 ? Math.min((totalSteps / goal) * 100, 100) : 0;
+    const goalReached = goal !== null && goal > 0 && totalSteps >= goal;
 
     res.json({
       success: true,
@@ -107,7 +109,7 @@ export const getStepsProgress = async (req, res) => {
       steps: totalSteps,
       remaining,
       percentage: Math.round(percentage),
-      goalReached: totalSteps >= goal,
+      goalReached,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

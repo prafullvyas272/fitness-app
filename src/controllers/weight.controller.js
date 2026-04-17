@@ -15,7 +15,7 @@ import { createReminderNotification } from "../services/notification.service.js"
 export const saveWeightGoal = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { goal, reminder, notify } = req.body;  // ✅ added notify
+    const { goal, reminder, notify } = req.body;  //  added notify
 
     if (goal === undefined && reminder === undefined && notify === undefined) {
       return res.status(400).json({ error: "At least one field required: goal, reminder, or notify" });
@@ -198,7 +198,6 @@ export const getWeeklyWeightProgress = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 export const getWeightProgress = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -212,16 +211,15 @@ export const getWeightProgress = async (req, res) => {
       where: { userId },
     });
 
-    const current = latestWeight?.weight || 0;
-    const goal = goalData?.goal || 0;
+    const current = latestWeight?.weight ?? null;
+    const goal = goalData?.goal ?? null;
 
     let remaining = 0;
     let percentage = 0;
     let goalReached = false;
 
-    if (goal > 0) {
-      remaining = Math.max(current - goal, 0); // for weight loss
-
+    if (goal !== null && goal > 0 && current !== null) {
+      remaining = Math.max(current - goal, 0);
       percentage = Math.min((current / goal) * 100, 100);
 
       if (current <= goal) {
@@ -244,4 +242,3 @@ export const getWeightProgress = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
