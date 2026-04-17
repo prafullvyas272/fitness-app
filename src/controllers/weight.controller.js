@@ -198,6 +198,7 @@ export const getWeeklyWeightProgress = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 export const getWeightProgress = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -207,23 +208,46 @@ export const getWeightProgress = async (req, res) => {
       orderBy: { createdAt: "desc" },
     });
 
+    // Get first ever entry to determine direction
+    const firstWeight = await prisma.weightEntry.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "asc" },
+    });
+
     const goalData = await prisma.weightGoal.findUnique({
       where: { userId },
     });
 
     const current = latestWeight?.weight ?? null;
     const goal = goalData?.goal ?? null;
+    const starting = firstWeight?.weight ?? null;
 
     let remaining = 0;
     let percentage = 0;
     let goalReached = false;
 
-    if (goal !== null && goal > 0 && current !== null) {
-      remaining = Math.max(current - goal, 0);
-      percentage = Math.min((current / goal) * 100, 100);
+    if (goal !== null && goal > 0 && current !== null && starting !== null) {
+      const isWeightLoss = starting > goal; // true = losing, false = gaining
 
-      if (current <= goal) {
-        goalReached = true;
+      if (isWeightLoss) {
+        // User wants to go DOWN to goal
+        const totalToLose = starting - goal;
+        const lost = starting - current;
+
+        remaining = Math.max(current - goal, 0);
+        percentage = totalToLose > 0 ? Math.min((lost / totalToLose) * 100, 100) : 0;
+        goalReached = current <= goal;
+      } else {
+        // User wants to go UP to goal
+        const totalToGain = goal - starting;
+        const gained = current - starting;
+
+        remaining = Math.max(goal - current, 0);
+        percentage = totalToGain > 0 ? Math.min((gained / totalToGain) * 100, 100) : 0;
+        goalReached = current >= goal;
+      }
+
+      if (goalReached) {
         percentage = 100;
         remaining = 0;
       }
