@@ -81,6 +81,8 @@ import { upload, videoUpload } from "../middlewares/upload.middleware.js";
  */
 const router = express.Router();
 
+router.use(authMiddleware);
+
 router.post(
   "/journal-entries",
   authMiddleware,
