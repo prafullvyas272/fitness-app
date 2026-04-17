@@ -1,5 +1,5 @@
 import express from "express";
-import { addJournalEntryForDateHandler, getJournalEntryByDateHandler } from "../controllers/journal-entry.controller.js";
+import { addJournalEntryForDateHandler, getJournalEntryByDateHandler, getAllJournalEntriesHandler } from "../controllers/journal-entry.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload, videoUpload } from "../middlewares/upload.middleware.js";
 
@@ -141,4 +141,6 @@ router.get(
   getJournalEntryByDateHandler
 );
 
+// journal.routes.js
+router.get("/", getAllJournalEntriesHandler);              // GET 
 export default router;

@@ -213,3 +213,17 @@ export const getJournalEntryByDate = async (userId, date) => {
     throw new Error("Failed to fetch journal entry: " + err.message);
   }
 };
+
+export const getAllJournalEntries = async ({ filters, skip, take, sortOrder }) => {
+  const [data, total] = await Promise.all([
+    prisma.journalEntry.findMany({
+      where: filters,
+      orderBy: { date: sortOrder },
+      skip,
+      take,
+    }),
+    prisma.journalEntry.count({ where: filters }),
+  ]);
+
+  return { data, total };
+};

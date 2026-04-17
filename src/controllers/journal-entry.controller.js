@@ -1,6 +1,7 @@
 import {
   addJournalEntryForDate,
   getJournalEntryByDate,
+  getAllJournalEntries,
 } from "../services/journal-entry.service.js";
 
 /**
@@ -76,6 +77,56 @@ export const getJournalEntryByDateHandler = async (req, res) => {
         ? "Journal entry retrieved successfully"
         : "No journal entry found for the date",
       data: entry,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+
+export const getAllJournalEntriesHandler = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Optional query params for filtering & pagination
+    const {
+      page = 1,
+      limit = 10,
+      sortOrder = "desc",   // "asc" | "desc"
+      isPrivate,            // "true" | "false" | undefined
+    } = req.query;
+
+    const pageNum = Math.max(parseInt(page, 10), 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10), 1), 100); // cap at 100
+    const skip = (pageNum - 1) * limitNum;
+
+    const filters = { userId };
+
+    // Only apply isPrivate filter if explicitly passed
+    if (isPrivate !== undefined) {
+      filters.isPrivate = isPrivate === "true";
+    }
+
+    const entries = await getAllJournalEntries({
+      filters,
+      skip,
+      take: limitNum,
+      sortOrder: sortOrder === "asc" ? "asc" : "desc",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: entries.total === 0 ? "No journal entries found" : "Journal entries retrieved successfully",
+      pagination: {
+        total: entries.total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(entries.total / limitNum),
+      },
+      data: entries.data,
     });
   } catch (err) {
     res.status(400).json({
