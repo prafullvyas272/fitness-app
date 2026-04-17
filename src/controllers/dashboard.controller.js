@@ -14,13 +14,17 @@ export const getDashboard = async (req, res) => {
       getRecentJournals(userId),
     ]);
 
+    // Suppress notify if no real data exists yet
+    if (steps?.goal === null || steps?.goal === 0) {
+      steps.notify = false;
+    }
+    if (weight?.goal === null || weight?.goal === 0) {
+      weight.notify = false;
+    }
+
     res.json({
       success: true,
-      data: {
-        steps,
-        weight,
-        journals,
-      },
+      data: { steps, weight, journals },
     });
 
   } catch (error) {
