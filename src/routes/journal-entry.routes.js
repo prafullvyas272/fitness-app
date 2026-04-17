@@ -142,5 +142,7 @@ router.get(
 );
 
 // journal.routes.js
-router.get("/", getAllJournalEntriesHandler);              // GET 
+router.get("/journal", getAllJournalEntriesHandler);              // GET 
+
+
 export default router;
