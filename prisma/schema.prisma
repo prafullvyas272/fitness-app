@@ -451,25 +451,23 @@ model JournalEntry {
 
   photoUrl    String?
   videoUrl    String?
-
   note        String?
   date        DateTime?
-
   isPrivate   Boolean  @default(false)
 
-  energy              Int?    // ✅ optional
-  physicalReadiness   Int?    // ✅ optional
-  motivation          Int?    // ✅ optional
-  stressLevel         Int?    // ✅ optional
-  mentalFitness       Int?    // ✅ optional
+  energy              Int?
+  physicalReadiness   Int?
+  motivation          Int?
+  stressLevel         Int?
+  mentalFitness       Int?
   dayNumber           Int?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@unique([userId, date])   // ✅ prevent duplicate entries per day
-  @@index([userId])
-  @@index([createdAt])
+  @@index([userId])          // ✅ keep this
+  @@index([createdAt])       // ✅ keep this
+  // @@unique([userId, date]) ← remove this
 }
 
 

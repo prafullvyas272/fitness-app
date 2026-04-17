@@ -48,10 +48,9 @@ export const addJournalEntryForDate = async ({
   } catch {
     throw new Error("Invalid date provided");
   }
-  // Normalize to start of day (ignore time for upsert)
+
   const dayStart = new Date(parsedDate.setHours(0, 0, 0, 0));
 
-  // Upload image/video to cloudinary if present and get URLs
   let photoUrl = undefined;
   let videoUrl = undefined;
   try {
@@ -68,56 +67,27 @@ export const addJournalEntryForDate = async ({
   }
 
   try {
-    const existingEntry = await prisma.journalEntry.findFirst({
-      where: {
+    const totalJournalEntries = await getCustomerTotalJournalEntriesCount(userId);
+    const dayNumber = totalJournalEntries + 1;
+
+    return await prisma.journalEntry.create({
+      data: {
         userId,
-        date: {
-          gte: dayStart,
-          lt: new Date(dayStart.getTime() + 24 * 60 * 60 * 1000) // Next day
-        }
+        photoUrl,
+        videoUrl,
+        note,
+        date: dayStart,
+        isPrivate,
+        energy: energy ?? null,
+        physicalReadiness: physicalReadiness ?? null,
+        motivation: motivation ?? null,
+        stressLevel: stressLevel ?? null,
+        mentalFitness: mentalFitness ?? null,
+        dayNumber,
       }
     });
-
-    if (existingEntry) {
-      // Update existing: keep old photoUrl/videoUrl if not provided new
-      return await prisma.journalEntry.update({
-        where: { id: existingEntry.id },
-        data: {
-          photoUrl: typeof photoUrl === "undefined" ? existingEntry.photoUrl : photoUrl,
-          videoUrl: typeof videoUrl === "undefined" ? existingEntry.videoUrl : videoUrl,
-          note,
-          date: dayStart,
-          isPrivate,
-          energy: energy ?? null,
-          physicalReadiness: physicalReadiness ?? null,
-          motivation: motivation ?? null,
-          stressLevel: stressLevel ?? null,
-          mentalFitness: mentalFitness ?? null,
-        }
-      });
-    } else {
-      // Create new
-      const totalJournalEntries = await getCustomerTotalJournalEntriesCount(userId);
-      const dayNumber = totalJournalEntries + 1;
-      return await prisma.journalEntry.create({
-         data: {
-          userId,
-          photoUrl,
-          videoUrl,
-          note,
-          date: dayStart,
-          isPrivate,
-          energy: energy ?? null,
-          physicalReadiness: physicalReadiness ?? null,
-          motivation: motivation ?? null,
-          stressLevel: stressLevel ?? null,
-          mentalFitness: mentalFitness ?? null,
-          dayNumber,
-        }
-      });
-    }
   } catch (err) {
-    throw new Error("Failed to add or update journal entry: " + err.message);
+    throw new Error("Failed to add journal entry: " + err.message);
   }
 };
 
