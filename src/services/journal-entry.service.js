@@ -88,11 +88,11 @@ export const addJournalEntryForDate = async ({
           note,
           date: dayStart,
           isPrivate,
-          energy,
-          physicalReadiness,
-          motivation,
-          stressLevel,
-          mentalFitness
+          energy: energy ?? null,
+          physicalReadiness: physicalReadiness ?? null,
+          motivation: motivation ?? null,
+          stressLevel: stressLevel ?? null,
+          mentalFitness: mentalFitness ?? null,
         }
       });
     } else {
@@ -100,18 +100,18 @@ export const addJournalEntryForDate = async ({
       const totalJournalEntries = await getCustomerTotalJournalEntriesCount(userId);
       const dayNumber = totalJournalEntries + 1;
       return await prisma.journalEntry.create({
-        data: {
+         data: {
           userId,
           photoUrl,
           videoUrl,
           note,
           date: dayStart,
           isPrivate,
-          energy,
-          physicalReadiness,
-          motivation,
-          stressLevel,
-          mentalFitness,
+          energy: energy ?? null,
+          physicalReadiness: physicalReadiness ?? null,
+          motivation: motivation ?? null,
+          stressLevel: stressLevel ?? null,
+          mentalFitness: mentalFitness ?? null,
           dayNumber,
         }
       });

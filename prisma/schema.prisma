@@ -444,30 +444,30 @@ model Questionnaire {
   updatedAt           DateTime @updatedAt
 }
 
-
 model JournalEntry {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   userId      String   @db.ObjectId
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  photoUrl    String?  // URL to photo (optional)
-  videoUrl    String?  // URL to video (optional)
+  photoUrl    String?
+  videoUrl    String?
 
-  note        String?  // Today's note or progress
+  note        String?
   date        DateTime?
 
   isPrivate   Boolean  @default(false)
 
-  energy              Int
-  physicalReadiness   Int
-  motivation          Int
-  stressLevel         Int
-  mentalFitness       Int
+  energy              Int?    // ✅ optional
+  physicalReadiness   Int?    // ✅ optional
+  motivation          Int?    // ✅ optional
+  stressLevel         Int?    // ✅ optional
+  mentalFitness       Int?    // ✅ optional
   dayNumber           Int?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@unique([userId, date])   // ✅ prevent duplicate entries per day
   @@index([userId])
   @@index([createdAt])
 }
