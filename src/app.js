@@ -34,6 +34,8 @@ import trainerVideoRoutes from "./routes/trainer-video.routes.js";
 import stepRoutes from "./routes/step.routes.js";
 import weightRoutes from "./routes/weight.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import mealRoutes from "./routes/meal.routes.js";
+import trainerMealRoutes from "./routes/trainerMeal.routes.js"
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -104,6 +106,8 @@ app.use("/api/trainer-video", trainerVideoRoutes);
 app.use("/api/weight", weightRoutes);
 app.use("/api/steps", stepRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/customer/meals", mealRoutes);
+app.use("/api/premium-meals", trainerMealRoutes);
 
 
 app.use(errorHandler);

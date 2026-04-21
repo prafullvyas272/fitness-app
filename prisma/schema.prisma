@@ -26,109 +26,113 @@ enum Gender {
 }
 
 model User {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  firstName  String?
-  lastName   String?
-  email      String   @unique
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  firstName String?
+  lastName  String?
+  email     String  @unique
 
-  stepGoal   StepGoal?
-  weightGoal WeightGoal?
-  stepEntries StepEntry[]
+  stepGoal      StepGoal?
+  weightGoal    WeightGoal?
+  stepEntries   StepEntry[]
   weightEntries WeightEntry[]
 
   assignedWorkoutRelations WorkoutTrainerAssignment[]
+  trainerMealPlansGiven    TrainerMealPlan[]          @relation("TrainerMealPlansGiven")
+  trainerMealPlansReceived TrainerMealPlan[]          @relation("TrainerMealPlansReceived")
 
-  planId String? @db.ObjectId
-  plan   Plan?   @relation("TrainerPlan", fields: [planId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  planId        String?        @db.ObjectId
+  plan          Plan?          @relation("TrainerPlan", fields: [planId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   subscriptions Subscription[]
 
-  phone      String?
-  password   String?
-  provider   String   @default("LOCAL")
-  providerId String?
-  roleId     String
-  isActive   Boolean  @default(false)
-  phoneVerified Boolean @default(false)
-  fcmToken   String?
-  gender     Gender?
+  mealLogs MealLog[]
 
-  role       Role     @relation(fields: [roleId], references: [id])
-  otps       Otp[]    // Added back-relation to Otp
+  phone         String?
+  password      String?
+  provider      String  @default("LOCAL")
+  providerId    String?
+  roleId        String
+  isActive      Boolean @default(false)
+  phoneVerified Boolean @default(false)
+  fcmToken      String?
+  gender        Gender?
+
+  role         Role             @relation(fields: [roleId], references: [id])
+  otps         Otp[] // Added back-relation to Otp
   specialities UserSpeciality[]
 
-  isPremiumMember   Boolean @default(false)
+  isPremiumMember Boolean @default(false)
 
   trainerWeeklyAvailabilities TrainerWeeklyAvailability[] @relation("Trainer_Weekly")
-  trainerDailyAvailabilities TrainerDailyAvailability[] @relation("Trainer_Daily")
-  trainerTimeSlots           TrainerTimeSlot[]           @relation("Trainer_Slot")
-  trainerBookings            TrainerBooking[]            @relation("Trainer_Booking") // As trainer in bookings
-  customerBookings           TrainerBooking[]            @relation("Customer_Booking") // As customer in bookings
+  trainerDailyAvailabilities  TrainerDailyAvailability[]  @relation("Trainer_Daily")
+  trainerTimeSlots            TrainerTimeSlot[]           @relation("Trainer_Slot")
+  trainerBookings             TrainerBooking[]            @relation("Trainer_Booking") // As trainer in bookings
+  customerBookings            TrainerBooking[]            @relation("Customer_Booking") // As customer in bookings
 
   // Added back-relations for AssignedCustomer
   assignedCustomersAsCustomer AssignedCustomer[] @relation("AssignedCustomer_Customer")
   assignedCustomersAsTrainer  AssignedCustomer[] @relation("AssignedCustomer_Trainer")
 
   userProfileDetails UserProfileDetail[] @relation("UserProfileDetailToUser")
-  workoutVideos   WorkoutVideo[] @relation("UserWorkoutVideos")
+  workoutVideos      WorkoutVideo[]      @relation("UserWorkoutVideos")
 
-  trainerVideos   TrainerVideo[]
+  trainerVideos TrainerVideo[]
 
   assignedVideos TrainerVideoAssignment[]
 
-  plans      Plan[]   @relation("UserPlans")
+  plans Plan[] @relation("UserPlans")
 
-  trainerRequests TrainerRequest[] @relation("CustomerRequests") // As the customer who made the request
+  trainerRequests     TrainerRequest[] @relation("CustomerRequests") // As the customer who made the request
   trainerApplications TrainerRequest[] @relation("TrainerRequests") // As the trainer receiving requests
 
   notifications Notification[] // Opposite relation: user has many notifications
 
-  userDevices UserDevice[] // Opposite relation: user has many user devices
-  questionnaire Questionnaire?
+  userDevices    UserDevice[] // Opposite relation: user has many user devices
+  questionnaire  Questionnaire?
   journalEntries JournalEntry[]
 
   // Opposite relation: user has many chat conversations as trainer and as customer
-  chatConversationsAsTrainer   ChatConversation[] @relation("ChatConversation_Trainer")
-  chatConversationsAsCustomer  ChatConversation[] @relation("ChatConversation_Customer")
+  chatConversationsAsTrainer  ChatConversation[] @relation("ChatConversation_Trainer")
+  chatConversationsAsCustomer ChatConversation[] @relation("ChatConversation_Customer")
 
   // Opposite relation: user has many chat messages as sender and as receiver
   sentChatMessages     ChatMessage[] @relation("ChatMessage_Sender")
   receivedChatMessages ChatMessage[] @relation("ChatMessage_Receiver")
 
   // Opposite relation: user has many reviews as trainer and as customer
-  receivedReviewsAsTrainer   Review[] @relation("Review_Trainer")
-  receivedReviewsAsCustomer  Review[] @relation("Review_Customer")
+  receivedReviewsAsTrainer  Review[] @relation("Review_Trainer")
+  receivedReviewsAsCustomer Review[] @relation("Review_Customer")
 
   customerQuestionaires CustomerQuestionaire[]
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model UserProfileDetail {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String   @db.ObjectId
-  address         String?
-  bio             String?
-  hostGymName     String?
-  hostGymAddress  String?
-  avatarUrl       String?
-  avatarPublicId  String?
-  dob             DateTime?
-  gender          String?
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @db.ObjectId
+  address          String?
+  bio              String?
+  hostGymName      String?
+  hostGymAddress   String?
+  avatarUrl        String?
+  avatarPublicId   String?
+  dob              DateTime?
+  gender           String?
   socialMediaLinks String[]
 
-  user            User     @relation("UserProfileDetailToUser", fields: [userId], references: [id], onDelete: Cascade )
+  user User @relation("UserProfileDetailToUser", fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
 
 model Otp {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  userId    String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   code      String
   expiresAt DateTime
@@ -137,50 +141,49 @@ model Otp {
 }
 
 model UserSpeciality {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId        String   @db.ObjectId
-  specialityId  String   @db.ObjectId
-  createdAt     DateTime @default(now())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  specialityId String   @db.ObjectId
+  createdAt    DateTime @default(now())
 
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  speciality    Speciality @relation("Speciality_UserSpeciality", fields: [specialityId], references: [id], onDelete: Cascade)
+  speciality Speciality @relation("Speciality_UserSpeciality", fields: [specialityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, specialityId])
 }
 
-
 model TrainerWeeklyAvailability {
-  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
-  trainerId            String   @db.ObjectId
-  weekStartDate        DateTime
-  weekEndDate          DateTime
-  requiredMinutes      Int      @default(2700)   //45 * 60
-  totalBookedMinutes   Int      @default(0)
-  isCompleted          Boolean  @default(false)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId          String   @db.ObjectId
+  weekStartDate      DateTime
+  weekEndDate        DateTime
+  requiredMinutes    Int      @default(2700) //45 * 60
+  totalBookedMinutes Int      @default(0)
+  isCompleted        Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  trainer              User     @relation("Trainer_Weekly", fields: [trainerId], references: [id], onDelete: Cascade)
-  dailyAvailabilities  TrainerDailyAvailability[] @relation("Week_Daily")
+  trainer             User                       @relation("Trainer_Weekly", fields: [trainerId], references: [id], onDelete: Cascade)
+  dailyAvailabilities TrainerDailyAvailability[] @relation("Week_Daily")
 }
 
 model TrainerDailyAvailability {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  trainerWeekId     String   @db.ObjectId
-  trainerId         String   @db.ObjectId
-  date              DateTime
-  dayOfWeek         String
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  trainerWeekId String   @db.ObjectId
+  trainerId     String   @db.ObjectId
+  date          DateTime
+  dayOfWeek     String
 
-  isAvailable       Boolean   @default(false)
-  totalDayMinutes   Int
+  isAvailable     Boolean @default(false)
+  totalDayMinutes Int
 
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  trainer           User                        @relation("Trainer_Daily", fields: [trainerId], references: [id], onDelete: Cascade)
-  trainerWeek       TrainerWeeklyAvailability   @relation("Week_Daily", fields: [trainerWeekId], references: [id], onDelete: Cascade)
-  timeSlots         TrainerTimeSlot[]           @relation("Daily_TimeSlot")
+  trainer     User                      @relation("Trainer_Daily", fields: [trainerId], references: [id], onDelete: Cascade)
+  trainerWeek TrainerWeeklyAvailability @relation("Week_Daily", fields: [trainerWeekId], references: [id], onDelete: Cascade)
+  timeSlots   TrainerTimeSlot[]         @relation("Daily_TimeSlot")
 }
 
 enum SlotType {
@@ -202,12 +205,10 @@ model TrainerTimeSlot {
   updatedAt           DateTime @updatedAt
   timeSlotId          String?  @db.ObjectId
 
-
-
-  dailyAvailability   TrainerDailyAvailability @relation("Daily_TimeSlot", fields: [dailyAvailabilityId], references: [id], onDelete: Cascade)
-  trainer             User                    @relation("Trainer_Slot", fields: [trainerId], references: [id], onDelete: Cascade)
-  bookings            TrainerBooking[]        @relation("TimeSlot_Booking")
-  timeSlot            TimeSlot?               @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+  dailyAvailability TrainerDailyAvailability @relation("Daily_TimeSlot", fields: [dailyAvailabilityId], references: [id], onDelete: Cascade)
+  trainer           User                     @relation("Trainer_Slot", fields: [trainerId], references: [id], onDelete: Cascade)
+  bookings          TrainerBooking[]         @relation("TimeSlot_Booking")
+  timeSlot          TimeSlot?                @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
 
   @@index([trainerId])
   @@index([date])
@@ -220,48 +221,48 @@ enum BookingStatus {
 }
 
 model TrainerBooking {
-  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
-  customerId            String   @db.ObjectId
-  trainerId             String   @db.ObjectId
-  timeSlotId            String   @db.ObjectId
-  isCancelled           Boolean  @default(false)
-  remarks               String?
-  bookingStatus         BookingStatus @default(PENDING)
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  customerId    String        @db.ObjectId
+  trainerId     String        @db.ObjectId
+  timeSlotId    String        @db.ObjectId
+  isCancelled   Boolean       @default(false)
+  remarks       String?
+  bookingStatus BookingStatus @default(PENDING)
 
   personalTrainingSession String?
 
-  originalTimeSlotId    String?  @db.ObjectId
-  rescheduledCount      Int      @default(0)
-  lastRescheduledAt     DateTime?
-  accolades             Int[]   @default([])
+  originalTimeSlotId String?   @db.ObjectId
+  rescheduledCount   Int       @default(0)
+  lastRescheduledAt  DateTime?
+  accolades          Int[]     @default([])
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  customer              User                @relation("Customer_Booking", fields: [customerId], references: [id], onDelete: Cascade)
-  trainer               User                @relation("Trainer_Booking", fields: [trainerId], references: [id], onDelete: Cascade)
-  timeSlot              TrainerTimeSlot     @relation("TimeSlot_Booking", fields: [timeSlotId], references: [id], onDelete: Cascade)
+  customer User            @relation("Customer_Booking", fields: [customerId], references: [id], onDelete: Cascade)
+  trainer  User            @relation("Trainer_Booking", fields: [trainerId], references: [id], onDelete: Cascade)
+  timeSlot TrainerTimeSlot @relation("TimeSlot_Booking", fields: [timeSlotId], references: [id], onDelete: Cascade)
 }
 
 model AssignedCustomer {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  customerId  String   @db.ObjectId
-  trainerId   String   @db.ObjectId
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String @db.ObjectId
+  trainerId  String @db.ObjectId
 
-  isActive    Boolean  @default(true)
-  startDate   DateTime @default(now())
-  endDate     DateTime?
+  isActive  Boolean   @default(true)
+  startDate DateTime  @default(now())
+  endDate   DateTime?
 
-  customer    User     @relation("AssignedCustomer_Customer", fields: [customerId], references: [id], onDelete: Cascade)
-  trainer     User     @relation("AssignedCustomer_Trainer", fields: [trainerId], references: [id], onDelete: Cascade)
-  createdAt           DateTime @default(now())
-  
-  updatedAt           DateTime @updatedAt
+  customer  User     @relation("AssignedCustomer_Customer", fields: [customerId], references: [id], onDelete: Cascade)
+  trainer   User     @relation("AssignedCustomer_Trainer", fields: [trainerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
   @@unique([customerId, trainerId])
   @@index([customerId, isActive])
   @@index([trainerId, isActive])
 }
-
 
 model Speciality {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -274,42 +275,42 @@ model Speciality {
 }
 
 model TimeSlot {
-  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
-  date                DateTime
-  startTime           DateTime
-  endTime             DateTime
-  slotType            SlotType @default(PEAK)
-  durationMinutes     Int
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  createdBy           String @db.ObjectId
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  date            DateTime
+  startTime       DateTime
+  endTime         DateTime
+  slotType        SlotType @default(PEAK)
+  durationMinutes Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String   @db.ObjectId
 
-  trainerTimeSlots    TrainerTimeSlot[]
+  trainerTimeSlots TrainerTimeSlot[]
 
   @@index([date])
 }
 
 enum VideoUploadStatus {
-  PROCESSING 
-  READY 
+  PROCESSING
+  READY
   FAILED
 }
 
 model WorkoutVideo {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  id           String            @id @default(auto()) @map("_id") @db.ObjectId
   title        String
   description  String?
   tags         String[]
   videoUrl     String?
   thumbnailUrl String?
   publicId     String?
-  status       VideoUploadStatus   @default(PROCESSING)
-  uploadedBy   String   @db.ObjectId
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  status       VideoUploadStatus @default(PROCESSING)
+  uploadedBy   String            @db.ObjectId
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
-  uploader     User @relation("UserWorkoutVideos", fields: [uploadedBy], references: [id])
-  assignments  WorkoutTrainerAssignment[]
+  uploader    User                       @relation("UserWorkoutVideos", fields: [uploadedBy], references: [id])
+  assignments WorkoutTrainerAssignment[]
 }
 
 enum TrainerVideoType {
@@ -318,50 +319,50 @@ enum TrainerVideoType {
 }
 
 model TrainerVideo {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
   tags        String[]
   type        TrainerVideoType @default(LINK)
 
-  videoLink   String
-  thumbnail   String
+  videoLink String
+  thumbnail String
 
-  trainerId   String   @db.ObjectId
-  trainer     User     @relation(fields: [trainerId], references: [id])
+  trainerId String @db.ObjectId
+  trainer   User   @relation(fields: [trainerId], references: [id])
 
-  assignments TrainerVideoAssignment[]   // ✅ ADD THIS
+  assignments TrainerVideoAssignment[] // ✅ ADD THIS
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model TrainerVideoAssignment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  videoId   String   @db.ObjectId
-  clientId  String   @db.ObjectId
+  videoId  String @db.ObjectId
+  clientId String @db.ObjectId
 
   assignedAt DateTime @default(now())
 
-  video     TrainerVideo @relation(fields: [videoId], references: [id])
-  client    User         @relation(fields: [clientId], references: [id])
+  video  TrainerVideo @relation(fields: [videoId], references: [id])
+  client User         @relation(fields: [clientId], references: [id])
 }
 
 model Plan {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  name       String
-  price      Float
-  features   String[]
-  description String?  
-  isPopular  Boolean  @default(false)
-  createdBy  String   @db.ObjectId
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  assignedTrainers User[] @relation("TrainerPlan")
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  price            Float
+  features         String[]
+  description      String?
+  isPopular        Boolean  @default(false)
+  createdBy        String   @db.ObjectId
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  assignedTrainers User[]   @relation("TrainerPlan")
 
   subscriptions Subscription[]
 
-  creator    User     @relation("UserPlans", fields: [createdBy], references: [id])
+  creator User @relation("UserPlans", fields: [createdBy], references: [id])
 }
 
 enum TrainerRequestStatus {
@@ -371,17 +372,17 @@ enum TrainerRequestStatus {
 }
 
 model TrainerRequest {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  customerId  String   @db.ObjectId
-  trainerId   String   @db.ObjectId
-  message     String?
-  status      TrainerRequestStatus @default(PENDING)
+  id         String               @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String               @db.ObjectId
+  trainerId  String               @db.ObjectId
+  message    String?
+  status     TrainerRequestStatus @default(PENDING)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  customer    User @relation("CustomerRequests", fields: [customerId], references: [id])
-  trainer     User @relation("TrainerRequests", fields: [trainerId], references: [id])
+  customer User @relation("CustomerRequests", fields: [customerId], references: [id])
+  trainer  User @relation("TrainerRequests", fields: [trainerId], references: [id])
 }
 
 enum NotificationType {
@@ -389,17 +390,18 @@ enum NotificationType {
   BOOKING
   REMINDER
 }
+
 model Notification {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  title     String
-  message   String
-  type      NotificationType
-  isRead    Boolean  @default(false)
+  id      String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String           @db.ObjectId
+  title   String
+  message String
+  type    NotificationType
+  isRead  Boolean          @default(false)
 
   createdAt DateTime @default(now())
 
-  user      User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model UserDevice {
@@ -424,10 +426,10 @@ model BlacklistedToken {
 }
 
 model Questionnaire {
-  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  userId              String   @unique @db.ObjectId
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   clientName          String
   age                 Int
@@ -445,31 +447,30 @@ model Questionnaire {
 }
 
 model JournalEntry {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String   @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  photoUrl    String?
-  videoUrl    String?
-  note        String?
-  date        DateTime?
-  isPrivate   Boolean  @default(false)
+  photoUrl  String?
+  videoUrl  String?
+  note      String?
+  date      DateTime?
+  isPrivate Boolean   @default(false)
 
-  energy              Int?
-  physicalReadiness   Int?
-  motivation          Int?
-  stressLevel         Int?
-  mentalFitness       Int?
-  dayNumber           Int?
+  energy            Int?
+  physicalReadiness Int?
+  motivation        Int?
+  stressLevel       Int?
+  mentalFitness     Int?
+  dayNumber         Int?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([userId])          // ✅ keep this
-  @@index([createdAt])       // ✅ keep this
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   // @@unique([userId, date]) ← remove this
-}
 
+  @@index([userId]) // ✅ keep this
+  @@index([createdAt]) // ✅ keep this
+}
 
 // Chat schema
 enum MessageType {
@@ -486,44 +487,44 @@ enum MessageStatus {
 }
 
 model ChatConversation {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  conversationId  String   @unique
-  trainerId       String   @db.ObjectId
-  customerId      String   @db.ObjectId
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String @unique
+  trainerId      String @db.ObjectId
+  customerId     String @db.ObjectId
 
   lastMessage     String?
   lastMessageTime DateTime?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  trainer   User @relation("ChatConversation_Trainer", fields: [trainerId], references: [id])
-  customer  User @relation("ChatConversation_Customer", fields: [customerId], references: [id])
+  trainer  User @relation("ChatConversation_Trainer", fields: [trainerId], references: [id])
+  customer User @relation("ChatConversation_Customer", fields: [customerId], references: [id])
 
-  messages  ChatMessage[]
+  messages ChatMessage[]
 
   @@index([trainerId])
   @@index([customerId])
 }
 
 model ChatMessage {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  conversationId  String
-  senderId        String   @db.ObjectId
-  receiverId      String   @db.ObjectId
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String
+  senderId       String @db.ObjectId
+  receiverId     String @db.ObjectId
 
-  message         String?
-  fileUrl         String?
+  message String?
+  fileUrl String?
 
-  type            MessageType
-  status          MessageStatus @default(SENT)
+  type   MessageType
+  status MessageStatus @default(SENT)
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  conversation    ChatConversation @relation(fields: [conversationId], references: [conversationId])
+  conversation ChatConversation @relation(fields: [conversationId], references: [conversationId])
 
-  sender          User @relation("ChatMessage_Sender", fields: [senderId], references: [id])
-  receiver        User @relation("ChatMessage_Receiver", fields: [receiverId], references: [id])
+  sender   User @relation("ChatMessage_Sender", fields: [senderId], references: [id])
+  receiver User @relation("ChatMessage_Receiver", fields: [receiverId], references: [id])
 
   @@index([conversationId])
   @@index([senderId])
@@ -531,39 +532,37 @@ model ChatMessage {
   @@index([createdAt])
 }
 
-
 enum ReviewType {
   BUSINESS
   TRAINER
 }
 
 model Review {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  trainerId    String?   @db.ObjectId
-  customerId   String?    @db.ObjectId
-  rating       Int
-  review       String?
-  type         ReviewType
-  createdAt    DateTime  @default(now())
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId  String?    @db.ObjectId
+  customerId String?    @db.ObjectId
+  rating     Int
+  review     String?
+  type       ReviewType
+  createdAt  DateTime   @default(now())
 
   // Relations
-  trainer      User?     @relation("Review_Trainer", fields: [trainerId], references: [id])
-  customer     User?      @relation("Review_Customer", fields: [customerId], references: [id])
+  trainer  User? @relation("Review_Trainer", fields: [trainerId], references: [id])
+  customer User? @relation("Review_Customer", fields: [customerId], references: [id])
 
   @@unique([trainerId, customerId, type])
   @@index([customerId])
   @@index([trainerId])
 }
 
-
 model CustomerQuestionaire {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  clientId  String   @db.ObjectId
-  client    User     @relation(fields: [clientId], references: [id])
+  clientId String @db.ObjectId
+  client   User   @relation(fields: [clientId], references: [id])
 
-  clientName   String?
-  dateOfBirth  DateTime?
+  clientName    String?
+  dateOfBirth   DateTime?
   dateCompleted DateTime?
 
   heartCondition                 Boolean
@@ -576,8 +575,8 @@ model CustomerQuestionaire {
   pregnancyOrRecentBirth         Boolean
   chronicMedicalCondition        Boolean
 
-  clientSignature   String?
-  clientSignedDate  DateTime?
+  clientSignature  String?
+  clientSignedDate DateTime?
 
   trainerName       String?
   trainerSignature  String?
@@ -588,31 +587,31 @@ model CustomerQuestionaire {
 }
 
 model StepGoal {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  goal      Int
-  reminder String?   // ✅ make optional
-  notify    Boolean  @default(true)
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String  @db.ObjectId
+  goal     Int
+  reminder String? // ✅ make optional
+  notify   Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId])
 }
 
 model WeightGoal {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  goal      Float
-  reminder  String?
-  notify    Boolean  @default(true) 
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId   String  @db.ObjectId
+  goal     Float
+  reminder String?
+  notify   Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId])
 }
@@ -626,7 +625,7 @@ model StepEntry {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
- @@index([userId, date])
+  @@index([userId, date])
 }
 
 model WeightEntry {
@@ -642,31 +641,81 @@ model WeightEntry {
 }
 
 model WorkoutTrainerAssignment {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  workoutId  String   @db.ObjectId
-  trainerId  String   @db.ObjectId
+  workoutId String @db.ObjectId
+  trainerId String @db.ObjectId
 
   assignedAt DateTime @default(now())
 
-  workout    WorkoutVideo @relation(fields: [workoutId], references: [id])
-  trainer    User         @relation(fields: [trainerId], references: [id])
+  workout WorkoutVideo @relation(fields: [workoutId], references: [id])
+  trainer User         @relation(fields: [trainerId], references: [id])
 
   @@unique([workoutId, trainerId])
 }
 
 model Subscription {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String   @db.ObjectId
-  planId     String   @db.ObjectId
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  planId String @db.ObjectId
 
-  status     String   // ACTIVE, CANCELLED
-  startDate  DateTime @default(now())
-  endDate    DateTime?
+  status    String // ACTIVE, CANCELLED
+  startDate DateTime  @default(now())
+  endDate   DateTime?
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user       User     @relation(fields: [userId], references: [id])
-  plan       Plan     @relation(fields: [planId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  plan Plan @relation(fields: [planId], references: [id])
+}
+
+model MealLog {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String @db.ObjectId
+
+  day      String
+  mealType MealType
+
+  mealName String
+  calories Int?
+  protein  Float?
+  carbs    Float?
+  fat      Float?
+  notes    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer User @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model TrainerMealPlan {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  trainerId  String @db.ObjectId
+  customerId String @db.ObjectId
+
+  day      String
+  mealType MealType
+
+  mealName String
+  calories Int?
+  protein  Float?
+  carbs    Float?
+  fat      Float?
+  notes    String?
+
+  trainer  User @relation("TrainerMealPlansGiven", fields: [trainerId], references: [id], onDelete: Cascade)
+  customer User @relation("TrainerMealPlansReceived", fields: [customerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
 }
