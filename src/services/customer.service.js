@@ -483,6 +483,49 @@ export const updateMyProfile = async (userId, data) => {
   return await updateCustomer(userId, safeData);
 };
 
+export const updateUPTRequestStatus = async ({ requestId, status }) => {
+  if (!["APPROVED", "REJECTED"].includes(status)) {
+    throw new Error("Invalid status. Only APPROVED or REJECTED is allowed.");
+  }
+
+  const trainerRequest = await prisma.trainerRequest.findUnique({
+    where: { id: requestId }
+  });
+
+  if (!trainerRequest) throw new Error("UPT request not found.");
+
+  const updatedRequest = await prisma.trainerRequest.update({
+    where: { id: requestId },
+    data: { status }
+  });
+
+  let assignedCustomer = null;
+
+  if (status === "APPROVED") {
+    const existing = await prisma.assignedCustomer.findUnique({
+      where: {
+        customerId_trainerId: {
+          customerId: trainerRequest.customerId,
+          trainerId: trainerRequest.trainerId
+        }
+      }
+    });
+
+    if (!existing) {
+      assignedCustomer = await prisma.assignedCustomer.create({
+        data: {
+          customerId: trainerRequest.customerId,
+          trainerId: trainerRequest.trainerId,
+          isActive: true,
+          startDate: new Date()
+        }
+      });
+    }
+  }
+
+  return { updatedRequest, assignedCustomer };
+};
+
 export const getUPTRequests = async () => {
   return prisma.trainerRequest.findMany({
     include: {

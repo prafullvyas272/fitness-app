@@ -10,6 +10,7 @@ import {
   cancelPlan,
   updateMyProfileHandler,
   getUPTRequestsHandler,
+  updateUPTRequestStatusHandler,
 } from "../controllers/customer.controller.js";
 import {
   customerForgotPasswordHandler,
@@ -506,5 +507,6 @@ router.post("/api/customer/cancel-plan", authMiddleware, cancelPlan);
 router.patch("/api/customer/me", authMiddleware, upload.single("avatar"), updateMyProfileHandler); //update my profile
 
 router.get("/api/customers/upt-requests", authMiddleware, superadminMiddleware, getUPTRequestsHandler);
+router.patch("/api/customers/upt-requests/:requestId/status", authMiddleware, superadminMiddleware, updateUPTRequestStatusHandler);
 
 export default router;
