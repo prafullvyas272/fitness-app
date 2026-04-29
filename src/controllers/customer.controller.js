@@ -5,6 +5,7 @@ import {
   showCustomerProfileData,
   applyForUPT,
   updateMyProfile,
+  getUPTRequests,
 } from "../services/customer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import prisma from "../utils/prisma.js";
@@ -334,6 +335,19 @@ export const cancelPlan = async (req, res) => {
  * Customer updates their OWN profile.
  * ID comes from JWT token — not from params.
  */
+export const getUPTRequestsHandler = async (req, res) => {
+  try {
+    const data = await getUPTRequests();
+    res.status(200).json({
+      success: true,
+      message: "UPT requests fetched successfully.",
+      data,
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
 export const updateMyProfileHandler = async (req, res) => {
   try {
     const customerId = req.user.userId; // ✅ from token

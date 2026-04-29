@@ -482,3 +482,17 @@ export const updateMyProfile = async (userId, data) => {
 
   return await updateCustomer(userId, safeData);
 };
+
+export const getUPTRequests = async () => {
+  return prisma.trainerRequest.findMany({
+    include: {
+      customer: {
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true }
+      },
+      trainer: {
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true }
+      }
+    },
+    orderBy: { createdAt: "desc" }
+  });
+};
