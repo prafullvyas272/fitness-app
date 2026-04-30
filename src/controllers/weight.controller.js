@@ -15,19 +15,24 @@ import { createReminderNotification } from "../services/notification.service.js"
 export const saveWeightGoal = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { goal, reminder, notify } = req.body;  //  added notify
+    const { goal, reminder, notify, weightGoalType } = req.body;
 
-    if (goal === undefined && reminder === undefined && notify === undefined) {
-      return res.status(400).json({ error: "At least one field required: goal, reminder, or notify" });
+    if (goal === undefined && reminder === undefined && notify === undefined && weightGoalType === undefined) {
+      return res.status(400).json({ error: "At least one field required: goal, weightGoalType, reminder, or notify" });
     }
 
     const updates = {};
 
     if (goal !== undefined) {
-      if (goal <= 0) {
-        return res.status(400).json({ error: "Goal must be greater than 0" });
-      }
+      if (goal <= 0) return res.status(400).json({ error: "Goal must be greater than 0" });
       updates.goal = goal;
+    }
+
+    if (weightGoalType !== undefined) {
+      if (!["LOSE", "GAIN"].includes(weightGoalType)) {
+        return res.status(400).json({ error: "weightGoalType must be LOSE or GAIN" });
+      }
+      updates.weightGoalType = weightGoalType;
     }
 
     if (reminder !== undefined) updates.reminder = reminder;
@@ -70,21 +75,26 @@ export const getWeight = async (req, res) => {
 export const updateWeightGoal = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { goal, reminder, notify } = req.body;
+    const { goal, reminder, notify, weightGoalType } = req.body;
 
-    if (goal === undefined && reminder === undefined && notify === undefined) {
+    if (goal === undefined && reminder === undefined && notify === undefined && weightGoalType === undefined) {
       return res.status(400).json({
-        error: "At least one field required: goal, reminder, or notify",
+        error: "At least one field required: goal, weightGoalType, reminder, or notify",
       });
     }
 
     const updates = {};
 
     if (goal !== undefined) {
-      if (goal <= 0) {
-        return res.status(400).json({ error: "Goal must be greater than 0" });
-      }
+      if (goal <= 0) return res.status(400).json({ error: "Goal must be greater than 0" });
       updates.goal = goal;
+    }
+
+    if (weightGoalType !== undefined) {
+      if (!["LOSE", "GAIN"].includes(weightGoalType)) {
+        return res.status(400).json({ error: "weightGoalType must be LOSE or GAIN" });
+      }
+      updates.weightGoalType = weightGoalType;
     }
 
     if (reminder !== undefined) updates.reminder = reminder;
@@ -135,14 +145,8 @@ export const updateWeight = async (req, res) => {
     let goalReached = false;
 
     if (goalData?.goal) {
-      const weightAtGoalTime = await prisma.weightEntry.findFirst({
-        where: { userId, createdAt: { lte: goalData.updatedAt } },
-        orderBy: { createdAt: "desc" },
-      });
-      const startingWeight = weightAtGoalTime?.weight ?? weight;
-      const isWeightLoss = startingWeight > goalData.goal;
-
-      goalReached = isWeightLoss ? weight <= goalData.goal : weight >= goalData.goal;
+      const isLose = (goalData.weightGoalType ?? "LOSE") === "LOSE";
+      goalReached = isLose ? weight <= goalData.goal : weight >= goalData.goal;
 
       if (goalReached && goalData.notify !== false) {
         await createReminderNotification({
@@ -218,46 +222,33 @@ export const getWeightProgress = async (req, res) => {
       where: { userId },
     });
 
-    // Weight entry at or before goal was set — determines direction correctly
-    const weightAtGoalTime = goalData
-      ? await prisma.weightEntry.findFirst({
-          where: { userId, createdAt: { lte: goalData.updatedAt } },
-          orderBy: { createdAt: "desc" },
-        })
-      : null;
-
     const current = latestWeight?.weight ?? null;
     const goal = goalData?.goal ?? null;
-    const starting = weightAtGoalTime?.weight ?? current;
+    const isLose = (goalData?.weightGoalType ?? "LOSE") === "LOSE";
+
+    // First weight entry after goal was last updated — used as starting reference for percentage
+    const firstEntryAfterGoal = goalData
+      ? await prisma.weightEntry.findFirst({
+          where: { userId, createdAt: { gte: goalData.updatedAt } },
+          orderBy: { createdAt: "asc" },
+        })
+      : null;
+    const starting = firstEntryAfterGoal?.weight ?? null;
 
     let remaining = 0;
     let percentage = 0;
     let goalReached = false;
 
-    if (goal !== null && goal > 0 && current !== null && starting !== null) {
-      const isWeightLoss = starting > goal;
-
-      if (isWeightLoss) {
-        // User wants to go DOWN to goal
-        const totalToLose = starting - goal;
-        const lost = starting - current;
-
-        remaining = Math.max(current - goal, 0);
-        percentage = totalToLose > 0 ? Math.min((lost / totalToLose) * 100, 100) : 0;
-        goalReached = current <= goal;
-      } else {
-        // User wants to go UP to goal
-        const totalToGain = goal - starting;
-        const gained = current - starting;
-
-        remaining = Math.max(goal - current, 0);
-        percentage = totalToGain > 0 ? Math.min((gained / totalToGain) * 100, 100) : 0;
-        goalReached = current >= goal;
-      }
+    if (goal !== null && goal > 0 && current !== null) {
+      goalReached = isLose ? current <= goal : current >= goal;
+      remaining = goalReached ? 0 : Math.abs(goal - current);
 
       if (goalReached) {
         percentage = 100;
-        remaining = 0;
+      } else if (starting !== null && Math.abs(starting - goal) > 0) {
+        const progress = Math.abs(starting - current);
+        const total = Math.abs(starting - goal);
+        percentage = Math.min(Math.round((progress / total) * 100), 99);
       }
     }
 

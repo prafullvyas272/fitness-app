@@ -611,12 +611,13 @@ model StepGoal {
 }
 
 model WeightGoal {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String  @db.ObjectId
-  goal        Float
-  reminder    String?
-  notify      Boolean @default(true)
-  isCompleted Boolean @default(false)
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String  @db.ObjectId
+  goal           Float
+  weightGoalType String? @default("LOSE")
+  reminder       String?
+  notify         Boolean @default(true)
+  isCompleted    Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -645,14 +646,15 @@ model PremiumStepGoal {
 }
 
 model PremiumWeightGoal {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  trainerId   String  @db.ObjectId
-  customerId  String  @db.ObjectId
-  goal        Float
-  reminder    String?
-  notify      Boolean @default(true)
-  isStarted   Boolean @default(false)
-  isCompleted Boolean @default(false)
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId      String  @db.ObjectId
+  customerId     String  @db.ObjectId
+  goal           Float
+  weightGoalType String? @default("LOSE")
+  reminder       String?
+  notify         Boolean @default(true)
+  isStarted      Boolean @default(false)
+  isCompleted    Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

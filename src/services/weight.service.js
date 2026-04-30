@@ -2,21 +2,19 @@ import { DownscopedClient } from "google-auth-library";
 import prisma from "../utils/prisma.js";
 
 export const createOrUpdateWeightGoal = async (userId, data) => {
-  const { goal, reminder, notify } = data;  // ✅ added notify
+  const { goal, reminder, notify, weightGoalType } = data;
 
-  const existing = await prisma.weightGoal.findUnique({
-    where: { userId },
-  });
+  const existing = await prisma.weightGoal.findUnique({ where: { userId } });
 
   if (existing) {
     return await prisma.weightGoal.update({
       where: { userId },
-      data: { goal, reminder, notify, isCompleted: false },
+      data: { goal, reminder, notify, weightGoalType, isCompleted: false },
     });
   }
 
   return await prisma.weightGoal.create({
-    data: { userId, goal, reminder, notify },
+    data: { userId, goal, reminder, notify, weightGoalType: weightGoalType ?? "LOSE" },
   });
 };
 

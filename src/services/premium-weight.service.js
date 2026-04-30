@@ -18,7 +18,7 @@ export const getActiveWeightGoal = async (userId) => {
 };
 
 // trainer creates weight goal for customer
-export const createPremiumWeightGoal = async ({ trainerId, customerId, goal, reminder, notify }) => {
+export const createPremiumWeightGoal = async ({ trainerId, customerId, goal, weightGoalType, reminder, notify }) => {
   if (!goal || goal <= 0) throw new Error("Goal must be greater than 0");
 
   const existing = await prisma.premiumWeightGoal.findFirst({
@@ -27,7 +27,7 @@ export const createPremiumWeightGoal = async ({ trainerId, customerId, goal, rem
   if (existing) throw new Error("Customer already has an active or pending premium weight goal.");
 
   return prisma.premiumWeightGoal.create({
-    data: { trainerId, customerId, goal, reminder, notify: notify ?? true },
+    data: { trainerId, customerId, goal, weightGoalType: weightGoalType ?? "LOSE", reminder, notify: notify ?? true },
   });
 };
 

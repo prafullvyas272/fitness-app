@@ -9,8 +9,8 @@ export const createPremiumWeightGoalHandler = async (req, res) => {
   try {
     const trainerId = req.user.userId;
     const { customerId } = req.params;
-    const { goal, reminder, notify } = req.body;
-    const data = await createPremiumWeightGoal({ trainerId, customerId, goal, reminder, notify });
+    const { goal, weightGoalType, reminder, notify } = req.body;
+    const data = await createPremiumWeightGoal({ trainerId, customerId, goal, weightGoalType, reminder, notify });
     res.status(201).json({ success: true, message: "Premium weight goal created.", data });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
