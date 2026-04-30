@@ -17,14 +17,20 @@ const getTodayRange = () => {
 
 const getLastCompletedStepGoal = async (userId) => {
   const freeGoal = await prisma.stepGoal.findUnique({ where: { userId } });
-  if (freeGoal?.isCompleted) return { type: "FREE", goal: freeGoal };
-
   const premiumGoal = await prisma.premiumStepGoal.findFirst({
     where: { customerId: userId, isCompleted: true },
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
   });
-  if (premiumGoal) return { type: "PREMIUM", goal: premiumGoal };
 
+  const free = freeGoal?.isCompleted ? freeGoal : null;
+
+  if (free && premiumGoal) {
+    return free.updatedAt >= premiumGoal.updatedAt
+      ? { type: "FREE", goal: free }
+      : { type: "PREMIUM", goal: premiumGoal };
+  }
+  if (premiumGoal) return { type: "PREMIUM", goal: premiumGoal };
+  if (free) return { type: "FREE", goal: free };
   return null;
 };
 
@@ -58,14 +64,20 @@ export const getStepsDashboard = async (userId) => {
 
 const getLastCompletedWeightGoal = async (userId) => {
   const freeGoal = await prisma.weightGoal.findUnique({ where: { userId } });
-  if (freeGoal?.isCompleted) return { type: "FREE", goal: freeGoal };
-
   const premiumGoal = await prisma.premiumWeightGoal.findFirst({
     where: { customerId: userId, isCompleted: true },
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
   });
-  if (premiumGoal) return { type: "PREMIUM", goal: premiumGoal };
 
+  const free = freeGoal?.isCompleted ? freeGoal : null;
+
+  if (free && premiumGoal) {
+    return free.updatedAt >= premiumGoal.updatedAt
+      ? { type: "FREE", goal: free }
+      : { type: "PREMIUM", goal: premiumGoal };
+  }
+  if (premiumGoal) return { type: "PREMIUM", goal: premiumGoal };
+  if (free) return { type: "FREE", goal: free };
   return null;
 };
 
