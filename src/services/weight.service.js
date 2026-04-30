@@ -11,17 +11,12 @@ export const createOrUpdateWeightGoal = async (userId, data) => {
   if (existing) {
     return await prisma.weightGoal.update({
       where: { userId },
-      data: { goal, reminder, notify },  // ✅ added notify
+      data: { goal, reminder, notify, isCompleted: false },
     });
   }
 
   return await prisma.weightGoal.create({
-    data: {
-      userId,
-      goal,
-      reminder,
-      notify,  // ✅ added notify
-    },
+    data: { userId, goal, reminder, notify },
   });
 };
 
