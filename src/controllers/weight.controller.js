@@ -135,11 +135,11 @@ export const updateWeight = async (req, res) => {
     let goalReached = false;
 
     if (goalData?.goal) {
-      const firstEntry = await prisma.weightEntry.findFirst({
-        where: { userId },
-        orderBy: { createdAt: "asc" },
+      const weightAtGoalTime = await prisma.weightEntry.findFirst({
+        where: { userId, createdAt: { lte: goalData.updatedAt } },
+        orderBy: { createdAt: "desc" },
       });
-      const startingWeight = firstEntry?.weight ?? weight;
+      const startingWeight = weightAtGoalTime?.weight ?? weight;
       const isWeightLoss = startingWeight > goalData.goal;
 
       goalReached = isWeightLoss ? weight <= goalData.goal : weight >= goalData.goal;
@@ -214,26 +214,28 @@ export const getWeightProgress = async (req, res) => {
       orderBy: { createdAt: "desc" },
     });
 
-    // Get first ever entry to determine direction
-    const firstWeight = await prisma.weightEntry.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "asc" },
-    });
-
     const goalData = await prisma.weightGoal.findUnique({
       where: { userId },
     });
 
+    // Weight entry at or before goal was set — determines direction correctly
+    const weightAtGoalTime = goalData
+      ? await prisma.weightEntry.findFirst({
+          where: { userId, createdAt: { lte: goalData.updatedAt } },
+          orderBy: { createdAt: "desc" },
+        })
+      : null;
+
     const current = latestWeight?.weight ?? null;
     const goal = goalData?.goal ?? null;
-    const starting = firstWeight?.weight ?? null;
+    const starting = weightAtGoalTime?.weight ?? current;
 
     let remaining = 0;
     let percentage = 0;
     let goalReached = false;
 
     if (goal !== null && goal > 0 && current !== null && starting !== null) {
-      const isWeightLoss = starting > goal; // true = losing, false = gaining
+      const isWeightLoss = starting > goal;
 
       if (isWeightLoss) {
         // User wants to go DOWN to goal
