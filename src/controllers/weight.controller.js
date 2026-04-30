@@ -134,11 +134,20 @@ export const updateWeight = async (req, res) => {
     const goalData = await getWeightGoal(userId);
     let goalReached = false;
 
-    if (goalData && weight <= goalData.goal) {
-      goalReached = true;
+    if (goalData?.goal) {
+      const firstEntry = await prisma.weightEntry.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "asc" },
+      });
 
-      // ✅ Respect notify flag
-      if (goalData.notify !== false) {
+      const startingWeight = firstEntry?.weight ?? weight;
+      const isWeightLoss = startingWeight > goalData.goal;
+
+      goalReached = isWeightLoss
+        ? weight <= goalData.goal
+        : weight >= goalData.goal;
+
+      if (goalReached && goalData.notify !== false) {
         await createReminderNotification({
           userId,
           title: "Weight Goal Achieved 🎉",
