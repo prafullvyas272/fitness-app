@@ -104,6 +104,8 @@ model User {
 
   customerQuestionaires CustomerQuestionaire[]
   customerWorkoutPlans  CustomerWorkoutPlan[]  @relation("CustomerWorkoutPlans")
+  trainerWorkoutPlans        TrainerWorkoutPlan[]   @relation("TrainerWorkoutPlans")
+  customerPremiumWorkoutPlans TrainerWorkoutPlan[]  @relation("CustomerPremiumWorkoutPlans")
 
   createdAt DateTime @default(now())
 }
@@ -719,6 +721,45 @@ enum MealType {
   LUNCH
   DINNER
   SNACK
+}
+
+model TrainerWorkoutPlan {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId    String   @db.ObjectId
+  customerId   String   @db.ObjectId
+  planName     String
+  numberOfDays Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trainer  User               @relation("TrainerWorkoutPlans", fields: [trainerId], references: [id], onDelete: Cascade)
+  customer User               @relation("CustomerPremiumWorkoutPlans", fields: [customerId], references: [id], onDelete: Cascade)
+  days     TrainerWorkoutDay[]
+}
+
+model TrainerWorkoutDay {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  planId    String @db.ObjectId
+  dayNumber Int
+
+  createdAt DateTime @default(now())
+
+  plan      TrainerWorkoutPlan       @relation(fields: [planId], references: [id], onDelete: Cascade)
+  exercises TrainerWorkoutExercise[]
+}
+
+model TrainerWorkoutExercise {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  dayId        String  @db.ObjectId
+  exerciseName String
+  sets         Int?
+  reps         Int?
+  weight       Float?
+
+  createdAt DateTime @default(now())
+
+  day TrainerWorkoutDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
 }
 
 model CustomerWorkoutPlan {
