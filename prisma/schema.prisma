@@ -106,6 +106,10 @@ model User {
   customerWorkoutPlans  CustomerWorkoutPlan[]  @relation("CustomerWorkoutPlans")
   trainerWorkoutPlans        TrainerWorkoutPlan[]   @relation("TrainerWorkoutPlans")
   customerPremiumWorkoutPlans TrainerWorkoutPlan[]  @relation("CustomerPremiumWorkoutPlans")
+  trainerPremiumStepGoals     PremiumStepGoal[]     @relation("TrainerPremiumStepGoals")
+  customerPremiumStepGoals    PremiumStepGoal[]     @relation("CustomerPremiumStepGoals")
+  trainerPremiumWeightGoals   PremiumWeightGoal[]   @relation("TrainerPremiumWeightGoals")
+  customerPremiumWeightGoals  PremiumWeightGoal[]   @relation("CustomerPremiumWeightGoals")
 
   createdAt DateTime @default(now())
 }
@@ -590,11 +594,13 @@ model CustomerQuestionaire {
 }
 
 model StepGoal {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId   String  @db.ObjectId
-  goal     Int
-  reminder String? // ✅ make optional
-  notify   Boolean @default(true)
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  goal        Int
+  reminder    String?
+  notify      Boolean  @default(true)
+  isCompleted Boolean   @default(false)
+  startedAt   DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -605,11 +611,12 @@ model StepGoal {
 }
 
 model WeightGoal {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId   String  @db.ObjectId
-  goal     Float
-  reminder String?
-  notify   Boolean @default(true)
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String  @db.ObjectId
+  goal        Float
+  reminder    String?
+  notify      Boolean @default(true)
+  isCompleted Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -617,6 +624,41 @@ model WeightGoal {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId])
+}
+
+model PremiumStepGoal {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId   String    @db.ObjectId
+  customerId  String    @db.ObjectId
+  goal        Int
+  reminder    String?
+  notify      Boolean   @default(true)
+  isStarted   Boolean   @default(false)
+  isCompleted Boolean   @default(false)
+  startedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trainer  User @relation("TrainerPremiumStepGoals", fields: [trainerId], references: [id], onDelete: Cascade)
+  customer User @relation("CustomerPremiumStepGoals", fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model PremiumWeightGoal {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId   String  @db.ObjectId
+  customerId  String  @db.ObjectId
+  goal        Float
+  reminder    String?
+  notify      Boolean @default(true)
+  isStarted   Boolean @default(false)
+  isCompleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trainer  User @relation("TrainerPremiumWeightGoals", fields: [trainerId], references: [id], onDelete: Cascade)
+  customer User @relation("CustomerPremiumWeightGoals", fields: [customerId], references: [id], onDelete: Cascade)
 }
 
 model StepEntry {

@@ -3,10 +3,12 @@ import {
   getStepGoal,
   addSteps,
   getTodaySteps,
-  getLast7DaysProgress,      //  import new function
+  getStepsSince,
+  getLast7DaysProgress,
   patchStepGoal,
 } from "../services/step.service.js";
 
+import { getActiveStepGoal } from "../services/premium-steps.service.js";
 import { createReminderNotification } from "../services/notification.service.js";
 
 export const saveStepGoal = async (req, res) => {
@@ -61,15 +63,16 @@ export const addUserSteps = async (req, res) => {
 
     await addSteps(userId, steps);
 
-    const totalSteps = await getTodaySteps(userId);
-    const goalData = await getStepGoal(userId);
+    const active = await getActiveStepGoal(userId);
+    const goalData = active?.goal || null;
+    const since = goalData?.startedAt ?? new Date(new Date().setHours(0, 0, 0, 0));
+    const totalSteps = await getStepsSince(userId, since);
 
     let goalReached = false;
 
     if (goalData && totalSteps >= goalData.goal) {
       goalReached = true;
 
-      // ✅ Respect notify flag when goal is reached too
       if (goalData.notify !== false) {
         await createReminderNotification({
           userId,
@@ -83,6 +86,7 @@ export const addUserSteps = async (req, res) => {
       success: true,
       totalSteps,
       goal: goalData?.goal || 0,
+      goalType: active?.type || null,
       goalReached,
     });
   } catch (error) {
@@ -94,11 +98,12 @@ export const getStepsProgress = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const totalSteps = await getTodaySteps(userId);
-    const goalData = await getStepGoal(userId);
+    const active = await getActiveStepGoal(userId);
+    const goalData = active?.goal || null;
+    const since = goalData?.startedAt ?? new Date(new Date().setHours(0, 0, 0, 0));
+    const totalSteps = await getStepsSince(userId, since);
 
     const goal = goalData?.goal ?? null;
-
     const remaining = goal !== null ? Math.max(goal - totalSteps, 0) : 0;
     const percentage = goal !== null && goal > 0 ? Math.min((totalSteps / goal) * 100, 100) : 0;
     const goalReached = goal !== null && goal > 0 && totalSteps >= goal;
@@ -106,6 +111,7 @@ export const getStepsProgress = async (req, res) => {
     res.json({
       success: true,
       goal,
+      goalType: active?.type || null,
       steps: totalSteps,
       remaining,
       percentage: Math.round(percentage),

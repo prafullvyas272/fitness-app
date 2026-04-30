@@ -1,5 +1,6 @@
 import express from "express";
 import { saveStepGoal, getSteps, addUserSteps, getStepsProgress, getWeeklyProgress, updateStepGoal } from "../controllers/step.controller.js";
+import { finishActiveStepGoalHandler } from "../controllers/premium-steps.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -10,6 +11,7 @@ router.get("/", authMiddleware, getSteps);
 router.patch("/", authMiddleware, updateStepGoal); 
 
 router.post("/add", authMiddleware, addUserSteps);
+router.post("/finish", authMiddleware, finishActiveStepGoalHandler);
 router.get("/progress", authMiddleware, getStepsProgress);
 router.get("/weekly", authMiddleware, getWeeklyProgress);
 

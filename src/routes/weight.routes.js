@@ -1,5 +1,6 @@
 import express from "express";
 import { saveWeightGoal, getWeight, updateWeight, getCurrentWeightData, updateWeightGoal, getWeeklyWeightProgress, getWeightProgress } from "../controllers/weight.controller.js";
+import { finishActiveWeightGoalHandler } from "../controllers/premium-weight.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -10,6 +11,7 @@ router.get("/", authMiddleware, getWeight);
 router.patch("/", authMiddleware, updateWeightGoal);
 
 router.post("/update", authMiddleware, updateWeight);
+router.post("/finish", authMiddleware, finishActiveWeightGoalHandler);
 
 router.get("/current", authMiddleware, getCurrentWeightData);
 router.get("/weekly", authMiddleware, getWeeklyWeightProgress);

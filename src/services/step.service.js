@@ -11,17 +11,12 @@ export const createOrUpdateStepGoal = async (userId, data) => {
   if (existing) {
     return await prisma.stepGoal.update({
       where: { userId },
-      data: { goal, reminder, notify },  // ✅ added notify
+      data: { goal, reminder, notify, isCompleted: false, startedAt: new Date() },
     });
   }
 
   return await prisma.stepGoal.create({
-    data: {
-      userId,
-      goal,
-      reminder,
-      notify,  // ✅ added notify
-    },
+    data: { userId, goal, reminder, notify, startedAt: new Date() },
   });
 };
 
@@ -56,16 +51,16 @@ export const addSteps = async (userId, steps) => {
 export const getTodaySteps = async (userId) => {
   const { start, end } = getTodayRange();
   const entries = await prisma.stepEntry.findMany({
-    where: {
-      userId,
-      date: {
-        gte: start,
-        lte: end,
-      },
-    },
+    where: { userId, date: { gte: start, lte: end } },
   });
+  return entries.reduce((sum, e) => sum + e.steps, 0);
+};
 
-  return entries.reduce((sum, e) => sum + e.steps, 0);  // ✅ fixed typo "seum" → "sum"
+export const getStepsSince = async (userId, since) => {
+  const entries = await prisma.stepEntry.findMany({
+    where: { userId, createdAt: { gte: since } },
+  });
+  return entries.reduce((sum, e) => sum + e.steps, 0);
 };
 
 export const getLast7DaysProgress = async (userId) => {
