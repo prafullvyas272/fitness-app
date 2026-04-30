@@ -135,7 +135,14 @@ export const updateWeight = async (req, res) => {
     let goalReached = false;
 
     if (goalData?.goal) {
-      goalReached = weight === goalData.goal;
+      const firstEntry = await prisma.weightEntry.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "asc" },
+      });
+      const startingWeight = firstEntry?.weight ?? weight;
+      const isWeightLoss = startingWeight > goalData.goal;
+
+      goalReached = isWeightLoss ? weight <= goalData.goal : weight >= goalData.goal;
 
       if (goalReached && goalData.notify !== false) {
         await createReminderNotification({
@@ -235,7 +242,7 @@ export const getWeightProgress = async (req, res) => {
 
         remaining = Math.max(current - goal, 0);
         percentage = totalToLose > 0 ? Math.min((lost / totalToLose) * 100, 100) : 0;
-        goalReached = current === goal;
+        goalReached = current <= goal;
       } else {
         // User wants to go UP to goal
         const totalToGain = goal - starting;
@@ -243,7 +250,7 @@ export const getWeightProgress = async (req, res) => {
 
         remaining = Math.max(goal - current, 0);
         percentage = totalToGain > 0 ? Math.min((gained / totalToGain) * 100, 100) : 0;
-        goalReached = current === goal;
+        goalReached = current >= goal;
       }
 
       if (goalReached) {
