@@ -8,7 +8,7 @@ import {
   patchStepGoal,
 } from "../services/step.service.js";
 
-import { getActiveStepGoal } from "../services/premium-steps.service.js";
+import { getActiveStepGoal, getLastCompletedStepGoal } from "../services/premium-steps.service.js";
 import { createReminderNotification } from "../services/notification.service.js";
 
 export const saveStepGoal = async (req, res) => {
@@ -99,7 +99,10 @@ export const getStepsProgress = async (req, res) => {
     const userId = req.user.userId;
 
     const active = await getActiveStepGoal(userId);
-    const goalData = active?.goal || null;
+    const fallback = active ? null : await getLastCompletedStepGoal(userId);
+    const source = active ?? fallback;
+    const goalData = source?.goal || null;
+
     const since = goalData?.startedAt ?? new Date(new Date().setHours(0, 0, 0, 0));
     const totalSteps = await getStepsSince(userId, since);
 
@@ -111,11 +114,12 @@ export const getStepsProgress = async (req, res) => {
     res.json({
       success: true,
       goal,
-      goalType: active?.type || null,
+      goalType: source?.type || null,
       steps: totalSteps,
       remaining,
       percentage: Math.round(percentage),
       goalReached,
+      isCompleted: goalData?.isCompleted ?? false,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

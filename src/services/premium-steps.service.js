@@ -1,5 +1,25 @@
 import prisma from "../utils/prisma.js";
 
+// helper: returns most recently completed goal (free or premium)
+export const getLastCompletedStepGoal = async (userId) => {
+  const freeGoal = await prisma.stepGoal.findUnique({ where: { userId } });
+  const premiumGoal = await prisma.premiumStepGoal.findFirst({
+    where: { customerId: userId, isCompleted: true },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  const free = freeGoal?.isCompleted ? freeGoal : null;
+
+  if (free && premiumGoal) {
+    return free.updatedAt >= premiumGoal.updatedAt
+      ? { type: "FREE", goal: free }
+      : { type: "PREMIUM", goal: premiumGoal };
+  }
+  if (premiumGoal) return { type: "PREMIUM", goal: premiumGoal };
+  if (free) return { type: "FREE", goal: free };
+  return null;
+};
+
 // helper: returns active goal for a user (free or premium)
 export const getActiveStepGoal = async (userId) => {
   const freeGoal = await prisma.stepGoal.findUnique({ where: { userId } });
