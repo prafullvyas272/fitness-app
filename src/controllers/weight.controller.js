@@ -244,7 +244,17 @@ export const getWeightProgress = async (req, res) => {
     });
 
     const active = await getActiveWeightGoal(userId);
-    const goalData = active?.goal || null;
+
+    // fallback: any non-completed premium goal (pending or started)
+    const premiumGoal = !active
+      ? await prisma.premiumWeightGoal.findFirst({
+          where: { customerId: userId, isCompleted: false },
+          orderBy: { createdAt: "desc" },
+        })
+      : null;
+
+    const source = active ?? (premiumGoal ? { type: "PREMIUM", goal: premiumGoal } : null);
+    const goalData = source?.goal ?? null;
 
     const current = latestWeight?.weight ?? null;
     const goal = goalData?.goal ?? null;
@@ -278,7 +288,7 @@ export const getWeightProgress = async (req, res) => {
     res.json({
       success: true,
       goal,
-      goalType: active?.type || null,
+      goalType: source?.type || null,
       current,
       remaining,
       percentage: Math.round(percentage),
