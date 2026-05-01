@@ -15,7 +15,7 @@ import { createReminderNotification } from "../services/notification.service.js"
 export const saveWeightGoal = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { goal, reminder, notify, weightGoalType } = req.body;
+    const { goal, reminder, notify, weightGoalType, currentWeight } = req.body;
 
     if (goal === undefined && reminder === undefined && notify === undefined && weightGoalType === undefined) {
       return res.status(400).json({ error: "At least one field required: goal, weightGoalType, reminder, or notify" });
@@ -46,7 +46,11 @@ export const saveWeightGoal = async (req, res) => {
 
     const data = await createOrUpdateWeightGoal(userId, updates);
 
-    // ✅ Only notify if notify is true AND reminder exists
+    if (currentWeight !== undefined) {
+      if (currentWeight <= 0) return res.status(400).json({ error: "currentWeight must be greater than 0" });
+      await addWeightEntry(userId, currentWeight);
+    }
+
     if (updates.notify === true && updates.reminder) {
       await createReminderNotification({
         userId,
@@ -55,7 +59,7 @@ export const saveWeightGoal = async (req, res) => {
       });
     }
 
-    res.json({ success: true, data });
+    res.json({ success: true, data, currentWeight: currentWeight ?? null });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
