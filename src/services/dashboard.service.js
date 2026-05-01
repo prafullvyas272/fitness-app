@@ -100,9 +100,12 @@ export const getWeightDashboard = async (userId) => {
     percentage = Math.min((current / goal) * 100, 100);
   }
 
+  const remaining = goal !== null && current !== null ? Math.abs(goal - current) : null;
+
   return {
     current,
     goal,
+    remaining,
     percentage: Math.round(percentage),
     notify: goalData?.notify ?? true,
     reminder: goalData?.reminder || null,
