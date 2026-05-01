@@ -156,12 +156,21 @@ export const updateWeight = async (req, res) => {
       const isLose = (goalData.weightGoalType ?? "LOSE") === "LOSE";
       goalReached = isLose ? weight <= goalData.goal : weight >= goalData.goal;
 
-      if (goalReached && goalData.notify !== false) {
-        await createReminderNotification({
-          userId,
-          title: "Weight Goal Achieved 🎉",
-          message: `Congratulations! You reached your goal weight (${goalData.goal} kg)!`,
-        });
+      if (goalReached) {
+        // Auto-complete the goal so user can start next one without manual finish call
+        if (active.type === "FREE") {
+          await prisma.weightGoal.update({ where: { userId }, data: { isCompleted: true } });
+        } else {
+          await prisma.premiumWeightGoal.update({ where: { id: goalData.id }, data: { isCompleted: true } });
+        }
+
+        if (goalData.notify !== false) {
+          await createReminderNotification({
+            userId,
+            title: "Weight Goal Achieved 🎉",
+            message: `Congratulations! You reached your goal weight (${goalData.goal} kg)!`,
+          });
+        }
       }
     }
 
