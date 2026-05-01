@@ -9,7 +9,7 @@ import {
 } from "../services/weight.service.js";
 
 import prisma from "../utils/prisma.js";
-
+import { getActiveWeightGoal } from "../services/premium-weight.service.js";
 import { createReminderNotification } from "../services/notification.service.js";
 
 export const saveWeightGoal = async (req, res) => {
@@ -141,7 +141,8 @@ export const updateWeight = async (req, res) => {
 
     await addWeightEntry(userId, weight);
 
-    const goalData = await getWeightGoal(userId);
+    const active = await getActiveWeightGoal(userId);
+    const goalData = active?.goal || null;
     let goalReached = false;
 
     if (goalData?.goal) {
@@ -161,6 +162,7 @@ export const updateWeight = async (req, res) => {
       success: true,
       currentWeight: weight,
       goal: goalData?.goal || null,
+      goalType: active?.type || null,
       goalReached,
       message: goalReached
         ? "Congratulations! You reached your weight goal 🎉"
@@ -176,12 +178,14 @@ export const getCurrentWeightData = async (req, res) => {
     const userId = req.user.userId;
 
     const currentWeight = await getCurrentWeight(userId);
-    const goalData = await getWeightGoal(userId);
+    const active = await getActiveWeightGoal(userId);
+    const goalData = active?.goal || null;
 
     res.json({
       success: true,
       currentWeight,
       goal: goalData?.goal || null,
+      goalType: active?.type || null,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -218,15 +222,13 @@ export const getWeightProgress = async (req, res) => {
       orderBy: { createdAt: "desc" },
     });
 
-    const goalData = await prisma.weightGoal.findUnique({
-      where: { userId },
-    });
+    const active = await getActiveWeightGoal(userId);
+    const goalData = active?.goal || null;
 
     const current = latestWeight?.weight ?? null;
     const goal = goalData?.goal ?? null;
     const isLose = (goalData?.weightGoalType ?? "LOSE") === "LOSE";
 
-    // First weight entry after goal was last updated — used as starting reference for percentage
     const firstEntryAfterGoal = goalData
       ? await prisma.weightEntry.findFirst({
           where: { userId, createdAt: { gte: goalData.updatedAt } },
@@ -255,6 +257,7 @@ export const getWeightProgress = async (req, res) => {
     res.json({
       success: true,
       goal,
+      goalType: active?.type || null,
       current,
       remaining,
       percentage: Math.round(percentage),

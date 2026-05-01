@@ -1,5 +1,6 @@
 import {
   createPremiumWeightGoal,
+  getTrainerPremiumWeightGoal,
   getCustomerPremiumWeightGoal,
   startPremiumWeightGoal,
   finishActiveWeightGoal,
@@ -12,6 +13,18 @@ export const createPremiumWeightGoalHandler = async (req, res) => {
     const { goal, weightGoalType, reminder, notify } = req.body;
     const data = await createPremiumWeightGoal({ trainerId, customerId, goal, weightGoalType, reminder, notify });
     res.status(201).json({ success: true, message: "Premium weight goal created.", data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getTrainerPremiumWeightGoalHandler = async (req, res) => {
+  try {
+    const trainerId = req.user.userId;
+    const { customerId } = req.params;
+    const data = await getTrainerPremiumWeightGoal(trainerId, customerId);
+    if (!data) return res.status(404).json({ success: false, message: "No goal found for this customer." });
+    res.status(200).json({ success: true, data });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }

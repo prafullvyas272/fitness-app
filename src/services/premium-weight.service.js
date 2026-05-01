@@ -31,6 +31,14 @@ export const createPremiumWeightGoal = async ({ trainerId, customerId, goal, wei
   });
 };
 
+// trainer views the goal they created for a customer
+export const getTrainerPremiumWeightGoal = async (trainerId, customerId) => {
+  return prisma.premiumWeightGoal.findFirst({
+    where: { trainerId, customerId },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 // customer views their pending/active premium weight goal
 export const getCustomerPremiumWeightGoal = async (customerId) => {
   return prisma.premiumWeightGoal.findFirst({

@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createPremiumWeightGoalHandler,
+  getTrainerPremiumWeightGoalHandler,
   getCustomerPremiumWeightGoalHandler,
   startPremiumWeightGoalHandler,
   finishActiveWeightGoalHandler,
@@ -14,7 +15,8 @@ router.get("/customer/goal", authMiddleware, getCustomerPremiumWeightGoalHandler
 router.post("/customer/start", authMiddleware, startPremiumWeightGoalHandler);
 router.post("/customer/finish", authMiddleware, finishActiveWeightGoalHandler);
 
-// trainer route
+// trainer routes
 router.post("/:customerId", authMiddleware, createPremiumWeightGoalHandler);
+router.get("/:customerId", authMiddleware, getTrainerPremiumWeightGoalHandler);
 
 export default router;
