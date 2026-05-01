@@ -69,7 +69,10 @@ export const getWeight = async (req, res) => {
   try {
     const userId = req.user.userId;
     const data = await getWeightGoal(userId);
-    res.json({ success: true, data });
+    const currentWeight = await getCurrentWeight(userId);
+    const goal = data?.goal ?? null;
+    const remaining = goal !== null && currentWeight !== null ? Math.abs(goal - currentWeight) : null;
+    res.json({ success: true, data, currentWeight, remaining });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -185,11 +188,16 @@ export const getCurrentWeightData = async (req, res) => {
     const active = await getActiveWeightGoal(userId);
     const goalData = active?.goal || null;
 
+    const goal = goalData?.goal || null;
+    const remaining = goal !== null && currentWeight !== null ? Math.abs(goal - currentWeight) : null;
+
     res.json({
       success: true,
       currentWeight,
-      goal: goalData?.goal || null,
+      goal,
+      weightGoalType: goalData?.weightGoalType ?? null,
       goalType: active?.type || null,
+      remaining,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
