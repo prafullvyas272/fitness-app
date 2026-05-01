@@ -50,8 +50,28 @@ export const getCustomerPremiumWeightGoal = async (customerId) => {
 // customer starts their premium weight goal
 export const startPremiumWeightGoal = async (customerId) => {
   const freeGoal = await prisma.weightGoal.findUnique({ where: { userId: customerId } });
+
   if (freeGoal && !freeGoal.isCompleted) {
-    throw new Error("You have an active free weight goal. Finish it before starting your trainer's goal.");
+    // Check if goal is already reached — auto-complete if so
+    const latestEntry = await prisma.weightEntry.findFirst({
+      where: { userId: customerId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (latestEntry) {
+      const isLose = (freeGoal.weightGoalType ?? "LOSE") === "LOSE";
+      const reached = isLose
+        ? latestEntry.weight <= freeGoal.goal
+        : latestEntry.weight >= freeGoal.goal;
+
+      if (reached) {
+        await prisma.weightGoal.update({ where: { userId: customerId }, data: { isCompleted: true } });
+      } else {
+        throw new Error("You have an active free weight goal. Finish it before starting your trainer's goal.");
+      }
+    } else {
+      throw new Error("You have an active free weight goal. Finish it before starting your trainer's goal.");
+    }
   }
 
   const alreadyStarted = await prisma.premiumWeightGoal.findFirst({
