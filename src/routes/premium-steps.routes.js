@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createPremiumStepGoalHandler,
+  getTrainerPremiumStepGoalHandler,
   getCustomerPremiumStepGoalHandler,
   startPremiumStepGoalHandler,
   finishActiveStepGoalHandler,
@@ -14,7 +15,8 @@ router.get("/customer/goal", authMiddleware, getCustomerPremiumStepGoalHandler);
 router.post("/customer/start", authMiddleware, startPremiumStepGoalHandler);
 router.post("/customer/finish", authMiddleware, finishActiveStepGoalHandler);
 
-// trainer route
+// trainer routes
 router.post("/:customerId", authMiddleware, createPremiumStepGoalHandler);
+router.get("/:customerId", authMiddleware, getTrainerPremiumStepGoalHandler);
 
 export default router;

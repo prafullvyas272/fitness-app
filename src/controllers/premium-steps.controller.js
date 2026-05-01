@@ -1,5 +1,6 @@
 import {
   createPremiumStepGoal,
+  getTrainerPremiumStepGoal,
   getCustomerPremiumStepGoal,
   startPremiumStepGoal,
   finishActiveStepGoal,
@@ -12,6 +13,18 @@ export const createPremiumStepGoalHandler = async (req, res) => {
     const { goal, reminder, notify } = req.body;
     const data = await createPremiumStepGoal({ trainerId, customerId, goal, reminder, notify });
     res.status(201).json({ success: true, message: "Premium step goal created.", data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getTrainerPremiumStepGoalHandler = async (req, res) => {
+  try {
+    const trainerId = req.user.userId;
+    const { customerId } = req.params;
+    const data = await getTrainerPremiumStepGoal(trainerId, customerId);
+    if (!data) return res.status(404).json({ success: false, message: "No goal found for this customer." });
+    res.status(200).json({ success: true, data });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }

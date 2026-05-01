@@ -60,6 +60,14 @@ export const getCustomerPremiumStepGoal = async (customerId) => {
   });
 };
 
+// trainer views the goal they created for a customer
+export const getTrainerPremiumStepGoal = async (trainerId, customerId) => {
+  return prisma.premiumStepGoal.findFirst({
+    where: { trainerId, customerId },
+    orderBy: { createdAt: "desc" },
+  });
+};
+
 // customer starts their premium step goal
 export const startPremiumStepGoal = async (customerId) => {
   // block if free goal is still active
