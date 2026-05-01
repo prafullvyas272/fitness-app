@@ -5,6 +5,7 @@ import {
   startPremiumWeightGoal,
   finishActiveWeightGoal,
 } from "../services/premium-weight.service.js";
+import prisma from "../utils/prisma.js";
 
 export const createPremiumWeightGoalHandler = async (req, res) => {
   try {
@@ -34,7 +35,18 @@ export const getCustomerPremiumWeightGoalHandler = async (req, res) => {
   try {
     const customerId = req.user.userId;
     const data = await getCustomerPremiumWeightGoal(customerId);
-    res.status(200).json({ success: true, data });
+
+    if (!data) return res.status(200).json({ success: true, data: null });
+
+    const latestEntry = await prisma.weightEntry.findFirst({
+      where: { userId: customerId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const currentWeight = latestEntry?.weight ?? null;
+    const remaining = currentWeight !== null ? Math.abs(data.goal - currentWeight) : null;
+
+    res.status(200).json({ success: true, data, currentWeight, remaining });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
