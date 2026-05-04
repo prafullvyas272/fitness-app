@@ -16,7 +16,9 @@ import {
   customerForgotPasswordHandler,
   customerMobileForgotPasswordHandler,
   customerMobileVerifyOtpHandler,
-  customerResetPasswordHandler
+  customerResetPasswordHandler,
+  customerUnifiedForgotPasswordHandler,
+  customerUnifiedVerifyOtpHandler,
 } from "../controllers/auth.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -497,6 +499,12 @@ router.post(
   "/api/customer/reset-password",
   customerResetPasswordHandler
 );
+
+// Unified forgot password — accepts email OR phone
+router.post("/api/customer/forgot-password/request", customerUnifiedForgotPasswordHandler);
+
+// Unified verify OTP — accepts { email, otp } OR { phone, otp }
+router.post("/api/customer/verify-otp", customerUnifiedVerifyOtpHandler);
 
 // router.get("/customer-trainer-plan", authMiddleware, getTrainerPlanForCustomer);
 router.get("/api/customer-trainer-plan", authMiddleware, getTrainerPlanForCustomer);

@@ -414,6 +414,49 @@ export const customerMobileForgotPasswordHandler = async (req, res) => {
   }
 };
 
+export const customerUnifiedForgotPasswordHandler = async (req, res) => {
+  try {
+    const { email, phone } = req.body;
+
+    if (!email && !phone) {
+      return res.status(400).json({ success: false, message: "email or phone is required" });
+    }
+
+    if (email) {
+      await customerForgotPassword(email);
+      return res.status(200).json({ success: true, message: "OTP sent to your email" });
+    }
+
+    const data = await customerForgotPasswordByPhone(phone);
+    return res.status(200).json({ success: true, message: "OTP generated successfully", data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const customerUnifiedVerifyOtpHandler = async (req, res) => {
+  try {
+    const { email, phone, otp } = req.body;
+
+    if (!otp) {
+      return res.status(400).json({ success: false, message: "otp is required" });
+    }
+    if (!email && !phone) {
+      return res.status(400).json({ success: false, message: "email or phone is required" });
+    }
+
+    if (email) {
+      await customerVerifyPasswordResetOtp(email, otp);
+    } else {
+      await customerVerifyForgotPasswordOtpByPhone(phone, otp);
+    }
+
+    return res.status(200).json({ success: true, message: "OTP verified successfully" });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
 export const customerMobileVerifyOtpHandler = async (req, res) => {
   try {
     const { phone, otp } = req.body;
