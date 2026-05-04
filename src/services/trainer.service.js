@@ -512,7 +512,7 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
       }
     });
 
-    // For each customer, attach conversationId between trainer and customer (if exists)
+    // For each customer, attach conversationId and real totalSessions
     const assignedCustomersWithConversations = await Promise.all(
       assignedCustomers.map(async (ac) => {
         let conversationId = null;
@@ -520,6 +520,16 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
           const conversation = await getConversationByUsers(trainerId, ac.customer.id);
           conversationId = conversation ? conversation.conversationId : null;
         }
+
+        const totalSessions = await prisma.trainerBooking.count({
+          where: {
+            trainerId,
+            customerId: ac.customer.id,
+            bookingStatus: "ATTENDED",
+            isCancelled: false,
+          },
+        });
+
         return {
           id: ac.id,
           customer: {
@@ -530,8 +540,8 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
             phone: ac.customer.phone,
             gender: ac.customer.gender,
             isActive: ac.customer.isActive,
-            fee: 0, // TODO: later it will be dynamic
-            totalSessions: 0, // TODO: later it will be dynamic
+            fee: 0,
+            totalSessions,
             createdAt: ac.customer.createdAt,
             userProfileDetail: ac.customer.userProfileDetails?.[0] || null,
             questionnaire: ac.customer.questionnaire,
