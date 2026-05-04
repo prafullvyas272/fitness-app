@@ -97,7 +97,7 @@ export const getTrainerDashboard = async (trainerId, period = "weekly") => {
 
   const booked = allBookings.length;
   const attended = allBookings.filter((b) => b.bookingStatus === "ATTENDED").length;
-  const sessionCompleted = booked > 0 ? Math.round((attended / booked) * 100) : 0;
+  const sessionCompleted = `${booked > 0 ? Math.round((attended / booked) * 100) : 0}%`;
   const chartData = buildChartData(allBookings, period);
 
   return {
