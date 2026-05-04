@@ -342,15 +342,13 @@ export const showCustomerProfileData = async (customerId) => {
   }
 
   const latestSubscription = customer.subscriptions?.[0] || null;
+  const profileDetail = customer.userProfileDetails?.[0] || null;
 
   return {
     ...customer,
+    hostGymAddress: profileDetail?.hostGymAddress || null,
     subscription: latestSubscription,
-    goals: customer.goals ? customer.goals.map(g => ({
-      id: g.id,
-      text: g.text,
-      createdAt: g.createdAt
-    })) : []
+    goals: []
   };
 };
 
