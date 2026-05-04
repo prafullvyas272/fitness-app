@@ -81,17 +81,25 @@ const buildChartData = (bookings, period) => {
 export const getTrainerDashboard = async (trainerId, period = "weekly") => {
   const { start, end } = getPeriodRange(period);
 
-  const [allBookings, clients] = await Promise.all([
+  const [allBookings, clients, latestPayout] = await Promise.all([
     prisma.trainerBooking.findMany({
       where: {
         trainerId,
         isCancelled: false,
         createdAt: { gte: start, lte: end },
       },
-      select: { bookingStatus: true, createdAt: true },
+      select: {
+        bookingStatus: true,
+        createdAt: true,
+        timeSlot: { select: { durationMinutes: true } },
+      },
     }),
     prisma.assignedCustomer.count({
       where: { trainerId, isActive: true },
+    }),
+    prisma.trainerPayout.findFirst({
+      where: { trainerId, createdAt: { gte: start, lte: end } },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -100,12 +108,20 @@ export const getTrainerDashboard = async (trainerId, period = "weekly") => {
   const sessionCompleted = `${booked > 0 ? Math.round((attended / booked) * 100) : 0}%`;
   const chartData = buildChartData(allBookings, period);
 
+  const totalWorkingMinutes = allBookings
+    .filter((b) => b.bookingStatus === "ATTENDED")
+    .reduce((sum, b) => sum + (b.timeSlot?.durationMinutes || 0), 0);
+  const totalWorkingHours = parseFloat((totalWorkingMinutes / 60).toFixed(1));
+
   return {
     sessionCompleted,
     booked,
     attended,
     clients,
     gymRent: 0,
+    totalWorkingHours,
+    totalPayout: latestPayout?.totalPayout ?? null,
+    netPayout: latestPayout?.netPayout ?? null,
     chartData,
   };
 };

@@ -110,6 +110,7 @@ model User {
   customerPremiumStepGoals    PremiumStepGoal[]     @relation("CustomerPremiumStepGoals")
   trainerPremiumWeightGoals   PremiumWeightGoal[]   @relation("TrainerPremiumWeightGoals")
   customerPremiumWeightGoals  PremiumWeightGoal[]   @relation("CustomerPremiumWeightGoals")
+  trainerPayouts              TrainerPayout[]        @relation("TrainerPayouts")
 
   createdAt DateTime @default(now())
 }
@@ -841,4 +842,22 @@ model CustomerWorkoutExercise {
   createdAt DateTime @default(now())
 
   day CustomerWorkoutDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+}
+
+model TrainerPayout {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId   String    @db.ObjectId
+  totalPayout Float
+  netPayout   Float
+  note        String?
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trainer User @relation("TrainerPayouts", fields: [trainerId], references: [id], onDelete: Cascade)
+
+  @@index([trainerId])
+  @@index([createdAt])
 }

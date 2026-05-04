@@ -8,6 +8,7 @@ import {
   getAssignedCustomersByTrainerIdHandler,
 } from "../controllers/trainer.controller.js";
 import { getTrainerDashboardHandler } from "../controllers/trainer-dashboard.controller.js";
+import { createTrainerPayoutHandler, getTrainerPayoutHistoryHandler } from "../controllers/trainer-payout.controller.js";
 import {
   trainerForgotPasswordHandler,
   trainerMobileForgotPasswordHandler,
@@ -375,6 +376,21 @@ router.get(
   "/api/trainer/dashboard",
   authMiddleware,
   getTrainerDashboardHandler
+);
+
+// Admin posts payout for a trainer
+router.post(
+  "/api/trainers/:id/payout",
+  authMiddleware,
+  superadminMiddleware,
+  createTrainerPayoutHandler
+);
+
+// Trainer views their payout history
+router.get(
+  "/api/trainer/payout/history",
+  authMiddleware,
+  getTrainerPayoutHistoryHandler
 );
 
 /**
