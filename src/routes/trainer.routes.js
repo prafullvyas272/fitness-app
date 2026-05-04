@@ -7,6 +7,7 @@ import {
   getTrainerSessionsByMonthAndYearHandler,
   getAssignedCustomersByTrainerIdHandler,
 } from "../controllers/trainer.controller.js";
+import { getTrainerDashboardHandler } from "../controllers/trainer-dashboard.controller.js";
 import {
   trainerForgotPasswordHandler,
   trainerMobileForgotPasswordHandler,
@@ -368,6 +369,12 @@ router.get(
   "/api/trainer/assigned-customers",
   authMiddleware,
   getAssignedCustomersByTrainerIdHandler
+);
+
+router.get(
+  "/api/trainer/dashboard",
+  authMiddleware,
+  getTrainerDashboardHandler
 );
 
 /**
