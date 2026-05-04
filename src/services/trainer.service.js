@@ -530,6 +530,15 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
           },
         });
 
+        const activeSubscription = await prisma.subscription.findFirst({
+          where: { userId: ac.customer.id, status: "ACTIVE" },
+          include: { plan: { select: { name: true, price: true } } },
+          orderBy: { createdAt: "desc" },
+        });
+
+        const fee = activeSubscription?.plan?.price ?? 0;
+        const planName = activeSubscription?.plan?.name ?? null;
+
         return {
           id: ac.id,
           customer: {
@@ -540,7 +549,8 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
             phone: ac.customer.phone,
             gender: ac.customer.gender,
             isActive: ac.customer.isActive,
-            fee: 0,
+            fee,
+            planName,
             totalSessions,
             createdAt: ac.customer.createdAt,
             userProfileDetail: ac.customer.userProfileDetails?.[0] || null,
