@@ -402,9 +402,11 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       }
     });
 
-    // TrainerTimeSlot records linked to a TimeSlot are admin-derived copies/links.
-    // Only standalone TrainerTimeSlot records are trainer-created slots.
-    const trainerCreatedSlots = trainerSlots.filter((slot) => !slot.timeSlotId);
+    // Admin-derived slots have a timeSlotId pointing to the admin TimeSlot table.
+    // Alternative slots self-link (timeSlotId === slot.id) and are trainer-created.
+    const trainerCreatedSlots = trainerSlots.filter(
+      (slot) => !slot.timeSlotId || slot.timeSlotId === slot.id
+    );
 
     const formattedTrainerSlots = trainerCreatedSlots.map((slot) => ({
       ...slot,
