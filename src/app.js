@@ -39,7 +39,8 @@ import trainerMealRoutes from "./routes/trainerMeal.routes.js";
 import customerWorkoutRoutes from "./routes/customer-workout.routes.js";
 import trainerWorkoutRoutes from "./routes/trainerWorkout.routes.js";
 import premiumStepsRoutes from "./routes/premium-steps.routes.js";
-import premiumWeightRoutes from "./routes/premium-weight.routes.js"
+import premiumWeightRoutes from "./routes/premium-weight.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -116,6 +117,7 @@ app.use("/api/customer/workout-plans", customerWorkoutRoutes);
 app.use("/api/premium-workout-plans", trainerWorkoutRoutes);
 app.use("/api/premium-steps", premiumStepsRoutes);
 app.use("/api/premium-weight", premiumWeightRoutes);
+app.use("/api", notificationRoutes);
 
 
 app.use(errorHandler);
