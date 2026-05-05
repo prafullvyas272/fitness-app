@@ -303,6 +303,13 @@ export const showCustomerProfileData = async (customerId) => {
               lastName: true,
               email: true,
               phone: true,
+              userProfileDetails: {
+                take: 1,
+                select: {
+                  hostGymName: true,
+                  hostGymAddress: true,
+                }
+              }
             }
           }
         }
@@ -342,11 +349,27 @@ export const showCustomerProfileData = async (customerId) => {
   }
 
   const latestSubscription = customer.subscriptions?.[0] || null;
-  const profileDetail = customer.userProfileDetails?.[0] || null;
+  const activeTrainer = customer.assignedCustomersAsCustomer?.find(a => a.isActive) || customer.assignedCustomersAsCustomer?.[0] || null;
+  const trainerProfile = activeTrainer?.trainer?.userProfileDetails?.[0] || null;
+
+  const assignedTrainers = customer.assignedCustomersAsCustomer.map(a => ({
+    ...a,
+    trainer: {
+      id: a.trainer.id,
+      firstName: a.trainer.firstName,
+      lastName: a.trainer.lastName,
+      email: a.trainer.email,
+      phone: a.trainer.phone,
+      hostGymName: a.trainer.userProfileDetails?.[0]?.hostGymName || null,
+      hostGymAddress: a.trainer.userProfileDetails?.[0]?.hostGymAddress || null,
+    }
+  }));
 
   return {
     ...customer,
-    hostGymAddress: profileDetail?.hostGymAddress || null,
+    assignedCustomersAsCustomer: assignedTrainers,
+    hostGymName: trainerProfile?.hostGymName || null,
+    hostGymAddress: trainerProfile?.hostGymAddress || null,
     subscription: latestSubscription,
     goals: []
   };
