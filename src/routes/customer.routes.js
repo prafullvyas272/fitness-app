@@ -8,6 +8,7 @@ import {
   getTrainerPlanForCustomer,
   buyPlan,
   cancelPlan,
+  getMyPlan,
   updateMyProfileHandler,
   getUPTRequestsHandler,
   updateUPTRequestStatusHandler,
@@ -510,6 +511,7 @@ router.post("/api/customer/verify-otp", customerUnifiedVerifyOtpHandler);
 router.get("/api/customer-trainer-plan", authMiddleware, getTrainerPlanForCustomer);
 
 router.post("/api/customer/buy-plan", authMiddleware, buyPlan);
+router.get("/api/customer/my-plan", authMiddleware, getMyPlan);
 router.post("/api/customer/cancel-plan", authMiddleware, cancelPlan);
 
 router.patch("/api/customer/me", authMiddleware, upload.single("avatar"), updateMyProfileHandler); //update my profile

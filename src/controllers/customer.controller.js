@@ -281,6 +281,37 @@ export const buyPlan = async (req, res) => {
   }
 };
 
+export const getMyPlan = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const subscription = await prisma.subscription.findFirst({
+      where: { userId, status: "ACTIVE" },
+      orderBy: { createdAt: "desc" },
+      include: {
+        plan: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            features: true,
+            description: true,
+            isPopular: true,
+          },
+        },
+      },
+    });
+
+    if (!subscription) {
+      return res.status(404).json({ success: false, message: "No active plan found" });
+    }
+
+    res.json({ success: true, data: subscription });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 export const cancelPlan = async (req, res) => {
   try {
     const userId = req.user.userId;

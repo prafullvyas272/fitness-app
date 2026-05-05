@@ -334,6 +334,7 @@ export const showCustomerProfileData = async (customerId) => {
               name: true,
               price: true,
               features: true,
+              description: true,
               isPopular: true,
               createdAt: true,
               updatedAt: true,
