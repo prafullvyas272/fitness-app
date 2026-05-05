@@ -1,5 +1,20 @@
 import prisma from "../utils/prisma.js";
 
+export const createTestNotificationHandler = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { title = "Test Notification", message = "This is a test notification", type = "REMINDER" } = req.body;
+
+    const notification = await prisma.notification.create({
+      data: { userId, title, message, type },
+    });
+
+    res.status(201).json({ success: true, data: notification });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const getNotificationsHandler = async (req, res) => {
   try {
     const userId = req.user.userId;
