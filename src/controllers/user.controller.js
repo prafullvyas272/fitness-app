@@ -140,6 +140,64 @@ export const unassignCustomerHandler = async (req, res) => {
     }
 };
 
+export const getTrainersUnavailabilityHandler = async (req, res) => {
+    try {
+        const { date, trainerId, page = 1, pageSize = 20 } = req.query;
+        const skip = (Number(page) - 1) * Number(pageSize);
+
+        const where = { isAvailable: false };
+
+        if (trainerId) where.trainerId = trainerId;
+
+        if (date) {
+            const d = new Date(date);
+            const start = new Date(d); start.setHours(0, 0, 0, 0);
+            const end = new Date(d); end.setHours(23, 59, 59, 999);
+            where.date = { gte: start, lte: end };
+        }
+
+        const [total, records] = await Promise.all([
+            prisma.trainerDailyAvailability.count({ where }),
+            prisma.trainerDailyAvailability.findMany({
+                where,
+                skip,
+                take: Number(pageSize),
+                orderBy: { date: "desc" },
+                include: {
+                    trainer: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                            phone: true,
+                        },
+                    },
+                },
+            }),
+        ]);
+
+        res.json({
+            success: true,
+            data: records.map((r) => ({
+                id: r.id,
+                date: r.date,
+                dayOfWeek: r.dayOfWeek,
+                isAvailable: r.isAvailable,
+                trainer: r.trainer,
+            })),
+            pagination: {
+                total,
+                page: Number(page),
+                pageSize: Number(pageSize),
+                totalPages: Math.ceil(total / Number(pageSize)),
+            },
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 export const getCustomersSubscriptionsHandler = async (req, res) => {
     try {
         const { status, page = 1, pageSize = 20 } = req.query;
