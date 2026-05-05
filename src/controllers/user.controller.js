@@ -1,4 +1,5 @@
 import { getAllTrainers, getAllCustomers, assignCustomer, toggleUserIsActive, unassignCustomer } from "../services/user.service.js";
+import prisma from "../utils/prisma.js";
 
 /**
  * Get all trainers
@@ -136,5 +137,108 @@ export const unassignCustomerHandler = async (req, res) => {
             success: false,
             message: err.message
         });
+    }
+};
+
+export const getCustomersSubscriptionsHandler = async (req, res) => {
+    try {
+        const { status, page = 1, pageSize = 20 } = req.query;
+        const skip = (Number(page) - 1) * Number(pageSize);
+
+        const customerRole = await prisma.role.findUnique({ where: { name: "Customer" }, select: { id: true } });
+        if (!customerRole) return res.status(500).json({ error: "Customer role not found" });
+
+        const where = { roleId: customerRole.id };
+
+        const [total, customers] = await Promise.all([
+            prisma.user.count({ where }),
+            prisma.user.findMany({
+                where,
+                skip,
+                take: Number(pageSize),
+                orderBy: { createdAt: "desc" },
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    phone: true,
+                    isActive: true,
+                    isPremiumMember: true,
+                    createdAt: true,
+                    subscriptions: {
+                        orderBy: { createdAt: "desc" },
+                        take: 1,
+                        select: {
+                            id: true,
+                            status: true,
+                            startDate: true,
+                            endDate: true,
+                            plan: { select: { id: true, name: true, price: true } },
+                        },
+                    },
+                },
+            }),
+        ]);
+
+        let data = customers.map((c) => ({
+            ...c,
+            subscription: c.subscriptions?.[0] || null,
+            subscriptions: undefined,
+        }));
+
+        if (status) {
+            const s = status.toUpperCase();
+            data = data.filter((c) =>
+                s === "NONE"
+                    ? !c.subscription
+                    : c.subscription?.status === s
+            );
+        }
+
+        res.json({
+            success: true,
+            data,
+            pagination: {
+                total,
+                page: Number(page),
+                pageSize: Number(pageSize),
+                totalPages: Math.ceil(total / Number(pageSize)),
+            },
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+export const adminActivatePlanHandler = async (req, res) => {
+    try {
+        const { id: customerId } = req.params;
+        const { planId } = req.body;
+
+        if (!planId) return res.status(400).json({ error: "planId is required" });
+
+        const plan = await prisma.plan.findUnique({ where: { id: planId } });
+        if (!plan) return res.status(404).json({ error: "Plan not found" });
+
+        const customer = await prisma.user.findUnique({ where: { id: customerId }, select: { id: true } });
+        if (!customer) return res.status(404).json({ error: "Customer not found" });
+
+        // Cancel any existing active subscription first
+        await prisma.subscription.updateMany({
+            where: { userId: customerId, status: "ACTIVE" },
+            data: { status: "CANCELLED", endDate: new Date() },
+        });
+
+        const subscription = await prisma.subscription.create({
+            data: { userId: customerId, planId, status: "ACTIVE" },
+            include: { plan: { select: { id: true, name: true, price: true } } },
+        });
+
+        await prisma.user.update({ where: { id: customerId }, data: { isPremiumMember: true } });
+
+        res.status(201).json({ success: true, message: "Plan activated successfully", data: subscription });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };

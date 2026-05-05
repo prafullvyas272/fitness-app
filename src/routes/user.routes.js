@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler, toggleUserIsActiveHandler, unassignCustomerHandler } from "../controllers/user.controller.js";
+import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler, toggleUserIsActiveHandler, unassignCustomerHandler, getCustomersSubscriptionsHandler, adminActivatePlanHandler } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
@@ -435,6 +435,23 @@ router.post(
   authMiddleware,
   superadminMiddleware,
   unassignCustomerHandler
+);
+
+// Admin — view all customers with subscription status
+// ?status=ACTIVE | CANCELLED | NONE (no plan at all)
+router.get(
+  "/api/admin/customers/subscriptions",
+  authMiddleware,
+  superadminMiddleware,
+  getCustomersSubscriptionsHandler
+);
+
+// Admin — activate a plan for a customer
+router.post(
+  "/api/admin/customers/:id/activate-plan",
+  authMiddleware,
+  superadminMiddleware,
+  adminActivatePlanHandler
 );
 
 export default router;
