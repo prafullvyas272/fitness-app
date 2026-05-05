@@ -42,11 +42,16 @@ export const createWorkoutVideo = async ({
 
     const result = await uploadBufferToCloudinary(file.buffer);
 
+    const thumbnailUrl = result.secure_url
+      .replace("/video/upload/", "/video/upload/so_0/")
+      .replace(/\.[^/.]+$/, ".jpg");
+
     const updatedVideo = await prisma.workoutVideo.update({
       where: { id: video.id },
       data: {
         videoUrl: result.secure_url,
         publicId: result.public_id,
+        thumbnailUrl,
         status: VIDEO_UPLOAD_STATUS.READY,
       },
     });
