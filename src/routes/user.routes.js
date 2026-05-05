@@ -439,7 +439,7 @@ router.post(
 
 // Admin — view single customer subscription by ID
 router.get(
-  "/api/admin/customers/:id/subscription",
+  "/admin/customers/:id/subscription",
   authMiddleware,
   superadminMiddleware,
   getCustomerSubscriptionByIdHandler
@@ -448,7 +448,7 @@ router.get(
 // Admin — view all customers with subscription status
 // ?status=ACTIVE | CANCELLED | NONE (no plan at all)
 router.get(
-  "/api/admin/customers/subscriptions",
+  "/admin/customers/subscriptions",
   authMiddleware,
   superadminMiddleware,
   getCustomersSubscriptionsHandler
@@ -456,7 +456,7 @@ router.get(
 
 // Admin — activate a plan for a customer
 router.post(
-  "/api/admin/customers/:id/activate-plan",
+  "/admin/customers/:id/activate-plan",
   authMiddleware,
   superadminMiddleware,
   adminActivatePlanHandler
