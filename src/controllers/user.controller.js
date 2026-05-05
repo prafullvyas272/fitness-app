@@ -211,6 +211,86 @@ export const getCustomersSubscriptionsHandler = async (req, res) => {
     }
 };
 
+export const getCustomerSubscriptionByIdHandler = async (req, res) => {
+    try {
+        const { id: customerId } = req.params;
+
+        const [customer, assignedTrainer] = await Promise.all([
+            prisma.user.findUnique({
+                where: { id: customerId },
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    phone: true,
+                    isActive: true,
+                    isPremiumMember: true,
+                    createdAt: true,
+                    subscriptions: {
+                        orderBy: { createdAt: "desc" },
+                        take: 1,
+                        select: {
+                            id: true,
+                            status: true,
+                            startDate: true,
+                            endDate: true,
+                            plan: { select: { id: true, name: true, price: true } },
+                        },
+                    },
+                },
+            }),
+            prisma.assignedCustomer.findFirst({
+                where: { customerId, isActive: true },
+                include: {
+                    trainer: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                            plan: {
+                                select: { id: true, name: true, price: true, features: true, description: true },
+                            },
+                        },
+                    },
+                },
+            }),
+        ]);
+
+        if (!customer) return res.status(404).json({ error: "Customer not found" });
+
+        const subscription = customer.subscriptions?.[0] || null;
+        const trainerPlan = assignedTrainer?.trainer?.plan || null;
+        const hasActiveSubscription = subscription?.status === "ACTIVE";
+
+        res.json({
+            success: true,
+            data: {
+                id: customer.id,
+                firstName: customer.firstName,
+                lastName: customer.lastName,
+                email: customer.email,
+                phone: customer.phone,
+                isActive: customer.isActive,
+                isPremiumMember: customer.isPremiumMember,
+                createdAt: customer.createdAt,
+                subscription,
+                assignedTrainer: assignedTrainer ? {
+                    id: assignedTrainer.trainer.id,
+                    firstName: assignedTrainer.trainer.firstName,
+                    lastName: assignedTrainer.trainer.lastName,
+                    email: assignedTrainer.trainer.email,
+                    plan: trainerPlan,
+                } : null,
+                canActivate: !!trainerPlan && !hasActiveSubscription,
+            },
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 export const adminActivatePlanHandler = async (req, res) => {
     try {
         const { id: customerId } = req.params;

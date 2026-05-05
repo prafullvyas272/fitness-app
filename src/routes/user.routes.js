@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler, toggleUserIsActiveHandler, unassignCustomerHandler, getCustomersSubscriptionsHandler, adminActivatePlanHandler } from "../controllers/user.controller.js";
+import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler, toggleUserIsActiveHandler, unassignCustomerHandler, getCustomersSubscriptionsHandler, getCustomerSubscriptionByIdHandler, adminActivatePlanHandler } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
@@ -435,6 +435,14 @@ router.post(
   authMiddleware,
   superadminMiddleware,
   unassignCustomerHandler
+);
+
+// Admin — view single customer subscription by ID
+router.get(
+  "/api/admin/customers/:id/subscription",
+  authMiddleware,
+  superadminMiddleware,
+  getCustomerSubscriptionByIdHandler
 );
 
 // Admin — view all customers with subscription status
