@@ -33,11 +33,16 @@ new Worker(
       const result = await uploadToCloudinary(filePath);
       console.log(filePath)
 
+      const thumbnailUrl = result.secure_url
+        .replace("/video/upload/", "/video/upload/so_0/")
+        .replace(/\.[^/.]+$/, ".jpg");
+
       await prisma.workoutVideo.update({
         where: { id: videoId },
         data: {
           videoUrl: result.secure_url,
           publicId: result.public_id,
+          thumbnailUrl,
           status: VIDEO_UPLOAD_STATUS.READY,
         },
       });
