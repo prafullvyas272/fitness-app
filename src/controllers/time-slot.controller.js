@@ -1,10 +1,10 @@
 import { getTrainerSlotsByDate } from "../services/time-slot.service.js";
-import { 
-  createTimeSlot, 
-  updateTimeSlot, 
-  deleteTimeSlot, 
-  showTimeSlot, 
-  getAllTimeSlot ,
+import {
+  createTimeSlot,
+  updateTimeSlot,
+  deleteTimeSlot,
+  showTimeSlot,
+  getAllTimeSlot,
   getTrainerAllTimeSlot
 } from "../services/time-slot.service.js";
 
@@ -141,6 +141,41 @@ export const getAllTimeSlotHandler = async (req, res) => {
   }
 };
 
+
+export const adminGetTrainerAllTimeSlotHandler = async (req, res) => {
+  try {
+    const {
+      date,
+      day,
+      month,
+      year,
+      trainerId,
+      page = 1,
+      pageSize = 20
+    } = req.query;
+
+    const result = await getTrainerAllTimeSlot({
+      date,
+      day,
+      month,
+      year,
+      trainerId,
+      page: Number(page),
+      pageSize: Number(pageSize)
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Trainer Time slots fetched successfully.",
+      data: result,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
 export const getTrainerAllTimeSlotHandler = async (req, res) => {
   try {

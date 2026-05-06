@@ -1,5 +1,5 @@
 import express from "express";
-import { getTrainerSlotsByDateHandler, createTimeSlotHandler, updateTimeSlotHandler, deleteTimeSlotHandler, getTrainerAllTimeSlotHandler, getAllTimeSlotHandler, showTimeSlotHandler } from "../controllers/time-slot.controller.js";
+import { getTrainerSlotsByDateHandler, createTimeSlotHandler, updateTimeSlotHandler, deleteTimeSlotHandler, getTrainerAllTimeSlotHandler, getAllTimeSlotHandler, showTimeSlotHandler, adminGetTrainerAllTimeSlotHandler } from "../controllers/time-slot.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 /**
@@ -585,4 +585,70 @@ router.get(
   authMiddleware,
   getTrainerAllTimeSlotHandler
 );
+
+/**
+ * @swagger
+ * /api/admin/trainer-time-slots:
+ *   get:
+ *     summary: (Admin) Get trainer time slots with filtering and pagination
+ *     description: Same response as /api/trainer-time-slots but for admin. No customer creation date restriction applied.
+ *     tags:
+ *       - Superadmin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: trainerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Trainer user ID
+ *       - in: query
+ *         name: day
+ *         schema:
+ *           type: integer
+ *           example: 6
+ *         description: Day of the month
+ *       - in: query
+ *         name: month
+ *         schema:
+ *           type: integer
+ *           example: 5
+ *         description: Month (1-12)
+ *       - in: query
+ *         name: year
+ *         schema:
+ *           type: integer
+ *           example: 2026
+ *         description: Year (YYYY)
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: 2026-05-06
+ *         description: Specific date (YYYY-MM-DD), alternative to day/month/year
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Trainer Time slots fetched successfully.
+ *       400:
+ *         description: Error occurred.
+ */
+router.get(
+  "/admin/trainer-time-slots",
+  authMiddleware,
+  superadminMiddleware,
+  adminGetTrainerAllTimeSlotHandler
+);
+
 export default router;
