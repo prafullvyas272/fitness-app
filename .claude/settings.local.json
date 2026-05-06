@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx prisma *)"
+      "Bash(npx prisma *)",
+      "Bash(Get-ChildItem -Path \"F:\\\\company\\\\New folder \\(2\\)\\\\fitness-app\" -Directory)",
+      "Bash(Select-Object Name)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "code-review-graph"
+  ]
 }

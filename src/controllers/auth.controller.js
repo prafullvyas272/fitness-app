@@ -8,6 +8,7 @@ import {
   appleLogin,
   getUserProfileById,
   logoutUser,
+  changePassword,
   trainerForgotPassword,
   trainerForgotPasswordByPhone,
   customerForgotPassword,
@@ -306,6 +307,25 @@ export const logoutHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+export const changePasswordHandler = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { oldPassword, newPassword } = req.body;
+
+    await changePassword(userId, oldPassword, newPassword);
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
     });
   }
 };

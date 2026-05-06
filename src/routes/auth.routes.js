@@ -7,6 +7,7 @@ import {
   sendOtpSchema,
   verifyOtpSchema,
   resendOtpSchema,
+  changePasswordSchema,
 } from "../validators/auth.validation.js";
 import {
   sendOtpHandler,
@@ -17,6 +18,7 @@ import {
   appleLoginHandler,
   getUserProfileByIdHandler,
   logoutHandler,
+  changePasswordHandler,
 } from "../controllers/auth.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 
@@ -469,6 +471,74 @@ router.post(
   "/logout",
   authMiddleware,
   logoutHandler
+);
+
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Change password
+ *     description: Change the authenticated user's password by providing the old password and a new password.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - oldPassword
+ *               - newPassword
+ *               - confirmPassword
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: OldPass@123
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: NewPass@456
+ *               confirmPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: NewPass@456
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Password changed successfully
+ *       400:
+ *         description: Validation error or incorrect old password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Old password is incorrect
+ */
+router.post(
+  "/change-password",
+  authMiddleware,
+  validate(changePasswordSchema),
+  changePasswordHandler
 );
 
 

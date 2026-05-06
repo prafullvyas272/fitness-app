@@ -811,6 +811,31 @@ export const getUserProfileById = async (userId) => {
  * @param {*} fcmToken 
  * @returns 
  */
+export const changePassword = async (userId, oldPassword, newPassword) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, password: true, provider: true },
+  });
+
+  if (!user) throw new Error("User not found");
+
+  if (user.provider !== "LOCAL" || !user.password) {
+    throw new Error("Password change is not available for social login accounts");
+  }
+
+  const isMatch = await bcrypt.compare(oldPassword, user.password);
+  if (!isMatch) throw new Error("Old password is incorrect");
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  });
+
+  return { success: true };
+};
+
 export const logoutUser = async (userId, token, fcmToken) => {
   if (!userId) throw new Error("User ID required");
 
