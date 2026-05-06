@@ -291,7 +291,7 @@ export const getAllTimeSlot = async (filter = {}) => {
 
 export const getTrainerAllTimeSlot = async (filter = {}) => {
   try {
-    const { trainerId, customerId, date, day, month, year, page = 1, pageSize = 20 } = filter;
+    const { trainerId, customerId, date, day, month, year, page = 1, pageSize = 20, filterAdminByTrainer = false } = filter;
 
     if (!trainerId) {
       throw new Error("trainerId is required");
@@ -414,7 +414,10 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       source: "TRAINER",
     }));
 
-    const formattedAdminSlots = adminSlots.map((slot) => ({
+    const formattedAdminSlots = (filterAdminByTrainer
+      ? adminSlots.filter((slot) => trainerSlotByAdminTimeSlotId.has(slot.id))
+      : adminSlots
+    ).map((slot) => ({
       ...slot,
       isBooked: Boolean(trainerSlotByAdminTimeSlotId.get(slot.id)?.isBooked),
       source: "ADMIN",

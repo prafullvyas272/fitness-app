@@ -160,6 +160,7 @@ export const adminGetTrainerAllTimeSlotHandler = async (req, res) => {
       month,
       year,
       trainerId,
+      filterAdminByTrainer: true,
       page: Number(page),
       pageSize: Number(pageSize)
     });
