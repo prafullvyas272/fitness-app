@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { findUserByEmail } from "../services/auth.service.js";
+import { findUserByEmail, findUserByPhone } from "../services/auth.service.js";
 import RoleEnum from "../enums/RoleEnum.js";
 
 export const registerSchema = z
@@ -47,11 +47,21 @@ export const registerSchema = z
   .refine(
     async (data) => {
       const user = await findUserByEmail(data.email);
-      return !user; // must be false if email exists
+      return !user;
     },
     {
       path: ["email"],
       message: "User with this email already exists",
+    }
+  )
+  .refine(
+    async (data) => {
+      const user = await findUserByPhone(data.phone);
+      return !user;
+    },
+    {
+      path: ["phone"],
+      message: "User with this phone number already exists",
     }
   );
 

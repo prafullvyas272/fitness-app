@@ -647,6 +647,12 @@ export const findUserByEmail = async (email) => {
   });
 };
 
+export const findUserByPhone = async (phone) => {
+  return prisma.user.findFirst({
+    where: { phone },
+  });
+};
+
 export const facebookLogin = async (accessToken) => {
   // 1. Verify token & get user info from Facebook
   const fbResponse = await axios.get(
