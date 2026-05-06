@@ -87,9 +87,7 @@ export const updateTrainerRequestStatus = async ({ requestId, status }) => {
           },
         });
 
-        // TODO: need to uncomment later
-        
-        // await sendTrainerAssignedNotification(trainerRequest.customerId, trainerRequest.trainerId);
+        await sendTrainerAssignedNotification(trainerRequest.customerId, trainerRequest.trainerId);
       }
     }
 

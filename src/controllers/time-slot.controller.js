@@ -155,12 +155,15 @@ export const getTrainerAllTimeSlotHandler = async (req, res) => {
     } = req.query;
     console.log(trainerId)
 
+    const customerId = req.user.userId;
+
     const result = await getTrainerAllTimeSlot({
       date,
       day,
       month,
       year,
       trainerId,
+      customerId,
       page: Number(page),
       pageSize: Number(pageSize)
     });
