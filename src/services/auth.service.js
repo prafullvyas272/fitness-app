@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import jwksClient from "jwks-rsa";
 import RoleEnum from "../enums/RoleEnum.js";
 import { TEMPORARY_SUPER_OTP } from "../constants/constants.js";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 const OTP_EXPIRY_MINUTES = 5;
@@ -25,7 +26,8 @@ export const registerUser = async (
   role,
   gender = null,
   hostGymName,
-  hostGymAddress
+  hostGymAddress,
+  profilePhotoFile = null
 ) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -38,9 +40,18 @@ export const registerUser = async (
     throw new Error("Invalid Role. The role not found in the database.");
   }
 
+  let avatarUrl;
+  let avatarPublicId;
+  if (profilePhotoFile?.buffer) {
+    const uploaded = await uploadToCloudinary(profilePhotoFile.buffer, "avatars");
+    avatarUrl = uploaded.secure_url;
+    avatarPublicId = uploaded.public_id;
+  }
+
   const shouldCreateProfile =
     hostGymName !== undefined ||
-    hostGymAddress !== undefined;
+    hostGymAddress !== undefined ||
+    avatarUrl !== undefined;
 
   const user = await prisma.user.create({
     data: {
@@ -57,6 +68,7 @@ export const registerUser = async (
           create: {
             ...(hostGymName !== undefined ? { hostGymName } : {}),
             ...(hostGymAddress !== undefined ? { hostGymAddress } : {}),
+            ...(avatarUrl !== undefined ? { avatarUrl, avatarPublicId } : {}),
           },
         },
       }),

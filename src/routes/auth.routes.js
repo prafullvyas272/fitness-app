@@ -21,6 +21,7 @@ import {
   changePasswordHandler,
 } from "../controllers/auth.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/upload.middleware.js";
 
 const router = Router();
 
@@ -119,7 +120,7 @@ const router = Router();
  *                 data:
  *                   type: object
  */
-router.post("/register", validate(registerSchema), register);
+router.post("/register", upload.single("profilePhoto"), validate(registerSchema), register);
 
 /**
  * @swagger

@@ -38,6 +38,7 @@ export const register = async (req, res) => {
       hostGymName,
       hostGymAddress,
     } = req.body;
+    const profilePhotoFile = req.file || null;
     const data = await registerUser(
       firstName,
       lastName,
@@ -47,7 +48,8 @@ export const register = async (req, res) => {
       role,
       gender,
       hostGymName,
-      hostGymAddress
+      hostGymAddress,
+      profilePhotoFile
     );
 
     console.log('role')
