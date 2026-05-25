@@ -396,6 +396,7 @@ model TrainerRequest {
 
 enum NotificationType {
   TRAINER_REQUEST
+  TRAINER_ASSIGNED
   BOOKING
   REMINDER
 }
