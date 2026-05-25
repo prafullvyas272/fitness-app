@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler, toggleUserIsActiveHandler, unassignCustomerHandler, getTrainersUnavailabilityHandler, getCustomersSubscriptionsHandler, getCustomerSubscriptionByIdHandler, adminActivatePlanHandler } from "../controllers/user.controller.js";
+import { getAllTrainersHandler, getAllCustomersHandler, assignCustomerHandler, toggleUserIsActiveHandler, unassignCustomerHandler, getTrainersUnavailabilityHandler, getCustomersSubscriptionsHandler, getCustomerSubscriptionByIdHandler, adminActivatePlanHandler, deleteCustomerHandler } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
@@ -468,6 +468,46 @@ router.post(
   authMiddleware,
   superadminMiddleware,
   adminActivatePlanHandler
+);
+
+/**
+ * @swagger
+ * /api/customers/{id}:
+ *   delete:
+ *     summary: Delete a customer account (admin only)
+ *     tags:
+ *       - Superadmin
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique identifier of the customer to delete.
+ *     responses:
+ *       200:
+ *         description: Customer deleted successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Bad request.
+ */
+router.delete(
+  "/customers/:id",
+  authMiddleware,
+  superadminMiddleware,
+  deleteCustomerHandler
 );
 
 export default router;

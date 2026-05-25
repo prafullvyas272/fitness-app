@@ -1,4 +1,6 @@
 import RoleEnum from "../enums/RoleEnum.js";
+import { deleteCustomer } from "../services/user.service.js";
+import { deleteTrainer } from "../services/trainer.service.js";
 import { registerUser, loginUser } from "../services/auth.service.js";
 import {
   sendOtp,
@@ -624,6 +626,39 @@ export const trainerResetPasswordHandler = async (req, res) => {
     });
   }
 };
+
+export const deleteOwnAccountHandler = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: { select: { name: true } } }
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const roleName = user.role.name;
+
+    if (roleName === RoleEnum.CUSTOMER) {
+      await deleteCustomer(userId);
+    } else if (roleName === RoleEnum.TRAINER) {
+      await deleteTrainer(userId);
+    } else {
+      return res.status(403).json({ success: false, message: "Account deletion not allowed for this role" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully.",
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
 
 export const customerResetPasswordHandler = async (req, res) => {
   try {

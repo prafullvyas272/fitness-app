@@ -19,6 +19,7 @@ import {
   getUserProfileByIdHandler,
   logoutHandler,
   changePasswordHandler,
+  deleteOwnAccountHandler,
 } from "../controllers/auth.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/upload.middleware.js";
@@ -545,5 +546,44 @@ router.post(
 
 
 
+
+/**
+ * @swagger
+ * /api/auth/account:
+ *   delete:
+ *     tags:
+ *       - Authentication
+ *       - Customer
+ *       - Trainer
+ *     summary: Delete own account
+ *     description: Permanently deletes the authenticated user's account (Customer or Trainer).
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Account deleted successfully.
+ *       400:
+ *         description: Bad request
+ *       403:
+ *         description: Role not allowed to delete account
+ *       404:
+ *         description: User not found
+ */
+router.delete(
+  "/account",
+  authMiddleware,
+  deleteOwnAccountHandler
+);
 
 export default router;

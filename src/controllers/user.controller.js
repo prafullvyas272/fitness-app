@@ -1,4 +1,4 @@
-import { getAllTrainers, getAllCustomers, assignCustomer, toggleUserIsActive, unassignCustomer } from "../services/user.service.js";
+import { getAllTrainers, getAllCustomers, assignCustomer, toggleUserIsActive, unassignCustomer, deleteCustomer } from "../services/user.service.js";
 import prisma from "../utils/prisma.js";
 
 /**
@@ -348,6 +348,27 @@ export const getCustomerSubscriptionByIdHandler = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+/**
+ * Delete a customer account (admin only).
+ */
+export const deleteCustomerHandler = async (req, res) => {
+    try {
+        const customerId = req.params.id;
+        const deletedCustomer = await deleteCustomer(customerId);
+        res.status(200).json({
+            success: true,
+            message: "Customer deleted successfully.",
+            data: deletedCustomer,
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
+
 
 export const adminActivatePlanHandler = async (req, res) => {
     try {

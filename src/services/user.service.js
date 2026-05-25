@@ -261,6 +261,60 @@ export const toggleUserIsActive = async (userId, isActive) => {
 
 
 /**
+ * Delete a Customer user and all related records.
+ * @param {string} customerId - The ID of the customer to delete.
+ * @returns {object} The deleted customer user.
+ */
+export const deleteCustomer = async (customerId) => {
+  if (!customerId) throw new Error("Customer ID is required");
+
+  const customer = await prisma.user.findUnique({
+    where: { id: customerId },
+    select: { id: true, role: { select: { name: true } } }
+  });
+  if (!customer) throw new Error("Customer not found");
+  if (customer.role.name !== "Customer") throw new Error("User is not a customer");
+
+  return await prisma.$transaction(async (tx) => {
+    // Delete records without cascade
+    await tx.userDevice.deleteMany({ where: { userId: customerId } });
+    await tx.notification.deleteMany({ where: { userId: customerId } });
+    await tx.subscription.deleteMany({ where: { userId: customerId } });
+    await tx.trainerRequest.deleteMany({ where: { customerId } });
+    await tx.customerQuestionaire.deleteMany({ where: { clientId: customerId } });
+    await tx.trainerVideoAssignment.deleteMany({ where: { clientId: customerId } });
+    await tx.review.deleteMany({ where: { customerId } });
+
+    // Chat messages have no cascade from conversation; delete them before deleting conversations
+    const conversations = await tx.chatConversation.findMany({
+      where: { customerId },
+      select: { conversationId: true }
+    });
+    if (conversations.length > 0) {
+      await tx.chatMessage.deleteMany({
+        where: { conversationId: { in: conversations.map(c => c.conversationId) } }
+      });
+    }
+    await tx.chatConversation.deleteMany({ where: { customerId } });
+
+    return await tx.user.delete({
+      where: { id: customerId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        isActive: true,
+        roleId: true,
+        createdAt: true,
+      },
+    });
+  }, { timeout: 15000 });
+};
+
+
+/**
  * Unassign a customer from a trainer.
  * @param {string} trainerId - The ID of the trainer.
  * @param {string} customerId - The ID of the customer to unassign.

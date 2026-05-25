@@ -111,6 +111,7 @@ model User {
   trainerPremiumWeightGoals   PremiumWeightGoal[]   @relation("TrainerPremiumWeightGoals")
   customerPremiumWeightGoals  PremiumWeightGoal[]   @relation("CustomerPremiumWeightGoals")
   trainerPayouts              TrainerPayout[]        @relation("TrainerPayouts")
+  progressPhotos              ProgressPhoto[]
 
   createdAt DateTime @default(now())
 }
@@ -842,6 +843,28 @@ model CustomerWorkoutExercise {
   createdAt DateTime @default(now())
 
   day CustomerWorkoutDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+}
+
+enum ProgressPhotoType {
+  BEFORE
+  DURING
+  AFTER
+  CHECK_IN
+}
+
+model ProgressPhoto {
+  id            String            @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String            @db.ObjectId
+  type          ProgressPhotoType
+  photoUrl      String
+  photoPublicId String?
+  takenAt       DateTime          @default(now())
+  createdAt     DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, type])
 }
 
 model TrainerPayout {
