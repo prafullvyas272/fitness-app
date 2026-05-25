@@ -2,6 +2,7 @@ import {
   addJournalEntryForDate,
   getJournalEntryByDate,
   getAllJournalEntries,
+  getCustomerPublicJournalEntries,
 } from "../services/journal-entry.service.js";
 
 /**
@@ -86,6 +87,21 @@ export const getJournalEntryByDateHandler = async (req, res) => {
   }
 };
 
+
+export const getCustomerPublicJournalEntriesHandler = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const entries = await getCustomerPublicJournalEntries(customerId);
+
+    res.status(200).json({
+      success: true,
+      message: entries.length === 0 ? "No public journal entries found" : "Journal entries retrieved successfully",
+      data: entries,
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
 
 export const getAllJournalEntriesHandler = async (req, res) => {
   try {

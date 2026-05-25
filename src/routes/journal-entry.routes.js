@@ -1,5 +1,5 @@
 import express from "express";
-import { addJournalEntryForDateHandler, getJournalEntryByDateHandler, getAllJournalEntriesHandler } from "../controllers/journal-entry.controller.js";
+import { addJournalEntryForDateHandler, getJournalEntryByDateHandler, getAllJournalEntriesHandler, getCustomerPublicJournalEntriesHandler } from "../controllers/journal-entry.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload, videoUpload } from "../middlewares/upload.middleware.js";
 
@@ -144,7 +144,31 @@ router.get(
 );
 
 // journal.routes.js
-router.get("/journal", getAllJournalEntriesHandler);              // GET 
+router.get("/journal", getAllJournalEntriesHandler);              // GET
+
+/**
+ * @swagger
+ * /api/journal-entries/customer/{customerId}:
+ *   get:
+ *     summary: Trainer views a customer's public journal entries (isPrivate=false only)
+ *     tags:
+ *       - JournalEntry
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: customerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the customer
+ *     responses:
+ *       200:
+ *         description: Public journal entries retrieved successfully
+ *       400:
+ *         description: Error fetching entries
+ */
+router.get("/journal-entries/customer/:customerId", authMiddleware, getCustomerPublicJournalEntriesHandler);
 
 
 export default router;

@@ -184,6 +184,22 @@ export const getJournalEntryByDate = async (userId, date) => {
   }
 };
 
+/**
+ * Get all public (isPrivate=false) journal entries for a customer — for trainer view.
+ * @param {string} customerId
+ * @returns {Promise<Array>}
+ */
+export const getCustomerPublicJournalEntries = async (customerId) => {
+  if (!customerId) throw new Error("Customer ID is required");
+
+  const entries = await prisma.journalEntry.findMany({
+    where: { userId: customerId, isPrivate: false },
+    orderBy: { date: "desc" },
+  });
+
+  return entries;
+};
+
 export const getAllJournalEntries = async ({ filters, skip, take, sortOrder }) => {
   const [data, total] = await Promise.all([
     prisma.journalEntry.findMany({

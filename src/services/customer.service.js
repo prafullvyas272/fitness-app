@@ -1,6 +1,6 @@
 import prisma from "../utils/prisma.js";
 import { getHashedPassword } from "../utils/password.js";
-import { sendTrainerRequestNotification } from "./notification.service.js";
+import { sendTrainerRequestNotification, sendTrainerAssignedNotification } from "./notification.service.js";
 
 /**
  * Create a new Customer user.
@@ -524,25 +524,33 @@ export const updateUPTRequestStatus = async ({ requestId, status }) => {
   let assignedCustomer = null;
 
   if (status === "APPROVED") {
-    const existing = await prisma.assignedCustomer.findUnique({
-      where: {
-        customerId_trainerId: {
-          customerId: trainerRequest.customerId,
-          trainerId: trainerRequest.trainerId
-        }
-      }
+    const { customerId, trainerId } = trainerRequest;
+
+    // Deactivate any currently active trainer assignment for this customer
+    // (keeps old record in DB — only marks it inactive with an endDate)
+    await prisma.assignedCustomer.updateMany({
+      where: { customerId, isActive: true },
+      data: { isActive: false, endDate: new Date() }
     });
 
-    if (!existing) {
+    // Create the new assignment for the requested trainer
+    const alreadyExists = await prisma.assignedCustomer.findUnique({
+      where: { customerId_trainerId: { customerId, trainerId } }
+    });
+
+    if (alreadyExists) {
+      // Re-activate if this trainer was previously assigned to this customer
+      assignedCustomer = await prisma.assignedCustomer.update({
+        where: { customerId_trainerId: { customerId, trainerId } },
+        data: { isActive: true, startDate: new Date(), endDate: null }
+      });
+    } else {
       assignedCustomer = await prisma.assignedCustomer.create({
-        data: {
-          customerId: trainerRequest.customerId,
-          trainerId: trainerRequest.trainerId,
-          isActive: true,
-          startDate: new Date()
-        }
+        data: { customerId, trainerId, isActive: true, startDate: new Date() }
       });
     }
+
+    await sendTrainerAssignedNotification(customerId, trainerId);
   }
 
   return { updatedRequest, assignedCustomer };
