@@ -1,8 +1,18 @@
 import prisma from "../utils/prisma.js";
 
+const IST_OFFSET_MINUTES = 330;
+
+const formatIstHhmm = (dateObj) => {
+  const istMs = new Date(dateObj).getTime() + IST_OFFSET_MINUTES * 60 * 1000;
+  const istDate = new Date(istMs);
+  const hh = String(istDate.getUTCHours()).padStart(2, "0");
+  const mm = String(istDate.getUTCMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+};
+
 /**
  * Get a paginated list of bookings for a specific trainer.
- * 
+ *
  */
 export const getBookingsByTrainerWithPagination = async ( trainerId, date = null, page = 1, pageSize = 10) => {
   if (!trainerId) {
@@ -79,8 +89,19 @@ export const getBookingsByTrainerWithPagination = async ( trainerId, date = null
 
   const totalPages = Math.ceil(total / pageSize);
 
+  const formattedBookings = bookings.map((booking) => ({
+    ...booking,
+    timeSlot: booking.timeSlot
+      ? {
+          ...booking.timeSlot,
+          start: formatIstHhmm(booking.timeSlot.startTime),
+          end: formatIstHhmm(booking.timeSlot.endTime),
+        }
+      : null,
+  }));
+
   return {
-    bookings,
+    bookings: formattedBookings,
     pagination: {
       total,
       page,
