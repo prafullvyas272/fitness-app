@@ -248,85 +248,53 @@ export const sendTrainerAssignedNotification = async (customerId, trainerId) => 
     const sendPushPromises = [];
     const createDbNotifyPromises = [];
 
-    // Notification to Trainer
-    if (trainerDevices && trainerDevices.length > 0) {
-      const notifTitle = "New Customer Assigned";
-      const notifMsg = `You have been assigned to customer ${customer.firstName} ${customer.lastName}`;
-      
-      for (const device of trainerDevices) {
-        const fcmMessage = {
-          token: device.fcmToken,
-          data: {
-            type: "TRAINER_ASSIGNED",
-            trainerId: trainer.id,
-            customerId: customer.id,
-            message: notifMsg
-          },
-          notification: {
-            title: notifTitle,
-            body: notifMsg
-          },
-          android: { priority: "high" },
-          apns: { payload: { aps: { sound: "default" } } }
-        };
-        sendPushPromises.push(admin.messaging().send(fcmMessage));
-      }
-      // One DB notification for the trainer
-      createDbNotifyPromises.push(
-        prisma.notification.create({
-          data: {
-            userId: trainer.id,
-            title: notifTitle,
-            message: notifMsg,
-            type: "TRAINER_ASSIGNED"
-          }
-        })
-      );
+    // Trainer notification
+    const trainerNotifTitle = "New Customer Assigned";
+    const trainerNotifMsg = `You have been assigned to customer ${customer.firstName} ${customer.lastName}`;
+
+    // Always save DB notification for trainer
+    createDbNotifyPromises.push(
+      prisma.notification.create({
+        data: { userId: trainer.id, title: trainerNotifTitle, message: trainerNotifMsg, type: "TRAINER_ASSIGNED" }
+      })
+    );
+    // Push only if trainer has devices
+    for (const device of trainerDevices) {
+      sendPushPromises.push(admin.messaging().send({
+        token: device.fcmToken,
+        data: { type: "TRAINER_ASSIGNED", trainerId: trainer.id, customerId: customer.id, message: trainerNotifMsg },
+        notification: { title: trainerNotifTitle, body: trainerNotifMsg },
+        android: { priority: "high" },
+        apns: { payload: { aps: { sound: "default" } } }
+      }));
     }
 
-    // Notification to Customer
-    if (customerDevices && customerDevices.length > 0) {
-      const notifTitle = "Trainer Assigned";
-      const notifMsg = `Trainer ${trainer.firstName} ${trainer.lastName} has been assigned to you`;
-      for (const device of customerDevices) {
-        const fcmMessage = {
-          token: device.fcmToken,
-          data: {
-            type: "TRAINER_ASSIGNED",
-            trainerId: trainer.id,
-            customerId: customer.id,
-            message: notifMsg
-          },
-          notification: {
-            title: notifTitle,
-            body: notifMsg
-          },
-          android: { priority: "high" },
-          apns: { payload: { aps: { sound: "default" } } }
-        };
-        sendPushPromises.push(admin.messaging().send(fcmMessage));
-      }
-      // One DB notification for the customer
-      createDbNotifyPromises.push(
-        prisma.notification.create({
-          data: {
-            userId: customer.id,
-            title: notifTitle,
-            message: notifMsg,
-            type: "TRAINER_ASSIGNED"
-          }
-        })
-      );
+    // Customer notification
+    const customerNotifTitle = "Trainer Assigned";
+    const customerNotifMsg = `Trainer ${trainer.firstName} ${trainer.lastName} has been assigned to you`;
+
+    // Always save DB notification for customer
+    createDbNotifyPromises.push(
+      prisma.notification.create({
+        data: { userId: customer.id, title: customerNotifTitle, message: customerNotifMsg, type: "TRAINER_ASSIGNED" }
+      })
+    );
+    // Push only if customer has devices
+    for (const device of customerDevices) {
+      sendPushPromises.push(admin.messaging().send({
+        token: device.fcmToken,
+        data: { type: "TRAINER_ASSIGNED", trainerId: trainer.id, customerId: customer.id, message: customerNotifMsg },
+        notification: { title: customerNotifTitle, body: customerNotifMsg },
+        android: { priority: "high" },
+        apns: { payload: { aps: { sound: "default" } } }
+      }));
     }
 
-    if (sendPushPromises.length === 0) {
-      throw new Error("No devices found for trainer or customer with FCM tokens");
+    // Always save DB notifications; push is best-effort
+    await Promise.all(createDbNotifyPromises);
+    if (sendPushPromises.length > 0) {
+      await Promise.allSettled(sendPushPromises);
     }
-
-    await Promise.all([
-      Promise.all(sendPushPromises),
-      Promise.all(createDbNotifyPromises)
-    ]);
 
     return true;
   } catch (error) {
