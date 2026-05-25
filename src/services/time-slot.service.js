@@ -402,10 +402,10 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       }
     });
 
-    // Admin-derived slots have a timeSlotId pointing to the admin TimeSlot table.
-    // Alternative slots self-link (timeSlotId === slot.id) and are trainer-created.
+    // Admin-derived PEAK slots have a timeSlotId pointing to the admin TimeSlot table.
+    // ALTERNATIVE slots are always trainer-created; use slotType as the discriminator.
     const trainerCreatedSlots = trainerSlots.filter(
-      (slot) => !slot.timeSlotId || slot.timeSlotId === slot.id
+      (slot) => slot.slotType === "ALTERNATIVE" || !slot.timeSlotId
     );
 
     const formattedTrainerSlots = trainerCreatedSlots.map((slot) => ({
