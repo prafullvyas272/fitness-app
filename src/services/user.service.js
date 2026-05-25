@@ -30,6 +30,7 @@ export const getAllTrainers = async (loggedInUserId = null) => {
       isActive: true,
       gender: true,
       assignedCustomersAsTrainer: {
+        where: { isActive: true },
         select: {
           id: true,
           customerId: true,
