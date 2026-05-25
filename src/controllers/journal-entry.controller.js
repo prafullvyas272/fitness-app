@@ -21,7 +21,7 @@ export const addJournalEntryForDateHandler = async (req, res) => {
       date,
     } = req.body;
 
-    const isPrivate = Boolean(req.body.isPrivate)
+    const isPrivate = req.body.isPrivate === "true" || req.body.isPrivate === true;
     const energy = req.body.energy !== undefined ? parseInt(req.body.energy, 10) : null;
     const physicalReadiness = req.body.physicalReadiness !== undefined ? parseInt(req.body.physicalReadiness, 10) : null;
     const motivation = req.body.motivation !== undefined ? parseInt(req.body.motivation, 10) : null;
