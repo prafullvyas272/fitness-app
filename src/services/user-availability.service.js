@@ -131,9 +131,38 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
     const slots = [];
 
     for (const slot of peakSlots) {
-        const startTime = getUtcDateTimeForIstDateAndTime(date, slot.start);
-        const endTime = getUtcDateTimeForIstDateAndTime(date, slot.end);
-        const durationMinutes = Math.round((endTime - startTime) / 60000);
+        let startTime, endTime, durationMinutes;
+        let resolvedTimeSlotId = slot.timeSlotId;
+
+        if (slot.timeSlotId) {
+            // Try to resolve as admin TimeSlot ID first
+            let adminSlot = await prisma.timeSlot.findUnique({ where: { id: slot.timeSlotId } });
+
+            if (!adminSlot) {
+                // May be a TrainerTimeSlot ID (update flow) — resolve via its admin FK
+                const trainerSlot = await prisma.trainerTimeSlot.findUnique({
+                    where: { id: slot.timeSlotId },
+                    select: { timeSlotId: true },
+                });
+                if (trainerSlot?.timeSlotId) {
+                    adminSlot = await prisma.timeSlot.findUnique({ where: { id: trainerSlot.timeSlotId } });
+                    resolvedTimeSlotId = trainerSlot.timeSlotId;
+                }
+            }
+
+            if (adminSlot) {
+                startTime = adminSlot.startTime;
+                endTime = adminSlot.endTime;
+                durationMinutes = adminSlot.durationMinutes;
+            }
+        }
+
+        if (!startTime) {
+            startTime = getUtcDateTimeForIstDateAndTime(date, slot.start);
+            endTime = getUtcDateTimeForIstDateAndTime(date, slot.end);
+            durationMinutes = Math.round((endTime - startTime) / 60000);
+        }
+
         slots.push({
             dailyAvailabilityId: dailyDoc.id,
             trainerId: userId,
@@ -141,7 +170,7 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
             startTime,
             endTime,
             slotType: "PEAK",
-            timeSlotId: slot.timeSlotId,
+            timeSlotId: resolvedTimeSlotId,
             durationMinutes,
             isBooked: false,
         });
@@ -225,10 +254,13 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
             },
         });
 
-        // Only create if it does not exist
         if (!exists) {
-            await prisma.trainerTimeSlot.create({
-                data: slot,
+            await prisma.trainerTimeSlot.create({ data: slot });
+        } else if (slot.slotType === "PEAK" && exists.startTime.getTime() !== new Date(slot.startTime).getTime()) {
+            // Correct times that were stored wrong (e.g. double IST conversion bug)
+            await prisma.trainerTimeSlot.update({
+                where: { id: exists.id },
+                data: { startTime: slot.startTime, endTime: slot.endTime, durationMinutes: slot.durationMinutes },
             });
         }
     }
