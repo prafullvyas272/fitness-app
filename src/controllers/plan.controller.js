@@ -8,12 +8,14 @@ import {
 } from "../services/plan.service.js";
 import prisma from "../utils/prisma.js";
 
+const ALLOWED_PLAN_DURATIONS = ["WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY"];
+
 /**
  * Controller to create a new plan.
  */
 export const createPlanHandler = async (req, res) => {
   try {
-    const { name, price, features, isPopular } = req.body;
+    const { name, price, features, isPopular, duration } = req.body;
     const createdBy = req.user?.userId;
 
     if (!name || price === undefined || !features || !createdBy) {
@@ -23,11 +25,19 @@ export const createPlanHandler = async (req, res) => {
       });
     }
 
+    if (duration !== undefined && !ALLOWED_PLAN_DURATIONS.includes(duration)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid duration. Allowed values: ${ALLOWED_PLAN_DURATIONS.join(", ")}`,
+      });
+    }
+
     const plan = await createPlan({
       name,
       price,
       features,
       isPopular,
+      duration,
       createdBy,
     });
 

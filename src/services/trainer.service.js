@@ -241,6 +241,7 @@ export const deleteTrainer = async (trainerId) => {
     await tx.assignedCustomer.deleteMany({ where: { trainerId: trainerId } });
     await tx.userProfileDetail.deleteMany({ where: { userId: trainerId } });
     await tx.userSpeciality.deleteMany({ where: { userId: trainerId } });
+    await tx.accountDeletionRequest.deleteMany({ where: { userId: trainerId } });
 
     // Now safe to delete the user
     return await tx.user.delete({

@@ -84,6 +84,8 @@ model User {
   trainerRequests     TrainerRequest[] @relation("CustomerRequests") // As the customer who made the request
   trainerApplications TrainerRequest[] @relation("TrainerRequests") // As the trainer receiving requests
 
+  accountDeletionRequests AccountDeletionRequest[] @relation("AccountDeletionRequests")
+
   notifications Notification[] // Opposite relation: user has many notifications
 
   userDevices    UserDevice[] // Opposite relation: user has many user devices
@@ -357,17 +359,25 @@ model TrainerVideoAssignment {
   client User         @relation(fields: [clientId], references: [id])
 }
 
+enum PlanDurationCycle {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
 model Plan {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
   name             String
   price            Float
   features         String[]
   description      String?
-  isPopular        Boolean  @default(false)
-  createdBy        String   @db.ObjectId
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  assignedTrainers User[]   @relation("TrainerPlan")
+  duration         PlanDurationCycle @default(MONTHLY)
+  isPopular        Boolean           @default(false)
+  createdBy        String            @db.ObjectId
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  assignedTrainers User[]            @relation("TrainerPlan")
 
   subscriptions Subscription[]
 
@@ -394,11 +404,33 @@ model TrainerRequest {
   trainer  User @relation("TrainerRequests", fields: [trainerId], references: [id])
 }
 
+enum AccountDeletionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AccountDeletionRequest {
+  id     String                @id @default(auto()) @map("_id") @db.ObjectId
+  userId String                @db.ObjectId
+  reason String?
+  status AccountDeletionStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation("AccountDeletionRequests", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
 enum NotificationType {
   TRAINER_REQUEST
   TRAINER_ASSIGNED
   BOOKING
   REMINDER
+  ACCOUNT_DELETION_REQUEST
 }
 
 model Notification {

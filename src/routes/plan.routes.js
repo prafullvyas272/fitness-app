@@ -43,6 +43,11 @@ const router = express.Router();
  *                 items:
  *                   type: string
  *                 example: ["Feature 1", "Feature 2"]
+ *               duration:
+ *                 type: string
+ *                 enum: [WEEKLY, MONTHLY, QUARTERLY, YEARLY]
+ *                 default: MONTHLY
+ *                 example: MONTHLY
  *               isPopular:
  *                 type: boolean
  *                 example: false

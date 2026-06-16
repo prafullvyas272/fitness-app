@@ -285,6 +285,7 @@ export const deleteCustomer = async (customerId) => {
     await tx.customerQuestionaire.deleteMany({ where: { clientId: customerId } });
     await tx.trainerVideoAssignment.deleteMany({ where: { clientId: customerId } });
     await tx.review.deleteMany({ where: { customerId } });
+    await tx.accountDeletionRequest.deleteMany({ where: { userId: customerId } });
 
     // Chat messages have no cascade from conversation; delete them before deleting conversations
     const conversations = await tx.chatConversation.findMany({

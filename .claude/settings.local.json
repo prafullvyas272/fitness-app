@@ -3,7 +3,9 @@
     "allow": [
       "Bash(npx prisma *)",
       "Bash(Get-ChildItem -Path \"F:\\\\company\\\\New folder \\(2\\)\\\\fitness-app\" -Directory)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"f:\\\\company\\\\New folder \\(2\\)\\\\fitness-app\" -Directory)",
+      "Bash(Select-Object -Property Name)"
     ]
   },
   "enableAllProjectMcpServers": true,

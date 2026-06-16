@@ -2,7 +2,7 @@ import prisma from "../utils/prisma.js";
 
 /**
  * Create a new plan.
- * @param {Object} data - { name: string, price: number, features: string[], isPopular?: boolean, createdBy: string }
+ * @param {Object} data - { name: string, price: number, features: string[], isPopular?: boolean, duration?: string, createdBy: string }
  * @returns {Promise<Object>}
  */
 export const createPlan = async (data) => {
@@ -13,6 +13,7 @@ export const createPlan = async (data) => {
         price: data.price,
         features: data.features,
         isPopular: data.isPopular || false,
+        duration: data.duration || "MONTHLY",
         createdBy: data.createdBy,
       }
     });

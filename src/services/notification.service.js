@@ -348,6 +348,125 @@ export const sendChatNotification = async ({
 };
 
 
+/**
+ * Notify all SuperAdmins that a Trainer/Customer has requested account deletion.
+ * @param {string} requestId - The ID of the AccountDeletionRequest triggering this notification.
+ * @param {object} requestUser - { id, firstName, lastName, email }
+ * @returns {boolean} true if processed (push delivery is best-effort).
+ */
+export const sendAccountDeletionRequestNotification = async (requestId, requestUser) => {
+  try {
+    const superAdminRole = await prisma.role.findUnique({
+      where: { name: RoleEnum.SUPERADMIN },
+      select: { id: true }
+    });
+
+    if (!superAdminRole) {
+      throw new Error("SuperAdmin role not found");
+    }
+
+    const superAdmins = await prisma.user.findMany({
+      where: {
+        roleId: superAdminRole.id,
+        isActive: true,
+      },
+      select: { id: true, email: true }
+    });
+
+    if (!superAdmins || superAdmins.length === 0) {
+      return false;
+    }
+
+    const notifTitle = "New Account Deletion Request";
+    const notifMsg = `${requestUser.firstName || "A user"} ${requestUser.lastName || ""} (${requestUser.email}) has requested account deletion.`;
+
+    const sendPushPromises = [];
+    const createDbNotifyPromises = [];
+
+    for (const adminUser of superAdmins) {
+      createDbNotifyPromises.push(
+        prisma.notification.create({
+          data: {
+            userId: adminUser.id,
+            title: notifTitle,
+            message: notifMsg,
+            type: "ACCOUNT_DELETION_REQUEST"
+          }
+        })
+      );
+
+      const devices = await prisma.userDevice.findMany({
+        where: { userId: adminUser.id },
+        select: { fcmToken: true }
+      });
+
+      for (const token of devices.map(d => d.fcmToken).filter(Boolean)) {
+        sendPushPromises.push(
+          admin.messaging().send({
+            token,
+            notification: { title: notifTitle, body: notifMsg },
+            data: {
+              type: "ACCOUNT_DELETION_REQUEST",
+              requestId,
+              userId: requestUser.id,
+            },
+            android: { priority: "high" },
+            apns: { payload: { aps: { sound: "default" } } }
+          })
+        );
+      }
+    }
+
+    // DB notifications must succeed; push delivery is best-effort.
+    await Promise.all(createDbNotifyPromises);
+    if (sendPushPromises.length > 0) {
+      await Promise.allSettled(sendPushPromises);
+    }
+
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to send account deletion request notification: ${error.message}`);
+  }
+};
+
+/**
+ * Notify a user about the decision (e.g. rejection) made on their account deletion request.
+ * Not used for APPROVED, since the account no longer exists once approved.
+ * @param {object} user - { id, firstName, lastName, email }
+ * @param {string} status - "REJECTED"
+ */
+export const sendAccountDeletionDecisionNotification = async (user, status) => {
+  try {
+    const title = "Account Deletion Request Rejected";
+    const message = "Your account deletion request has been reviewed and rejected by the admin. Your account remains active.";
+
+    await prisma.notification.create({
+      data: {
+        userId: user.id,
+        title,
+        message,
+        type: "ACCOUNT_DELETION_REQUEST"
+      }
+    });
+
+    const devices = await prisma.userDevice.findMany({ where: { userId: user.id } });
+    const tokens = devices.map(d => d.fcmToken).filter(Boolean);
+
+    if (tokens.length > 0) {
+      await admin.messaging().sendEachForMulticast({
+        tokens,
+        notification: { title, body: message },
+        data: { type: "ACCOUNT_DELETION_REQUEST", userId: user.id },
+        android: { priority: "high" },
+        apns: { payload: { aps: { sound: "default" } } }
+      });
+    }
+  } catch (error) {
+    // Notification failure should never block the admin's decision from being saved.
+    console.error("Failed to send account deletion decision notification:", error.message);
+  }
+};
+
 export const createReminderNotification = async ({
   userId,
   title,
