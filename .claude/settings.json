@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check src/services/account-deletion.service.js)",
+      "Bash(node --check src/controllers/account-deletion.controller.js)",
+      "Bash(node --check src/routes/account-deletion.routes.js)",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId=10148\")",
+      "PowerShell(Get-Process -Id 10148)"
+    ]
+  }
+}

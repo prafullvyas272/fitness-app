@@ -88,6 +88,42 @@ export const getAllAccountDeletionRequests = async () => {
 };
 
 /**
+ * Fetch account deletion requests submitted by users with the given role (SuperAdmin only).
+ */
+const getAccountDeletionRequestsByRole = async (roleName) => {
+  try {
+    return await prisma.accountDeletionRequest.findMany({
+      where: {
+        user: {
+          role: { name: roleName },
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (err) {
+    throw new Error(`Failed to fetch ${roleName} account deletion requests: ` + err.message);
+  }
+};
+
+export const getTrainerAccountDeletionRequests = () =>
+  getAccountDeletionRequestsByRole(RoleEnum.TRAINER);
+
+export const getCustomerAccountDeletionRequests = () =>
+  getAccountDeletionRequestsByRole(RoleEnum.CUSTOMER);
+
+/**
  * Approve or reject an account deletion request.
  * On approval, the Trainer/Customer account (and its related records) is permanently deleted,
  * so the user must register again to use the app.
@@ -126,14 +162,17 @@ export const updateAccountDeletionRequestStatus = async ({ requestId, status }) 
     }
 
     if (status === "REJECTED") {
-      const updatedRequest = await prisma.accountDeletionRequest.update({
+      await prisma.accountDeletionRequest.update({
         where: { id: requestId },
         data: { status: "REJECTED" },
       });
 
       await sendAccountDeletionDecisionNotification(request.user, "REJECTED");
 
-      return { updatedRequest, deletedUser: null };
+      return {
+        updatedRequest: { ...request, status: "REJECTED" },
+        deletedUser: null,
+      };
     }
 
     // status === "APPROVED": delete the account. This also removes the

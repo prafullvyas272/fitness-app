@@ -2,6 +2,8 @@ import {
   requestAccountDeletion,
   getMyAccountDeletionRequest,
   getAllAccountDeletionRequests,
+  getTrainerAccountDeletionRequests,
+  getCustomerAccountDeletionRequests,
   updateAccountDeletionRequestStatus,
 } from "../services/account-deletion.service.js";
 
@@ -59,6 +61,44 @@ export const getAllAccountDeletionRequestsHandler = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Account deletion requests fetched successfully",
+      data: requests,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+/**
+ * Controller for SuperAdmin to fetch only Trainer account deletion requests.
+ */
+export const getTrainerAccountDeletionRequestsHandler = async (req, res) => {
+  try {
+    const requests = await getTrainerAccountDeletionRequests();
+    res.status(200).json({
+      success: true,
+      message: "Trainer account deletion requests fetched successfully",
+      data: requests,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+/**
+ * Controller for SuperAdmin to fetch only Customer account deletion requests.
+ */
+export const getCustomerAccountDeletionRequestsHandler = async (req, res) => {
+  try {
+    const requests = await getCustomerAccountDeletionRequests();
+    res.status(200).json({
+      success: true,
+      message: "Customer account deletion requests fetched successfully",
       data: requests,
     });
   } catch (err) {

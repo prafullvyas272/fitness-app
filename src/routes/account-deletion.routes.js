@@ -3,6 +3,8 @@ import {
   requestAccountDeletionHandler,
   getMyAccountDeletionRequestHandler,
   getAllAccountDeletionRequestsHandler,
+  getTrainerAccountDeletionRequestsHandler,
+  getCustomerAccountDeletionRequestsHandler,
   updateAccountDeletionRequestStatusHandler,
 } from "../controllers/account-deletion.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -106,6 +108,52 @@ router.get(
   authMiddleware,
   superadminMiddleware,
   getAllAccountDeletionRequestsHandler
+);
+
+/**
+ * @swagger
+ * /api/account-deletion-requests/trainers:
+ *   get:
+ *     summary: Get all Trainer account deletion requests
+ *     description: Retrieve account deletion requests submitted only by Trainers. Only accessible by superadmin.
+ *     tags:
+ *       - Account Deletion
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Trainer account deletion requests fetched successfully
+ *       403:
+ *         description: Forbidden. Superadmin access required.
+ */
+router.get(
+  "/account-deletion-requests/trainers",
+  authMiddleware,
+  superadminMiddleware,
+  getTrainerAccountDeletionRequestsHandler
+);
+
+/**
+ * @swagger
+ * /api/account-deletion-requests/customers:
+ *   get:
+ *     summary: Get all Customer account deletion requests
+ *     description: Retrieve account deletion requests submitted only by Customers. Only accessible by superadmin.
+ *     tags:
+ *       - Account Deletion
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Customer account deletion requests fetched successfully
+ *       403:
+ *         description: Forbidden. Superadmin access required.
+ */
+router.get(
+  "/account-deletion-requests/customers",
+  authMiddleware,
+  superadminMiddleware,
+  getCustomerAccountDeletionRequestsHandler
 );
 
 /**
