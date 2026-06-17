@@ -54,6 +54,15 @@ export const updatePlan = async (id, data) => {
  */
 export const deletePlan = async (id) => {
   try {
+    await prisma.user.updateMany({
+      where: { planId: id },
+      data: { planId: null },
+    });
+
+    await prisma.subscription.deleteMany({
+      where: { planId: id },
+    });
+
     const deleted = await prisma.plan.delete({
       where: { id }
     });
