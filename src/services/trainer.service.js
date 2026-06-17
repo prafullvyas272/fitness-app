@@ -575,19 +575,25 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
 
 export const updateTrainerBioAndSocialLinks = async (userId, { bio, socialMediaLinks }) => {
   try {
-    const updated = await prisma.userProfileDetail.upsert({
-      where: { userId },
-      update: {
-        ...(bio !== undefined && { bio }),
-        ...(socialMediaLinks !== undefined && { socialMediaLinks }),
-      },
-      create: {
+    const existing = await prisma.userProfileDetail.findFirst({ where: { userId } });
+
+    if (existing) {
+      return await prisma.userProfileDetail.update({
+        where: { id: existing.id },
+        data: {
+          ...(bio !== undefined && { bio }),
+          ...(socialMediaLinks !== undefined && { socialMediaLinks }),
+        },
+      });
+    }
+
+    return await prisma.userProfileDetail.create({
+      data: {
         userId,
         bio: bio || null,
         socialMediaLinks: socialMediaLinks || [],
       },
     });
-    return updated;
   } catch (err) {
     throw new Error(`Failed to update bio and social links: ${err.message}`);
   }
