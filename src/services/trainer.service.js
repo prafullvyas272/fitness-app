@@ -572,3 +572,23 @@ export const getAssignedCustomersByTrainerId = async (trainerId) => {
     throw new Error(`Failed to get assigned customers: ${err.message}`);
   }
 };
+
+export const updateTrainerBioAndSocialLinks = async (userId, { bio, socialMediaLinks }) => {
+  try {
+    const updated = await prisma.userProfileDetail.upsert({
+      where: { userId },
+      update: {
+        ...(bio !== undefined && { bio }),
+        ...(socialMediaLinks !== undefined && { socialMediaLinks }),
+      },
+      create: {
+        userId,
+        bio: bio || null,
+        socialMediaLinks: socialMediaLinks || [],
+      },
+    });
+    return updated;
+  } catch (err) {
+    throw new Error(`Failed to update bio and social links: ${err.message}`);
+  }
+};

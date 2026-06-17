@@ -5,6 +5,7 @@ import {
     showTrainerProfileData,
     getTrainerSessionsByMonthAndYear,
     getAssignedCustomersByTrainerId,
+    updateTrainerBioAndSocialLinks,
 } from "../services/trainer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
@@ -167,6 +168,26 @@ export const getAssignedCustomersByTrainerIdHandler = async (req, res) => {
             success: true,
             message: "Assigned customers fetched successfully.",
             data: assignedCustomers,
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
+
+export const updateTrainerBioAndSocialLinksHandler = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { bio, socialMediaLinks } = req.body;
+
+        const data = await updateTrainerBioAndSocialLinks(userId, { bio, socialMediaLinks });
+
+        res.status(200).json({
+            success: true,
+            message: "Bio and social media links updated successfully.",
+            data,
         });
     } catch (err) {
         res.status(400).json({

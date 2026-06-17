@@ -6,6 +6,7 @@ import {
   showTrainerProfileDataHandler,
   getTrainerSessionsByMonthAndYearHandler,
   getAssignedCustomersByTrainerIdHandler,
+  updateTrainerBioAndSocialLinksHandler,
 } from "../controllers/trainer.controller.js";
 import { getTrainerDashboardHandler } from "../controllers/trainer-dashboard.controller.js";
 import { createTrainerPayoutHandler, getTrainerPayoutsByAdminHandler, getTrainerPayoutHistoryHandler } from "../controllers/trainer-payout.controller.js";
@@ -561,6 +562,56 @@ router.post(
 router.post(
   "/api/trainer/reset-password",
   trainerResetPasswordHandler
+);
+
+/**
+ * @swagger
+ * /api/trainer/profile/bio-social:
+ *   patch:
+ *     summary: Update trainer bio and social media links
+ *     description: Trainer updates their own bio and social media links.
+ *     tags:
+ *       - Trainer
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               bio:
+ *                 type: string
+ *                 example: "Certified fitness trainer with 5 years of experience."
+ *               socialMediaLinks:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["https://instagram.com/trainer", "https://twitter.com/trainer"]
+ *     responses:
+ *       200:
+ *         description: Bio and social media links updated successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Bio and social media links updated successfully.
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Error occurred.
+ */
+router.patch(
+  "/api/trainer/profile/bio-social",
+  authMiddleware,
+  updateTrainerBioAndSocialLinksHandler
 );
 
 export default router;
