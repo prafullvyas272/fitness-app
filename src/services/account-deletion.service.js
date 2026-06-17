@@ -92,12 +92,18 @@ export const getAllAccountDeletionRequests = async () => {
  */
 const getAccountDeletionRequestsByRole = async (roleName) => {
   try {
+    const role = await prisma.role.findUnique({ where: { name: roleName } });
+    if (!role) return [];
+
+    const users = await prisma.user.findMany({
+      where: { roleId: role.id },
+      select: { id: true },
+    });
+
+    const userIds = users.map((u) => u.id);
+
     return await prisma.accountDeletionRequest.findMany({
-      where: {
-        user: {
-          role: { name: roleName },
-        },
-      },
+      where: { userId: { in: userIds } },
       include: {
         user: {
           select: {
