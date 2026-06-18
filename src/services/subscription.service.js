@@ -45,33 +45,41 @@ export const createCheckoutSession = async (userId, planId) => {
 
   const stripeCustomerId = await getOrCreateStripeCustomer(user);
 
-  // Create subscription in incomplete state — gives us a payment intent client secret
+  // Create subscription in incomplete state
   const subscription = await stripe.subscriptions.create({
     customer: stripeCustomerId,
     items: [{ price: plan.stripePriceId }],
     payment_behavior: "default_incomplete",
     payment_settings: { save_default_payment_method: "on_subscription" },
-    expand: ["latest_invoice.payment_intent"],
   });
 
-  // Safely extract payment intent — may need a second fetch if expand didn't populate
-  let paymentIntent = subscription.latest_invoice?.payment_intent;
+  // Explicitly fetch the invoice and its payment intent (more reliable than expand in serverless)
+  const invoiceId = typeof subscription.latest_invoice === "string"
+    ? subscription.latest_invoice
+    : subscription.latest_invoice?.id;
 
-  if (!paymentIntent || typeof paymentIntent === "string") {
-    const invoiceId = typeof subscription.latest_invoice === "string"
-      ? subscription.latest_invoice
-      : subscription.latest_invoice?.id;
-
-    if (!invoiceId) throw new Error("Invoice not found on subscription");
-
-    const invoice = await stripe.invoices.retrieve(invoiceId, {
-      expand: ["payment_intent"],
-    });
-    paymentIntent = invoice.payment_intent;
+  if (!invoiceId) {
+    await stripe.subscriptions.cancel(subscription.id);
+    throw new Error("No invoice found on subscription");
   }
 
-  if (!paymentIntent?.client_secret) {
-    throw new Error("Payment intent could not be created. Check your Stripe price configuration.");
+  const invoice = await stripe.invoices.retrieve(invoiceId, {
+    expand: ["payment_intent"],
+  });
+
+  // If invoice is still draft, finalize it to generate the payment intent
+  let finalInvoice = invoice;
+  if (invoice.status === "draft") {
+    finalInvoice = await stripe.invoices.finalizeInvoice(invoiceId, {
+      expand: ["payment_intent"],
+    });
+  }
+
+  const clientSecret = finalInvoice.payment_intent?.client_secret ?? null;
+
+  if (!clientSecret) {
+    await stripe.subscriptions.cancel(subscription.id);
+    throw new Error("Payment intent not found. Check your Stripe price is active and has a non-zero amount.");
   }
 
   // Create ephemeral key for mobile Payment Sheet
@@ -93,7 +101,7 @@ export const createCheckoutSession = async (userId, planId) => {
 
   return {
     subscriptionId: subscription.id,
-    clientSecret: paymentIntent.client_secret,
+    clientSecret,
     ephemeralKey: ephemeralKey.secret,
     customerId: stripeCustomerId,
   };
