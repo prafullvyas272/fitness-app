@@ -71,12 +71,43 @@ export const createCheckoutSession = async (userId, planId) => {
     : rawInvoice.payment_intent?.id ?? null;
 
   if (!paymentIntentId) {
-    await stripe.subscriptions.cancel(subscription.id);
-    throw new Error(
-      `Invoice has no payment intent. Status: ${rawInvoice.status}, ` +
-      `amount_due: ${rawInvoice.amount_due}, ` +
-      `payment_intent raw: ${JSON.stringify(rawInvoice.payment_intent)}`
+    // List payment intents for this customer to find the one for this invoice
+    const paymentIntents = await stripe.paymentIntents.list({
+      customer: stripeCustomerId,
+      limit: 5,
+    });
+
+    const matchedPi = paymentIntents.data.find(
+      pi => pi.invoice === invoiceId || pi.status === "requires_payment_method"
     );
+
+    if (!matchedPi) {
+      await stripe.subscriptions.cancel(subscription.id);
+      throw new Error(
+        `No payment intent found. Invoice keys: ${Object.keys(rawInvoice).join(", ")}`
+      );
+    }
+
+    const clientSecret = matchedPi.client_secret;
+    const ephemeralKey = await stripe.ephemeralKeys.create(
+      { customer: stripeCustomerId },
+      { apiVersion: "2023-10-16" }
+    );
+    await prisma.subscription.create({
+      data: {
+        userId,
+        planId,
+        status: "INCOMPLETE",
+        stripeSubscriptionId: subscription.id,
+        stripeStatus: subscription.status,
+      },
+    });
+    return {
+      subscriptionId: subscription.id,
+      clientSecret,
+      ephemeralKey: ephemeralKey.secret,
+      customerId: stripeCustomerId,
+    };
   }
 
   // Step 3: retrieve payment intent directly by ID — no expand needed
