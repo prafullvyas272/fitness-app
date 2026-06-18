@@ -54,7 +54,25 @@ export const createCheckoutSession = async (userId, planId) => {
     expand: ["latest_invoice.payment_intent"],
   });
 
-  const paymentIntent = subscription.latest_invoice.payment_intent;
+  // Safely extract payment intent — may need a second fetch if expand didn't populate
+  let paymentIntent = subscription.latest_invoice?.payment_intent;
+
+  if (!paymentIntent || typeof paymentIntent === "string") {
+    const invoiceId = typeof subscription.latest_invoice === "string"
+      ? subscription.latest_invoice
+      : subscription.latest_invoice?.id;
+
+    if (!invoiceId) throw new Error("Invoice not found on subscription");
+
+    const invoice = await stripe.invoices.retrieve(invoiceId, {
+      expand: ["payment_intent"],
+    });
+    paymentIntent = invoice.payment_intent;
+  }
+
+  if (!paymentIntent?.client_secret) {
+    throw new Error("Payment intent could not be created. Check your Stripe price configuration.");
+  }
 
   // Create ephemeral key for mobile Payment Sheet
   const ephemeralKey = await stripe.ephemeralKeys.create(
