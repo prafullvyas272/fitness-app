@@ -6,6 +6,7 @@ import {
   cancelMySubscriptionHandler,
   linkPlanToStripePriceHandler,
   getAllSubscriptionsHandler,
+  getMyTrainerPlanHandler,
 } from "../controllers/subscription.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -59,6 +60,58 @@ router.post("/webhooks/stripe", express.raw({ type: "application/json" }), strip
  *                     customerId:
  *                       type: string
  */
+/**
+ * @swagger
+ * /api/customer/my-trainer-plan:
+ *   get:
+ *     summary: Get the plan assigned to the customer's trainer (Customer only)
+ *     description: Returns the plan that the admin has assigned to the customer's trainer. Customer uses this planId to subscribe.
+ *     tags:
+ *       - Subscriptions
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Trainer plan fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     trainer:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         firstName:
+ *                           type: string
+ *                         lastName:
+ *                           type: string
+ *                     plan:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         price:
+ *                           type: number
+ *                         features:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         duration:
+ *                           type: string
+ *       400:
+ *         description: Not assigned to any trainer or trainer has no plan
+ */
+router.get("/customer/my-trainer-plan", authMiddleware, getMyTrainerPlanHandler);
+
 router.post("/subscriptions/checkout", authMiddleware, createCheckoutHandler);
 
 /**

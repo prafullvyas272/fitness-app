@@ -6,6 +6,7 @@ import {
   cancelMySubscription,
   linkPlanToStripePrice,
   getAllSubscriptions,
+  getMyTrainerPlan,
 } from "../services/subscription.service.js";
 
 export const createCheckoutHandler = async (req, res) => {
@@ -74,6 +75,20 @@ export const linkPlanToStripePriceHandler = async (req, res) => {
 
     const data = await linkPlanToStripePrice(id, stripePriceId);
     res.status(200).json({ success: true, message: "Plan linked to Stripe price successfully", data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getMyTrainerPlanHandler = async (req, res) => {
+  try {
+    const customerId = req.user.userId;
+    const data = await getMyTrainerPlan(customerId);
+    res.status(200).json({
+      success: true,
+      message: "Trainer plan fetched successfully",
+      data,
+    });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
