@@ -19,7 +19,7 @@ export const createReport = async ({ trainerId, customerId, sessionDate, categor
   });
 };
 
-export const getAllReports = async ({ page = 1, pageSize = 10, category, priority } = {}) => {
+export const getAllReports = async ({ page = 1, pageSize = 10, category, priority, status } = {}) => {
   if (page < 1) page = 1;
   if (pageSize < 1) pageSize = 10;
   const skip = (page - 1) * pageSize;
@@ -27,6 +27,7 @@ export const getAllReports = async ({ page = 1, pageSize = 10, category, priorit
   const where = {
     ...(category && { category }),
     ...(priority && { priority }),
+    ...(status   && { status }),
   };
 
   const [total, reports] = await Promise.all([
@@ -64,4 +65,21 @@ export const getReportById = async (id) => {
   });
   if (!report) throw new Error("Report not found");
   return report;
+};
+
+export const updateReportStatus = async (id, { status, adminNote }) => {
+  const report = await prisma.report.findUnique({ where: { id } });
+  if (!report) throw new Error("Report not found");
+
+  return prisma.report.update({
+    where: { id },
+    data: {
+      ...(status    && { status }),
+      ...(adminNote !== undefined && { adminNote }),
+    },
+    include: {
+      trainer:  { select: { id: true, firstName: true, lastName: true, email: true } },
+      customer: { select: { id: true, firstName: true, lastName: true, email: true } },
+    },
+  });
 };

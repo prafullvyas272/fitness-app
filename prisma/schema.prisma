@@ -942,6 +942,12 @@ enum PriorityLevel {
   CRITICAL
 }
 
+enum ReportStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+}
+
 model Report {
   id          String            @id @default(auto()) @map("_id") @db.ObjectId
   trainerId   String            @db.ObjectId
@@ -950,6 +956,8 @@ model Report {
   category    ComplaintCategory
   priority    PriorityLevel     @default(ROUTINE)
   description String
+  status      ReportStatus      @default(OPEN)
+  adminNote   String?
 
   trainer  User @relation("TrainerReports",   fields: [trainerId],  references: [id])
   customer User @relation("CustomerReports",  fields: [customerId], references: [id])

@@ -3,6 +3,7 @@ import {
   createReportHandler,
   getAllReportsHandler,
   getReportByIdHandler,
+  updateReportStatusHandler,
 } from "../controllers/report.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -126,5 +127,42 @@ router.get("/reports", authMiddleware, superadminMiddleware, getAllReportsHandle
  *         description: Report not found
  */
 router.get("/reports/:id", authMiddleware, superadminMiddleware, getReportByIdHandler);
+
+/**
+ * @swagger
+ * /api/reports/{id}:
+ *   patch:
+ *     summary: Update report status / add admin note (Admin only)
+ *     tags:
+ *       - Reports
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [OPEN, IN_REVIEW, RESOLVED]
+ *                 example: IN_REVIEW
+ *               adminNote:
+ *                 type: string
+ *                 example: "Reviewed and action taken against customer."
+ *     responses:
+ *       200:
+ *         description: Report updated successfully
+ *       400:
+ *         description: Error
+ */
+router.patch("/reports/:id", authMiddleware, superadminMiddleware, updateReportStatusHandler);
 
 export default router;

@@ -1,4 +1,4 @@
-import { createReport, getAllReports, getReportById } from "../services/report.service.js";
+import { createReport, getAllReports, getReportById, updateReportStatus } from "../services/report.service.js";
 
 export const createReportHandler = async (req, res) => {
   try {
@@ -26,13 +26,14 @@ export const createReportHandler = async (req, res) => {
 
 export const getAllReportsHandler = async (req, res) => {
   try {
-    const { page, pageSize, category, priority } = req.query;
+    const { page, pageSize, category, priority, status } = req.query;
 
     const data = await getAllReports({
       page: parseInt(page) || 1,
       pageSize: parseInt(pageSize) || 10,
       category,
       priority,
+      status,
     });
 
     res.status(200).json({
@@ -52,6 +53,30 @@ export const getReportByIdHandler = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Report fetched successfully",
+      data,
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const updateReportStatusHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, adminNote } = req.body;
+
+    if (!status && adminNote === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "status or adminNote is required",
+      });
+    }
+
+    const data = await updateReportStatus(id, { status, adminNote });
+
+    res.status(200).json({
+      success: true,
+      message: "Report updated successfully",
       data,
     });
   } catch (err) {
