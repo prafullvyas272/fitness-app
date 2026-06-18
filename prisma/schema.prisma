@@ -53,8 +53,9 @@ model User {
   roleId        String
   isActive      Boolean @default(false)
   phoneVerified Boolean @default(false)
-  fcmToken      String?
-  gender        Gender?
+  fcmToken         String?
+  stripeCustomerId String?
+  gender           Gender?
 
   role         Role             @relation(fields: [roleId], references: [id])
   otps         Otp[] // Added back-relation to Otp
@@ -377,6 +378,7 @@ model Plan {
   description      String?
   duration         PlanDurationCycle @default(MONTHLY)
   isPopular        Boolean           @default(false)
+  stripePriceId    String?
   createdBy        String            @db.ObjectId
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -744,9 +746,11 @@ model Subscription {
   userId String @db.ObjectId
   planId String @db.ObjectId
 
-  status    String // ACTIVE, CANCELLED
-  startDate DateTime  @default(now())
-  endDate   DateTime?
+  status               String   // ACTIVE, CANCELLED, PAST_DUE, INCOMPLETE
+  stripeSubscriptionId String?
+  stripeStatus         String?
+  startDate            DateTime  @default(now())
+  endDate              DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
