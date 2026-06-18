@@ -178,9 +178,6 @@ export const linkPlanToStripePrice = async (planId, stripePriceId) => {
   const plan = await prisma.plan.findUnique({ where: { id: planId } });
   if (!plan) throw new Error("Plan not found");
 
-  // Verify price exists in Stripe
-  await stripe.prices.retrieve(stripePriceId);
-
   return prisma.plan.update({
     where: { id: planId },
     data: { stripePriceId },
