@@ -931,10 +931,12 @@ enum ComplaintCategory {
   PERFORMANCE
   ATTENDANCE
   PAYMENT
+  ACCOUNT
   OTHER
 }
 
 enum PriorityLevel {
+  LOW
   ROUTINE
   HIGH
   CRITICAL
