@@ -53,16 +53,40 @@ export const createCheckoutSession = async (userId, planId) => {
     payment_settings: { save_default_payment_method: "on_subscription" },
   });
 
-  // Retrieve subscription with expand — most reliable way to get payment intent
-  const expandedSub = await stripe.subscriptions.retrieve(subscription.id, {
-    expand: ["latest_invoice.payment_intent"],
-  });
+  // Step 1: get invoice ID (latest_invoice is a string ID when not expanded)
+  const invoiceId = typeof subscription.latest_invoice === "string"
+    ? subscription.latest_invoice
+    : subscription.latest_invoice?.id;
 
-  const clientSecret = expandedSub.latest_invoice?.payment_intent?.client_secret ?? null;
+  if (!invoiceId) {
+    await stripe.subscriptions.cancel(subscription.id);
+    throw new Error("No invoice found on subscription");
+  }
+
+  // Step 2: retrieve raw invoice — payment_intent field is a string ID
+  const rawInvoice = await stripe.invoices.retrieve(invoiceId);
+
+  const paymentIntentId = typeof rawInvoice.payment_intent === "string"
+    ? rawInvoice.payment_intent
+    : rawInvoice.payment_intent?.id ?? null;
+
+  if (!paymentIntentId) {
+    await stripe.subscriptions.cancel(subscription.id);
+    throw new Error(
+      `Invoice has no payment intent. Status: ${rawInvoice.status}, ` +
+      `amount_due: ${rawInvoice.amount_due}, ` +
+      `payment_intent raw: ${JSON.stringify(rawInvoice.payment_intent)}`
+    );
+  }
+
+  // Step 3: retrieve payment intent directly by ID — no expand needed
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+  const clientSecret = paymentIntent.client_secret ?? null;
 
   if (!clientSecret) {
     await stripe.subscriptions.cancel(subscription.id);
-    throw new Error("Unable to retrieve payment client secret from Stripe.");
+    throw new Error("Payment intent has no client secret");
   }
 
   // Create ephemeral key for mobile Payment Sheet
