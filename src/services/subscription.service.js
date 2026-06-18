@@ -2,7 +2,14 @@ import prisma from "../utils/prisma.js";
 import stripe from "../utils/stripe.js";
 
 const getOrCreateStripeCustomer = async (user) => {
-  if (user.stripeCustomerId) return user.stripeCustomerId;
+  if (user.stripeCustomerId) {
+    try {
+      const existing = await stripe.customers.retrieve(user.stripeCustomerId);
+      if (!existing.deleted) return user.stripeCustomerId;
+    } catch {
+      // Customer doesn't exist in this Stripe account — create fresh one
+    }
+  }
 
   const customer = await stripe.customers.create({
     email: user.email,
