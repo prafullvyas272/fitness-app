@@ -53,39 +53,16 @@ export const createCheckoutSession = async (userId, planId) => {
     payment_settings: { save_default_payment_method: "on_subscription" },
   });
 
-  // Explicitly fetch the invoice and its payment intent (more reliable than expand in serverless)
-  const invoiceId = typeof subscription.latest_invoice === "string"
-    ? subscription.latest_invoice
-    : subscription.latest_invoice?.id;
-
-  if (!invoiceId) {
-    await stripe.subscriptions.cancel(subscription.id);
-    throw new Error("No invoice found on subscription");
-  }
-
-  const invoice = await stripe.invoices.retrieve(invoiceId, {
-    expand: ["payment_intent"],
+  // Retrieve subscription with expand — most reliable way to get payment intent
+  const expandedSub = await stripe.subscriptions.retrieve(subscription.id, {
+    expand: ["latest_invoice.payment_intent"],
   });
 
-  // If invoice is still draft, finalize it to generate the payment intent
-  let finalInvoice = invoice;
-  if (invoice.status === "draft") {
-    finalInvoice = await stripe.invoices.finalizeInvoice(invoiceId, {
-      expand: ["payment_intent"],
-    });
-  }
-
-  const clientSecret = finalInvoice.payment_intent?.client_secret ?? null;
+  const clientSecret = expandedSub.latest_invoice?.payment_intent?.client_secret ?? null;
 
   if (!clientSecret) {
     await stripe.subscriptions.cancel(subscription.id);
-    throw new Error(
-      `DEBUG — invoice.status: ${finalInvoice.status} | ` +
-      `invoice.amount_due: ${finalInvoice.amount_due} | ` +
-      `invoice.collection_method: ${finalInvoice.collection_method} | ` +
-      `payment_intent type: ${typeof finalInvoice.payment_intent} | ` +
-      `payment_intent value: ${JSON.stringify(finalInvoice.payment_intent)}`
-    );
+    throw new Error("Unable to retrieve payment client secret from Stripe.");
   }
 
   // Create ephemeral key for mobile Payment Sheet
