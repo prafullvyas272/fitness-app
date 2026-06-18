@@ -236,14 +236,47 @@ export const deleteTrainer = async (trainerId) => {
   if (trainer.role.name !== "Trainer") throw new Error("User is not a trainer");
 
   const deletedTrainer = await prisma.$transaction(async (tx) => {
-    // Delete related records first
+    // TrainerVideo: get IDs first, then delete assignments, then videos
+    const trainerVideos = await tx.trainerVideo.findMany({
+      where: { trainerId },
+      select: { id: true },
+    });
+    const videoIds = trainerVideos.map(v => v.id);
+    if (videoIds.length > 0) {
+      await tx.trainerVideoAssignment.deleteMany({ where: { videoId: { in: videoIds } } });
+    }
+    await tx.trainerVideo.deleteMany({ where: { trainerId } });
+
+    // WorkoutTrainerAssignment
+    await tx.workoutTrainerAssignment.deleteMany({ where: { trainerId } });
+
+    // Chat: delete messages first, then conversations
+    const conversations = await tx.chatConversation.findMany({
+      where: { trainerId },
+      select: { conversationId: true },
+    });
+    const conversationIds = conversations.map(c => c.conversationId);
+    if (conversationIds.length > 0) {
+      await tx.chatMessage.deleteMany({ where: { conversationId: { in: conversationIds } } });
+    }
+    await tx.chatConversation.deleteMany({ where: { trainerId } });
+
+    // TrainerRequest (as trainer)
+    await tx.trainerRequest.deleteMany({ where: { trainerId } });
+
+    // Plans created by trainer
+    await tx.plan.deleteMany({ where: { createdBy: trainerId } });
+
+    // Reports submitted by trainer
+    await tx.report.deleteMany({ where: { trainerId } });
+
+    // Already-handled cascades (kept for safety)
     await tx.userDevice.deleteMany({ where: { userId: trainerId } });
-    await tx.assignedCustomer.deleteMany({ where: { trainerId: trainerId } });
+    await tx.assignedCustomer.deleteMany({ where: { trainerId } });
     await tx.userProfileDetail.deleteMany({ where: { userId: trainerId } });
     await tx.userSpeciality.deleteMany({ where: { userId: trainerId } });
     await tx.accountDeletionRequest.deleteMany({ where: { userId: trainerId } });
 
-    // Now safe to delete the user
     return await tx.user.delete({
       where: { id: trainerId },
       select: {
@@ -258,9 +291,8 @@ export const deleteTrainer = async (trainerId) => {
       },
     });
   }, {
-    timeout: 15000 
-  }
-);
+    timeout: 15000
+  });
 
   return deletedTrainer;
 };

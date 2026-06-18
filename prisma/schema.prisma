@@ -113,6 +113,8 @@ model User {
   trainerPremiumWeightGoals   PremiumWeightGoal[]   @relation("TrainerPremiumWeightGoals")
   customerPremiumWeightGoals  PremiumWeightGoal[]   @relation("CustomerPremiumWeightGoals")
   trainerPayouts              TrainerPayout[]        @relation("TrainerPayouts")
+  submittedReports            Report[]               @relation("TrainerReports")
+  receivedReports             Report[]               @relation("CustomerReports")
   progressPhotos              ProgressPhoto[]
 
   createdAt DateTime @default(now())
@@ -916,4 +918,37 @@ model TrainerPayout {
 
   @@index([trainerId])
   @@index([createdAt])
+}
+
+enum ComplaintCategory {
+  CONDUCT
+  PERFORMANCE
+  ATTENDANCE
+  PAYMENT
+  OTHER
+}
+
+enum PriorityLevel {
+  ROUTINE
+  HIGH
+  CRITICAL
+}
+
+model Report {
+  id          String            @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId   String            @db.ObjectId
+  customerId  String            @db.ObjectId
+  sessionDate DateTime
+  category    ComplaintCategory
+  priority    PriorityLevel     @default(ROUTINE)
+  description String
+
+  trainer  User @relation("TrainerReports",   fields: [trainerId],  references: [id])
+  customer User @relation("CustomerReports",  fields: [customerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([trainerId])
+  @@index([customerId])
 }
