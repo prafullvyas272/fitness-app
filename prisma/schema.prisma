@@ -117,6 +117,7 @@ model User {
   submittedReports            Report[]               @relation("TrainerReports")
   receivedReports             Report[]               @relation("CustomerReports")
   customerReports             CustomerReport[]       @relation("CustomerReportSubmissions")
+  trainerIssueReports         TrainerIssueReport[]   @relation("TrainerIssueReports")
   progressPhotos              ProgressPhoto[]
 
   createdAt DateTime @default(now())
@@ -980,5 +981,39 @@ model CustomerReport {
   updatedAt DateTime @updatedAt
 
   @@index([customerId])
+  @@index([status])
+}
+
+enum AppIssueCategory {
+  BUG
+  FEATURE_REQUEST
+  PAYMENT
+  ACCOUNT
+  PERFORMANCE
+  OTHER
+}
+
+enum AppIssueStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+}
+
+model TrainerIssueReport {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId   String           @db.ObjectId
+  subject     String
+  category    AppIssueCategory
+  priority    PriorityLevel    @default(ROUTINE)
+  description String?
+  status      AppIssueStatus   @default(OPEN)
+  adminNote   String?
+
+  trainer User @relation("TrainerIssueReports", fields: [trainerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([trainerId])
   @@index([status])
 }

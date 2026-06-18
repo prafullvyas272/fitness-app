@@ -46,6 +46,7 @@ import progressPhotoRoutes from "./routes/progress-photo.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 import customerReportRoutes from "./routes/customer-report.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
+import trainerIssueReportRoutes from "./routes/trainer-issue-report.routes.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -132,6 +133,7 @@ app.use("/api/progress-photos", progressPhotoRoutes);
 app.use("/api", reportRoutes);
 app.use("/api", customerReportRoutes);
 app.use("/api", subscriptionRoutes);
+app.use("/api", trainerIssueReportRoutes);
 
 app.use(errorHandler);
 
