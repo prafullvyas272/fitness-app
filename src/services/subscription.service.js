@@ -79,7 +79,13 @@ export const createCheckoutSession = async (userId, planId) => {
 
   if (!clientSecret) {
     await stripe.subscriptions.cancel(subscription.id);
-    throw new Error("Payment intent not found. Check your Stripe price is active and has a non-zero amount.");
+    throw new Error(
+      `DEBUG — invoice.status: ${finalInvoice.status} | ` +
+      `invoice.amount_due: ${finalInvoice.amount_due} | ` +
+      `invoice.collection_method: ${finalInvoice.collection_method} | ` +
+      `payment_intent type: ${typeof finalInvoice.payment_intent} | ` +
+      `payment_intent value: ${JSON.stringify(finalInvoice.payment_intent)}`
+    );
   }
 
   // Create ephemeral key for mobile Payment Sheet
