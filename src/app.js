@@ -44,6 +44,7 @@ import premiumWeightRoutes from "./routes/premium-weight.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import progressPhotoRoutes from "./routes/progress-photo.routes.js";
 import reportRoutes from "./routes/report.routes.js";
+import customerReportRoutes from "./routes/customer-report.routes.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -124,6 +125,7 @@ app.use("/api/premium-weight", premiumWeightRoutes);
 app.use("/api", notificationRoutes);
 app.use("/api/progress-photos", progressPhotoRoutes);
 app.use("/api", reportRoutes);
+app.use("/api", customerReportRoutes);
 
 app.use(errorHandler);
 

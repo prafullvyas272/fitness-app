@@ -115,6 +115,7 @@ model User {
   trainerPayouts              TrainerPayout[]        @relation("TrainerPayouts")
   submittedReports            Report[]               @relation("TrainerReports")
   receivedReports             Report[]               @relation("CustomerReports")
+  customerReports             CustomerReport[]       @relation("CustomerReportSubmissions")
   progressPhotos              ProgressPhoto[]
 
   createdAt DateTime @default(now())
@@ -951,4 +952,29 @@ model Report {
 
   @@index([trainerId])
   @@index([customerId])
+}
+
+enum CustomerReportStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+}
+
+model CustomerReport {
+  id          String               @id @default(auto()) @map("_id") @db.ObjectId
+  customerId  String               @db.ObjectId
+  subject     String
+  category    ComplaintCategory
+  priority    PriorityLevel        @default(ROUTINE)
+  description String?
+  status      CustomerReportStatus @default(OPEN)
+  adminNote   String?
+
+  customer User @relation("CustomerReportSubmissions", fields: [customerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([status])
 }
