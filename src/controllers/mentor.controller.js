@@ -11,10 +11,6 @@ export const createMentorHandler = async (req, res) => {
       data.avatarPublicId = result.public_id;
     }
 
-    if (data.specialityIds && typeof data.specialityIds === "string") {
-      data.specialityIds = JSON.parse(data.specialityIds);
-    }
-
     const mentor = await createMentor(data);
 
     res.status(201).json({

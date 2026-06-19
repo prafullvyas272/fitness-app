@@ -7,6 +7,17 @@ const getMentorRole = async () => {
   return role;
 };
 
+const resolveSpecialityIds = async (specialityNames) => {
+  if (!specialityNames) return [];
+  const names = specialityNames.split(",").map(n => n.trim()).filter(Boolean);
+  if (names.length === 0) return [];
+  const records = await prisma.speciality.findMany({
+    where: { name: { in: names } },
+    select: { id: true },
+  });
+  return records.map(r => r.id);
+};
+
 export const createMentor = async (data) => {
   const { firstName, lastName, email, phone, password, title, experience, region, maxPTs, avatarUrl, avatarPublicId, status, specialityIds } = data;
 
@@ -16,9 +27,10 @@ export const createMentor = async (data) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw new Error("Email already in use");
 
-  const [mentorRole, hashedPassword] = await Promise.all([
+  const [mentorRole, hashedPassword, resolvedIds] = await Promise.all([
     getMentorRole(),
     getHashedPassword(password),
+    resolveSpecialityIds(specialityIds),
   ]);
 
   const result = await prisma.$transaction(async (tx) => {
@@ -47,10 +59,9 @@ export const createMentor = async (data) => {
       },
     });
 
-    const validSpecialityIds = (specialityIds || []).filter(id => id != null);
-    if (validSpecialityIds.length > 0) {
+    if (resolvedIds.length > 0) {
       await tx.userSpeciality.createMany({
-        data: validSpecialityIds.map(id => ({ userId: user.id, specialityId: id })),
+        data: resolvedIds.map(id => ({ userId: user.id, specialityId: id })),
       });
     }
 
