@@ -50,7 +50,6 @@ export const createMentor = async (data) => {
     if (specialityIds && specialityIds.length > 0) {
       await tx.userSpeciality.createMany({
         data: specialityIds.map(id => ({ userId: user.id, specialityId: id })),
-        skipDuplicates: true,
       });
     }
 
@@ -185,7 +184,6 @@ export const updateMentor = async (id, data, avatarFile) => {
       if (specialityIds.length > 0) {
         await tx.userSpeciality.createMany({
           data: specialityIds.map(sid => ({ userId: id, specialityId: sid })),
-          skipDuplicates: true,
         });
       }
     }
