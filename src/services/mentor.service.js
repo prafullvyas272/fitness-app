@@ -207,6 +207,73 @@ export const updateMentor = async (id, data, avatarFile) => {
   });
 };
 
+export const getUnassignedTrainers = async () => {
+  const trainerRole = await prisma.role.findUnique({ where: { name: "Trainer" } });
+  if (!trainerRole) throw new Error("Trainer role not found");
+
+  // Trainers who already have a mentor assignment
+  const assigned = await prisma.mentorTrainerAssignment.findMany({
+    select: { trainerId: true },
+  });
+  const assignedIds = assigned.map(a => a.trainerId);
+
+  return prisma.user.findMany({
+    where: {
+      roleId: trainerRole.id,
+      isActive: true,
+      id: { notIn: assignedIds },
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+    },
+    orderBy: { firstName: "asc" },
+  });
+};
+
+export const assignTrainers = async (mentorId, trainerIds) => {
+  const mentor = await prisma.user.findUnique({ where: { id: mentorId }, include: { mentorProfile: true } });
+  if (!mentor || !mentor.mentorProfile) throw new Error("Mentor not found");
+
+  const maxPTs = mentor.mentorProfile.maxPTs;
+
+  // Check how many trainers are already assigned to this mentor
+  const currentCount = await prisma.mentorTrainerAssignment.count({ where: { mentorId } });
+  if (currentCount + trainerIds.length > maxPTs) {
+    throw new Error(`Cannot assign ${trainerIds.length} trainer(s). Mentor capacity is ${maxPTs}, currently has ${currentCount} assigned.`);
+  }
+
+  // Check none of the trainers are already assigned to any mentor
+  const alreadyAssigned = await prisma.mentorTrainerAssignment.findMany({
+    where: { trainerId: { in: trainerIds } },
+    select: { trainerId: true },
+  });
+  if (alreadyAssigned.length > 0) {
+    const ids = alreadyAssigned.map(a => a.trainerId).join(", ");
+    throw new Error(`Trainer(s) already assigned to another mentor: ${ids}`);
+  }
+
+  await prisma.mentorTrainerAssignment.createMany({
+    data: trainerIds.map(trainerId => ({ mentorId, trainerId })),
+  });
+
+  return getMentorById(mentorId);
+};
+
+export const unassignTrainer = async (mentorId, trainerId) => {
+  const assignment = await prisma.mentorTrainerAssignment.findFirst({
+    where: { mentorId, trainerId },
+  });
+  if (!assignment) throw new Error("Assignment not found");
+
+  await prisma.mentorTrainerAssignment.delete({ where: { id: assignment.id } });
+
+  return getMentorById(mentorId);
+};
+
 export const deleteMentor = async (id) => {
   const mentor = await prisma.user.findUnique({ where: { id } });
   if (!mentor) throw new Error("Mentor not found");

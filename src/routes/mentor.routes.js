@@ -5,6 +5,9 @@ import {
   getMentorByIdHandler,
   updateMentorHandler,
   deleteMentorHandler,
+  getUnassignedTrainersHandler,
+  assignTrainersHandler,
+  unassignTrainerHandler,
 } from "../controllers/mentor.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -193,5 +196,73 @@ router.put(
  *         description: Mentor deleted successfully
  */
 router.delete("/mentors/:id", authMiddleware, superadminMiddleware, deleteMentorHandler);
+
+/**
+ * @swagger
+ * /api/mentors/trainers/unassigned:
+ *   get:
+ *     summary: Get all trainers not yet assigned to any mentor (Admin only)
+ *     tags: [Mentors]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Unassigned trainers fetched successfully
+ */
+router.get("/mentors/trainers/unassigned", authMiddleware, superadminMiddleware, getUnassignedTrainersHandler);
+
+/**
+ * @swagger
+ * /api/mentors/{id}/assign-trainers:
+ *   post:
+ *     summary: Assign one or more trainers to a mentor (Admin only)
+ *     tags: [Mentors]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [trainerIds]
+ *             properties:
+ *               trainerIds:
+ *                 type: array
+ *                 items: { type: string }
+ *                 example: ["trainerId1", "trainerId2"]
+ *     responses:
+ *       200:
+ *         description: Trainer(s) assigned successfully
+ */
+router.post("/mentors/:id/assign-trainers", authMiddleware, superadminMiddleware, assignTrainersHandler);
+
+/**
+ * @swagger
+ * /api/mentors/{id}/unassign-trainer/{trainerId}:
+ *   delete:
+ *     summary: Unassign a trainer from a mentor (Admin only)
+ *     tags: [Mentors]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *       - in: path
+ *         name: trainerId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Trainer unassigned successfully
+ */
+router.delete("/mentors/:id/unassign-trainer/:trainerId", authMiddleware, superadminMiddleware, unassignTrainerHandler);
 
 export default router;
