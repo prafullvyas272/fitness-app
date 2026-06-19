@@ -11,6 +11,7 @@ enum ROLES {
   SuperAdmin
   Trainer
   Customer
+  Mentor
 }
 
 model Role {
@@ -119,8 +120,48 @@ model User {
   customerReports             CustomerReport[]       @relation("CustomerReportSubmissions")
   trainerIssueReports         TrainerIssueReport[]   @relation("TrainerIssueReports")
   progressPhotos              ProgressPhoto[]
+  mentorProfile               MentorProfile?         @relation("MentorProfileToUser")
+  mentorTrainerAssignments    MentorTrainerAssignment[] @relation("MentorAssignments")
+  trainerMentorAssignments    MentorTrainerAssignment[] @relation("TrainerMentorAssignments")
 
   createdAt DateTime @default(now())
+}
+
+enum MentorStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model MentorProfile {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String       @unique @db.ObjectId
+  title          String?
+  experience     Int?
+  region         String?
+  maxPTs         Int          @default(30)
+  avatarUrl      String?
+  avatarPublicId String?
+  status         MentorStatus @default(ACTIVE)
+
+  user User @relation("MentorProfileToUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MentorTrainerAssignment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  mentorId  String   @db.ObjectId
+  trainerId String   @db.ObjectId
+
+  mentor  User @relation("MentorAssignments",        fields: [mentorId],  references: [id], onDelete: Cascade)
+  trainer User @relation("TrainerMentorAssignments",  fields: [trainerId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@unique([mentorId, trainerId])
+  @@index([mentorId])
+  @@index([trainerId])
 }
 
 model UserProfileDetail {
