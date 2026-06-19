@@ -13,8 +13,8 @@ import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
 const router = express.Router();
 
-// Webhook — raw body required, registered separately in app.js
-router.post("/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhookHandler);
+// Raw body is applied at app.js level before express.json()
+router.post("/webhooks/stripe", stripeWebhookHandler);
 
 /**
  * @swagger

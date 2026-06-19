@@ -53,7 +53,7 @@ export const createCheckoutSession = async (userId, planId) => {
     payment_settings: { save_default_payment_method: "on_subscription" },
   });
 
-  // Step 1: get invoice ID (latest_invoice is a string ID when not expanded)
+  // Get invoice ID from subscription
   const invoiceId = typeof subscription.latest_invoice === "string"
     ? subscription.latest_invoice
     : subscription.latest_invoice?.id;
@@ -63,61 +63,32 @@ export const createCheckoutSession = async (userId, planId) => {
     throw new Error("No invoice found on subscription");
   }
 
-  // Step 2: retrieve raw invoice — payment_intent field is a string ID
+  // Try to get payment intent ID from invoice directly
   const rawInvoice = await stripe.invoices.retrieve(invoiceId);
-
   const paymentIntentId = typeof rawInvoice.payment_intent === "string"
     ? rawInvoice.payment_intent
     : rawInvoice.payment_intent?.id ?? null;
 
-  if (!paymentIntentId) {
-    // List payment intents for this customer to find the one for this invoice
+  let clientSecret = null;
+
+  if (paymentIntentId) {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    clientSecret = paymentIntent.client_secret ?? null;
+  } else {
+    // Fallback: list payment intents for customer and match by invoice
     const paymentIntents = await stripe.paymentIntents.list({
       customer: stripeCustomerId,
       limit: 5,
     });
-
-    const matchedPi = paymentIntents.data.find(
+    const matched = paymentIntents.data.find(
       pi => pi.invoice === invoiceId || pi.status === "requires_payment_method"
     );
-
-    if (!matchedPi) {
-      await stripe.subscriptions.cancel(subscription.id);
-      throw new Error(
-        `No payment intent found. Invoice keys: ${Object.keys(rawInvoice).join(", ")}`
-      );
-    }
-
-    const clientSecret = matchedPi.client_secret;
-    const ephemeralKey = await stripe.ephemeralKeys.create(
-      { customer: stripeCustomerId },
-      { apiVersion: "2023-10-16" }
-    );
-    await prisma.subscription.create({
-      data: {
-        userId,
-        planId,
-        status: "INCOMPLETE",
-        stripeSubscriptionId: subscription.id,
-        stripeStatus: subscription.status,
-      },
-    });
-    return {
-      subscriptionId: subscription.id,
-      clientSecret,
-      ephemeralKey: ephemeralKey.secret,
-      customerId: stripeCustomerId,
-    };
+    clientSecret = matched?.client_secret ?? null;
   }
-
-  // Step 3: retrieve payment intent directly by ID — no expand needed
-  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-  const clientSecret = paymentIntent.client_secret ?? null;
 
   if (!clientSecret) {
     await stripe.subscriptions.cancel(subscription.id);
-    throw new Error("Payment intent has no client secret");
+    throw new Error("Could not retrieve payment client secret from Stripe");
   }
 
   // Create ephemeral key for mobile Payment Sheet
