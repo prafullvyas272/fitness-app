@@ -7,6 +7,7 @@ import {
   linkPlanToStripePrice,
   getAllSubscriptions,
   getMyTrainerPlan,
+  confirmSubscriptionPayment,
 } from "../services/subscription.service.js";
 
 export const createCheckoutHandler = async (req, res) => {
@@ -75,6 +76,27 @@ export const linkPlanToStripePriceHandler = async (req, res) => {
 
     const data = await linkPlanToStripePrice(id, stripePriceId);
     res.status(200).json({ success: true, message: "Plan linked to Stripe price successfully", data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const confirmSubscriptionPaymentHandler = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { stripeSubscriptionId } = req.body;
+
+    if (!stripeSubscriptionId) {
+      return res.status(400).json({ success: false, message: "stripeSubscriptionId is required" });
+    }
+
+    const data = await confirmSubscriptionPayment(userId, stripeSubscriptionId);
+
+    res.status(200).json({
+      success: true,
+      message: "Subscription status synced successfully",
+      data,
+    });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }

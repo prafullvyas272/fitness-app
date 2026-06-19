@@ -227,6 +227,38 @@ export const linkPlanToStripePrice = async (planId, stripePriceId) => {
 };
 
 /**
+ * Confirm payment after mobile SDK completes — syncs status directly from Stripe.
+ */
+export const confirmSubscriptionPayment = async (userId, stripeSubscriptionId) => {
+  const sub = await prisma.subscription.findFirst({
+    where: { userId, stripeSubscriptionId },
+  });
+  if (!sub) throw new Error("Subscription not found");
+
+  // Fetch latest status directly from Stripe
+  const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+  const endDate = new Date(stripeSub.current_period_end * 1000);
+
+  let status = "INCOMPLETE";
+  if (stripeSub.status === "active") status = "ACTIVE";
+  else if (stripeSub.status === "canceled") status = "CANCELLED";
+  else if (stripeSub.status === "past_due") status = "PAST_DUE";
+
+  const updated = await prisma.subscription.update({
+    where: { id: sub.id },
+    data: {
+      status,
+      stripeStatus: stripeSub.status,
+      startDate: new Date(),
+      endDate,
+    },
+    include: { plan: true },
+  });
+
+  return updated;
+};
+
+/**
  * Customer: get the plan assigned to their trainer.
  */
 export const getMyTrainerPlan = async (customerId) => {

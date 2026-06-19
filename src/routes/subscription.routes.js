@@ -1,20 +1,19 @@
 import express from "express";
 import {
   createCheckoutHandler,
-  stripeWebhookHandler,
   getMySubscriptionHandler,
   cancelMySubscriptionHandler,
   linkPlanToStripePriceHandler,
   getAllSubscriptionsHandler,
   getMyTrainerPlanHandler,
+  confirmSubscriptionPaymentHandler,
 } from "../controllers/subscription.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
 const router = express.Router();
 
-// Raw body is applied at app.js level before express.json()
-router.post("/webhooks/stripe", stripeWebhookHandler);
+// Webhook is registered directly in app.js before express.json() — do not add here
 
 /**
  * @swagger
@@ -113,6 +112,34 @@ router.post("/webhooks/stripe", stripeWebhookHandler);
 router.get("/customer/my-trainer-plan", authMiddleware, getMyTrainerPlanHandler);
 
 router.post("/subscriptions/checkout", authMiddleware, createCheckoutHandler);
+
+/**
+ * @swagger
+ * /api/subscriptions/confirm:
+ *   post:
+ *     summary: Confirm payment after Stripe Payment Sheet completes (Customer)
+ *     description: Mobile calls this immediately after Stripe Payment Sheet succeeds. Syncs subscription status directly from Stripe without relying on webhooks.
+ *     tags:
+ *       - Subscriptions
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - stripeSubscriptionId
+ *             properties:
+ *               stripeSubscriptionId:
+ *                 type: string
+ *                 example: "sub_1TjuQZAQfjCeRChbRW1whv0b"
+ *     responses:
+ *       200:
+ *         description: Subscription status synced
+ */
+router.post("/subscriptions/confirm", authMiddleware, confirmSubscriptionPaymentHandler);
 
 /**
  * @swagger

@@ -47,6 +47,7 @@ import reportRoutes from "./routes/report.routes.js";
 import customerReportRoutes from "./routes/customer-report.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
 import trainerIssueReportRoutes from "./routes/trainer-issue-report.routes.js";
+import { stripeWebhookHandler } from "./controllers/subscription.controller.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -63,8 +64,8 @@ const app = express();
 // Middlewares
 app.use(cors());
 
-// Stripe webhook must receive raw body — BEFORE express.json()
-app.use("/api/webhooks/stripe", express.raw({ type: "application/json" }));
+// Stripe webhook MUST be registered directly before express.json() — raw body required for signature verification
+app.post("/api/webhooks/stripe", express.raw({ type: "*/*" }), stripeWebhookHandler);
 
 app.use(express.json());
 
