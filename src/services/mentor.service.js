@@ -47,9 +47,10 @@ export const createMentor = async (data) => {
       },
     });
 
-    if (specialityIds && specialityIds.length > 0) {
+    const validSpecialityIds = (specialityIds || []).filter(id => id != null);
+    if (validSpecialityIds.length > 0) {
       await tx.userSpeciality.createMany({
-        data: specialityIds.map(id => ({ userId: user.id, specialityId: id })),
+        data: validSpecialityIds.map(id => ({ userId: user.id, specialityId: id })),
       });
     }
 
@@ -181,9 +182,10 @@ export const updateMentor = async (id, data, avatarFile) => {
 
     if (specialityIds !== undefined) {
       await tx.userSpeciality.deleteMany({ where: { userId: id } });
-      if (specialityIds.length > 0) {
+      const validSpecialityIds = specialityIds.filter(sid => sid != null);
+      if (validSpecialityIds.length > 0) {
         await tx.userSpeciality.createMany({
-          data: specialityIds.map(sid => ({ userId: id, specialityId: sid })),
+          data: validSpecialityIds.map(sid => ({ userId: id, specialityId: sid })),
         });
       }
     }
