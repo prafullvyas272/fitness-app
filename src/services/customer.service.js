@@ -366,9 +366,11 @@ export const showCustomerProfileData = async (customerId) => {
     }
   }));
 
+  const { subscriptions, assignedCustomersAsCustomer, ...customerData } = customer;
+
   return {
-    ...customer,
-    assignedCustomersAsCustomer: assignedTrainers,
+    ...customerData,
+    assignedTrainers,
     hostGymName: trainerProfile?.hostGymName || null,
     hostGymAddress: trainerProfile?.hostGymAddress || null,
     subscription: latestSubscription,
