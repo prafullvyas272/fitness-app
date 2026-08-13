@@ -1,7 +1,8 @@
 const RoleEnum = {
     SUPERADMIN: 'SuperAdmin',
     TRAINER: 'Trainer',
-    CUSTOMER: 'Customer'
+    CUSTOMER: 'Customer',
+    MENTOR: 'Mentor'
 };
 
 export default RoleEnum;
