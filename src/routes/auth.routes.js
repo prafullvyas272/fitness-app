@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, login } from "../controllers/auth.controller.js";
+import { register, login, mentorLogin } from "../controllers/auth.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import {
   registerSchema,
@@ -171,6 +171,85 @@ router.post("/register", upload.single("profilePhoto"), validate(registerSchema)
  *                   type: object
  */
 router.post("/login", validate(loginSchema), login);
+
+/**
+ * @swagger
+ * /api/auth/mentor/login:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *       - Mentor
+ *     summary: Mentor login
+ *     description: Login a mentor using email and password. Returns user data and JWT token with 24-hour expiration.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: mentor@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: password123
+ *               fcmToken:
+ *                 type: string
+ *                 example: dskjfhsdkjfhsdkjfhskdjhfksdhf
+ *     responses:
+ *       200:
+ *         description: Mentor login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Login successful.
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         firstName:
+ *                           type: string
+ *                         lastName:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         phone:
+ *                           type: string
+ *                         roleId:
+ *                           type: string
+ *                         isActive:
+ *                           type: boolean
+ *                         phoneVerified:
+ *                           type: boolean
+ *                     access_token:
+ *                       type: string
+ *                       description: JWT token (24-hour expiration)
+ *                     refresh_token:
+ *                       type: string
+ *                       description: Refresh token (30-day expiration)
+ *       401:
+ *         description: Invalid credentials or account inactive
+ *       403:
+ *         description: Access denied - only mentors can login here
+ */
+router.post("/mentor/login", validate(loginSchema), mentorLogin);
 
 /**
  * @swagger

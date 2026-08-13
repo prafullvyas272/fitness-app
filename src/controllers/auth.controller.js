@@ -25,6 +25,7 @@ import {
   customerResetPasswordWithPhone,
 } from "../services/auth.service.js";
 import { googleLogin } from "../services/auth.service.js";
+import { signToken } from "../utils/jwt.js";
 import prisma from "../utils/prisma.js";
 
 export const register = async (req, res) => {
@@ -708,6 +709,81 @@ export const customerResetPasswordHandler = async (req, res) => {
     });
   } catch (err) {
     res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const mentorLogin = async (req, res) => {
+  try {
+    const { email, password, fcmToken } = req.body;
+    const data = await loginUser(email, password, fcmToken);
+    const { user } = data;
+    const role = await getUserRoleByRoleId(user.roleId);
+
+    if (role?.name !== RoleEnum.MENTOR) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Only mentors can login here.",
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: "Your account is not active.",
+      });
+    }
+
+    if (!user.phoneVerified) {
+      return res.status(200).json({
+        success: true,
+        message: "OTP sent to your registered email.",
+        data: {
+          user: {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            phone: user.phone,
+            roleId: user.roleId,
+            isActive: user.isActive,
+            phoneVerified: user.phoneVerified,
+            gender: user.gender,
+            createdAt: user.createdAt,
+            provider: user.provider,
+          },
+        },
+      });
+    }
+
+    const access_token = signToken({ userId: user.id }, { expiresIn: "24h" });
+    const refresh_token = signToken({ userId: user.id, type: "refresh" }, { expiresIn: "30d" });
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful.",
+      data: {
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          roleId: user.roleId,
+          isActive: user.isActive,
+          phoneVerified: user.phoneVerified,
+          gender: user.gender,
+          createdAt: user.createdAt,
+          provider: user.provider,
+        },
+        access_token,
+        refresh_token,
+      },
+    });
+  } catch (err) {
+    res.status(401).json({
       success: false,
       message: err.message,
     });
