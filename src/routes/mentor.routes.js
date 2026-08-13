@@ -8,6 +8,8 @@ import {
   getUnassignedTrainersHandler,
   assignTrainersHandler,
   unassignTrainerHandler,
+  getAssignedPTsHandler,
+  getAssignedPTByIdHandler,
 } from "../controllers/mentor.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -264,5 +266,76 @@ router.post("/mentors/:id/assign-trainers", authMiddleware, superadminMiddleware
  *         description: Trainer unassigned successfully
  */
 router.delete("/mentors/:id/unassign-trainer/:trainerId", authMiddleware, superadminMiddleware, unassignTrainerHandler);
+
+/**
+ * @swagger
+ * /api/mentor/assigned-pts:
+ *   get:
+ *     summary: Get all assigned PTs for a mentor
+ *     tags: [Mentors]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, inactive, pending]
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [name, rating, clients]
+ *           default: name
+ *     responses:
+ *       200:
+ *         description: Assigned PTs fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pts:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     pagination:
+ *                       type: object
+ */
+router.get("/mentor/assigned-pts", authMiddleware, getAssignedPTsHandler);
+
+/**
+ * @swagger
+ * /api/mentor/assigned-pts/{ptId}:
+ *   get:
+ *     summary: Get single PT details
+ *     tags: [Mentors]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: ptId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: PT details fetched successfully
+ *       404:
+ *         description: PT not found
+ */
+router.get("/mentor/assigned-pts/:ptId", authMiddleware, getAssignedPTByIdHandler);
 
 export default router;

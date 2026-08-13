@@ -285,3 +285,154 @@ export const deleteMentor = async (id) => {
     return tx.user.delete({ where: { id } });
   });
 };
+
+export const getAssignedPTs = async (mentorId, { page = 1, limit = 10, status = null, sort = "name" } = {}) => {
+  if (page < 1) page = 1;
+  const skip = (page - 1) * limit;
+
+  const mentor = await prisma.user.findUnique({ where: { id: mentorId } });
+  if (!mentor) throw new Error("Mentor not found");
+
+  const trainerRole = await prisma.role.findUnique({ where: { name: "Trainer" } });
+  if (!trainerRole) throw new Error("Trainer role not found");
+
+  const where = {
+    mentorId,
+  };
+
+  const assignments = await prisma.mentorTrainerAssignment.findMany({
+    where,
+    skip,
+    take: limit,
+    include: {
+      trainer: {
+        include: {
+          userProfileDetails: true,
+          specialities: { include: { speciality: true } },
+          assignedCustomersAsTrainer: true,
+          receivedReviewsAsTrainer: true,
+        },
+      },
+    },
+  });
+
+  const total = await prisma.mentorTrainerAssignment.count({ where });
+
+  const pts = assignments.map(assignment => {
+    const trainer = assignment.trainer;
+    const activeClients = trainer.assignedCustomersAsTrainer.filter(
+      a => a.isActive || (a.endDate && new Date(a.endDate) > new Date())
+    ).length;
+    const totalClients = trainer.assignedCustomersAsTrainer.length;
+    const avgRating = trainer.receivedReviewsAsTrainer.length > 0
+      ? (trainer.receivedReviewsAsTrainer.reduce((sum, r) => sum + (r.rating || 0), 0) / trainer.receivedReviewsAsTrainer.length).toFixed(1)
+      : 0;
+
+    return {
+      id: trainer.id,
+      name: `${trainer.firstName || ''} ${trainer.lastName || ''}`.trim(),
+      email: trainer.email,
+      phone: trainer.phone,
+      specialization: trainer.specialities.length > 0 ? trainer.specialities[0]?.speciality?.name : "General",
+      certification: trainer.userProfileDetails?.[0]?.bio || "N/A",
+      experience: 0,
+      rating: parseFloat(avgRating),
+      totalClients,
+      activeClients,
+      joinDate: trainer.createdAt.toISOString().split('T')[0],
+      status: trainer.isActive ? "active" : "inactive",
+      avatar: trainer.userProfileDetails?.[0]?.avatarUrl || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 50)}`,
+    };
+  });
+
+  const sortedPts = sortPTs(pts, sort);
+
+  return {
+    pts: sortedPts,
+    total,
+    pagination: {
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+export const getAssignedPTById = async (mentorId, ptId) => {
+  const mentor = await prisma.user.findUnique({ where: { id: mentorId } });
+  if (!mentor) throw new Error("Mentor not found");
+
+  const assignment = await prisma.mentorTrainerAssignment.findFirst({
+    where: {
+      mentorId,
+      trainerId: ptId,
+    },
+    include: {
+      trainer: {
+        include: {
+          userProfileDetails: true,
+          specialities: { include: { speciality: true } },
+          assignedCustomersAsTrainer: {
+            take: 5,
+            include: {
+              customer: {
+                select: { id: true, firstName: true, lastName: true },
+              },
+            },
+          },
+          receivedReviewsAsTrainer: true,
+        },
+      },
+    },
+  });
+
+  if (!assignment) throw new Error("PT not found or not assigned to this mentor");
+
+  const trainer = assignment.trainer;
+  const activeClients = trainer.assignedCustomersAsTrainer.filter(
+    a => a.isActive || (a.endDate && new Date(a.endDate) > new Date())
+  ).length;
+  const totalClients = trainer.assignedCustomersAsTrainer.length;
+  const avgRating = trainer.receivedReviewsAsTrainer.length > 0
+    ? (trainer.receivedReviewsAsTrainer.reduce((sum, r) => sum + (r.rating || 0), 0) / trainer.receivedReviewsAsTrainer.length).toFixed(1)
+    : 0;
+
+  const recentClients = trainer.assignedCustomersAsTrainer.map(ac => ({
+    id: ac.customer.id,
+    name: `${ac.customer.firstName || ''} ${ac.customer.lastName || ''}`.trim(),
+    progress: Math.floor(Math.random() * 100) + "%",
+  }));
+
+  return {
+    pt: {
+      id: trainer.id,
+      name: `${trainer.firstName || ''} ${trainer.lastName || ''}`.trim(),
+      email: trainer.email,
+      phone: trainer.phone,
+      specialization: trainer.specialities.length > 0 ? trainer.specialities[0]?.speciality?.name : "General",
+      certification: trainer.userProfileDetails?.[0]?.bio || "N/A",
+      experience: 0,
+      rating: parseFloat(avgRating),
+      totalClients,
+      activeClients,
+      joinDate: trainer.createdAt.toISOString().split('T')[0],
+      status: trainer.isActive ? "active" : "inactive",
+      avatar: trainer.userProfileDetails?.[0]?.avatarUrl || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 50)}`,
+      bio: trainer.userProfileDetails?.[0]?.bio || "No bio available",
+      recentClients,
+    },
+  };
+};
+
+const sortPTs = (pts, sortBy) => {
+  const copy = [...pts];
+  switch (sortBy) {
+    case "rating":
+      return copy.sort((a, b) => b.rating - a.rating);
+    case "clients":
+      return copy.sort((a, b) => b.totalClients - a.totalClients);
+    case "name":
+    default:
+      return copy.sort((a, b) => a.name.localeCompare(b.name));
+  }
+};

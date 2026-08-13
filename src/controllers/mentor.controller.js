@@ -1,4 +1,4 @@
-import { createMentor, getAllMentors, getMentorById, updateMentor, deleteMentor, getUnassignedTrainers, assignTrainers, unassignTrainer } from "../services/mentor.service.js";
+import { createMentor, getAllMentors, getMentorById, updateMentor, deleteMentor, getUnassignedTrainers, assignTrainers, unassignTrainer, getAssignedPTs, getAssignedPTById } from "../services/mentor.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 export const createMentorHandler = async (req, res) => {
@@ -107,5 +107,57 @@ export const unassignTrainerHandler = async (req, res) => {
     res.status(200).json({ success: true, message: "Trainer unassigned successfully", data });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const getAssignedPTsHandler = async (req, res) => {
+  try {
+    const mentorId = req.user.userId;
+    const { page, limit, status, sort } = req.query;
+
+    const data = await getAssignedPTs(mentorId, {
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 10,
+      status: status || null,
+      sort: sort || "name",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Assigned PTs fetched successfully",
+      data,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getAssignedPTByIdHandler = async (req, res) => {
+  try {
+    const mentorId = req.user.userId;
+    const { ptId } = req.params;
+
+    const data = await getAssignedPTById(mentorId, ptId);
+
+    res.status(200).json({
+      success: true,
+      message: "PT details fetched successfully",
+      data,
+    });
+  } catch (err) {
+    if (err.message.includes("not found")) {
+      return res.status(404).json({
+        success: false,
+        message: err.message,
+        error: "NOT_FOUND",
+      });
+    }
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };

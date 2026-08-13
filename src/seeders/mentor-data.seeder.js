@@ -39,7 +39,24 @@ async function main() {
     }
   });
 
+  // Create or update MentorProfile
+  const mentorProfile = await prisma.mentorProfile.upsert({
+    where: { userId: mentorUser.id },
+    update: {
+      status: 'ACTIVE'
+    },
+    create: {
+      userId: mentorUser.id,
+      title: 'Senior Trainer Success Manager',
+      experience: 5,
+      region: 'North America',
+      maxPTs: 30,
+      status: 'ACTIVE'
+    }
+  });
+
   console.log("Mentor user seeded:", mentorUser.email);
+  console.log("Mentor profile created");
 }
 
 main()
