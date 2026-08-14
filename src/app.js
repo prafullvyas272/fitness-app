@@ -52,6 +52,7 @@ import mentorRoutes from "./routes/mentor.routes.js";
 import mentorMessagingRoutes from "./routes/mentor-messaging.routes.js";
 import mentorSchedulesRoutes from "./routes/mentor-schedules.routes.js";
 import mentorReportsRoutes from "./routes/mentor-reports.routes.js";
+import mentorDashboardRoutes from "./routes/mentor-dashboard.routes.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -142,6 +143,7 @@ app.use("/api", mentorRoutes);
 app.use("/api/mentor/messages", mentorMessagingRoutes);
 app.use("/api/mentor/schedules", mentorSchedulesRoutes);
 app.use("/api/mentor/reports", mentorReportsRoutes);
+app.use("/api/mentor/dashboard", mentorDashboardRoutes);
 app.use("/api", trainerIssueReportRoutes);
 
 app.use(errorHandler);
