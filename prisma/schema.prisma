@@ -1006,6 +1006,7 @@ model TrainerPayout {
 
 enum ComplaintCategory {
   CONDUCT
+  TECHNICAL
   PERFORMANCE
   ATTENDANCE
   PAYMENT
@@ -1027,24 +1028,38 @@ enum ReportStatus {
 }
 
 model Report {
-  id          String            @id @default(auto()) @map("_id") @db.ObjectId
-  trainerId   String            @db.ObjectId
-  customerId  String            @db.ObjectId
-  sessionDate DateTime
-  category    ComplaintCategory
-  priority    PriorityLevel     @default(ROUTINE)
-  description String
-  status      ReportStatus      @default(OPEN)
-  adminNote   String?
+  id                  String            @id @default(auto()) @map("_id") @db.ObjectId
+  reportId            String?           // Human-readable ID like TR-4029
+  trainerId           String            @db.ObjectId
+  customerId          String            @db.ObjectId
+  reporterName        String
+  clientName          String?
+  clientEmail         String?
+  category            ComplaintCategory
+  priority            PriorityLevel     @default(ROUTINE)
+  description         String
+  status              ReportStatus      @default(OPEN)
+  incidentDate        DateTime
+  incidentLocation    String?
+  resolutionNotes     String?
+  assignedTo          String?
+  sessionDate         DateTime?
+  adminNote           String?
 
   trainer  User @relation("TrainerReports",   fields: [trainerId],  references: [id])
   customer User @relation("CustomerReports",  fields: [customerId], references: [id])
+
+  attachments ReportAttachment[]
+  timeline    ReportTimeline[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([trainerId])
   @@index([customerId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
 }
 
 enum CustomerReportStatus {
@@ -1104,4 +1119,61 @@ model TrainerIssueReport {
 
   @@index([trainerId])
   @@index([status])
+}
+
+model ReportAttachment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  reportId  String   @db.ObjectId
+  fileName  String
+  fileUrl   String
+  uploadedBy String
+  uploadedAt DateTime @default(now())
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+enum ReportTimelineAction {
+  created
+  assigned
+  status_changed
+  priority_changed
+  note_added
+  resolved
+}
+
+model ReportTimeline {
+  id        String                @id @default(auto()) @map("_id") @db.ObjectId
+  reportId  String                @db.ObjectId
+  action    ReportTimelineAction
+  by        String                // User name who performed action
+  note      String?
+  timestamp DateTime              @default(now())
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+enum ReportActivityType {
+  report_created
+  status_updated
+  priority_changed
+  assigned
+  resolved
+  commented
+}
+
+model ReportActivity {
+  id            String             @id @default(auto()) @map("_id") @db.ObjectId
+  reportId      String             @db.ObjectId
+  activityType  ReportActivityType
+  text          String
+  severity      String             @default("low")
+  performedBy   String?
+  timestamp     DateTime           @default(now())
+
+  @@index([reportId])
+  @@index([timestamp])
 }
