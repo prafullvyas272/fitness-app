@@ -30,7 +30,7 @@ export const getAllSchedules = async (mentorId, { page = 1, limit = 20, date = n
       where,
       skip,
       take: limit,
-      orderBy: { "timeSlot.date": "asc" },
+      orderBy: { timeSlot: { date: "asc" } },
       include: {
         trainer: { select: { id: true, firstName: true, lastName: true, userProfileDetails: true } },
         customer: { select: { id: true, firstName: true, lastName: true } },
@@ -98,7 +98,7 @@ export const getSchedulesByDateRange = async (mentorId, startDate, endDate) => {
       customer: { select: { id: true, firstName: true, lastName: true } },
       timeSlot: { select: { date: true, startTime: true, endTime: true } }
     },
-    orderBy: { "timeSlot.date": "asc" }
+    orderBy: { timeSlot: { date: "asc" } }
   });
 
   const schedulesByDate = {};
