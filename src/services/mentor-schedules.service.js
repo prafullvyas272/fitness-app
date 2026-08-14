@@ -14,12 +14,14 @@ export const getAllSchedules = async (mentorId, { page = 1, limit = 20, date = n
       }
     },
     ...(date && {
-      date: {
-        gte: new Date(date),
-        lt: new Date(new Date(date).getTime() + 86400000)
+      timeSlot: {
+        date: {
+          gte: new Date(date),
+          lt: new Date(new Date(date).getTime() + 86400000)
+        }
       }
     }),
-    ...(status && { status })
+    ...(status && { bookingStatus: status })
   };
 
   const [total, schedules] = await Promise.all([
@@ -28,10 +30,11 @@ export const getAllSchedules = async (mentorId, { page = 1, limit = 20, date = n
       where,
       skip,
       take: limit,
-      orderBy: { date: "asc" },
+      orderBy: { "timeSlot.date": "asc" },
       include: {
         trainer: { select: { id: true, firstName: true, lastName: true, userProfileDetails: true } },
-        customer: { select: { id: true, firstName: true, lastName: true } }
+        customer: { select: { id: true, firstName: true, lastName: true } },
+        timeSlot: { select: { date: true, startTime: true, endTime: true, durationMinutes: true } }
       }
     })
   ]);
@@ -43,15 +46,15 @@ export const getAllSchedules = async (mentorId, { page = 1, limit = 20, date = n
     ptAvatar: schedule.trainer.userProfileDetails?.[0]?.avatarUrl || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 50)}`,
     clientId: schedule.customerId,
     clientName: `${schedule.customer.firstName || ''} ${schedule.customer.lastName || ''}`.trim(),
-    sessionType: schedule.sessionType || "Training Session",
-    date: schedule.date.toISOString().split('T')[0],
-    startTime: schedule.startTime || "00:00",
-    endTime: schedule.endTime || "01:00",
-    duration: schedule.duration || 60,
-    status: schedule.status || "scheduled",
-    location: schedule.location || "Not specified",
-    notes: schedule.notes || "",
-    confirmed: schedule.isConfirmed || false,
+    sessionType: schedule.personalTrainingSession || "Training Session",
+    date: schedule.timeSlot?.date ? schedule.timeSlot.date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    startTime: schedule.timeSlot?.startTime ? new Date(schedule.timeSlot.startTime).toTimeString().slice(0, 5) : "00:00",
+    endTime: schedule.timeSlot?.endTime ? new Date(schedule.timeSlot.endTime).toTimeString().slice(0, 5) : "01:00",
+    duration: schedule.timeSlot?.durationMinutes || 60,
+    status: schedule.bookingStatus || "PENDING",
+    location: "Training Studio",
+    notes: schedule.remarks || "",
+    confirmed: schedule.bookingStatus === "CONFIRMED",
     reminderSent: true
   }));
 
@@ -72,14 +75,17 @@ export const getSchedulesByDateRange = async (mentorId, startDate, endDate) => {
 
   const start = new Date(startDate);
   const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
 
   if (start > end) throw new Error("Start date must be before end date");
 
   const schedules = await prisma.trainerBooking.findMany({
     where: {
-      date: {
-        gte: start,
-        lte: end
+      timeSlot: {
+        date: {
+          gte: start,
+          lte: end
+        }
       },
       trainer: {
         mentorTrainerAssignments: {
@@ -89,15 +95,16 @@ export const getSchedulesByDateRange = async (mentorId, startDate, endDate) => {
     },
     include: {
       trainer: { select: { id: true, firstName: true, lastName: true } },
-      customer: { select: { id: true, firstName: true, lastName: true } }
+      customer: { select: { id: true, firstName: true, lastName: true } },
+      timeSlot: { select: { date: true, startTime: true, endTime: true } }
     },
-    orderBy: { date: "asc" }
+    orderBy: { "timeSlot.date": "asc" }
   });
 
   const schedulesByDate = {};
 
   schedules.forEach(schedule => {
-    const dateKey = schedule.date.toISOString().split('T')[0];
+    const dateKey = schedule.timeSlot?.date ? schedule.timeSlot.date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
     if (!schedulesByDate[dateKey]) {
       schedulesByDate[dateKey] = [];
     }
@@ -105,10 +112,10 @@ export const getSchedulesByDateRange = async (mentorId, startDate, endDate) => {
     schedulesByDate[dateKey].push({
       id: schedule.id,
       ptName: `${schedule.trainer.firstName || ''} ${schedule.trainer.lastName || ''}`.trim(),
-      startTime: schedule.startTime || "00:00",
-      endTime: schedule.endTime || "01:00",
+      startTime: schedule.timeSlot?.startTime ? new Date(schedule.timeSlot.startTime).toTimeString().slice(0, 5) : "00:00",
+      endTime: schedule.timeSlot?.endTime ? new Date(schedule.timeSlot.endTime).toTimeString().slice(0, 5) : "01:00",
       clientName: `${schedule.customer.firstName || ''} ${schedule.customer.lastName || ''}`.trim(),
-      status: schedule.status || "scheduled"
+      status: schedule.bookingStatus || "PENDING"
     });
   });
 
@@ -214,18 +221,21 @@ export const getScheduleStats = async (mentorId, period = "week") => {
   const schedules = await prisma.trainerBooking.findMany({
     where: {
       trainerId: { in: trainerIds },
-      date: { gte: startDate }
+      timeSlot: { date: { gte: startDate } }
+    },
+    include: {
+      timeSlot: { select: { durationMinutes: true } }
     }
   });
 
   const totalSchedules = schedules.length;
-  const confirmedSchedules = schedules.filter(s => s.isConfirmed).length;
-  const pendingConfirmation = schedules.filter(s => !s.isConfirmed && s.status === "scheduled").length;
-  const cancelledSchedules = schedules.filter(s => s.status === "cancelled").length;
-  const completedSessions = schedules.filter(s => s.status === "completed").length;
-  const noShowSchedules = schedules.filter(s => s.status === "no_show").length;
+  const confirmedSchedules = schedules.filter(s => s.bookingStatus === "CONFIRMED").length;
+  const pendingConfirmation = schedules.filter(s => s.bookingStatus === "PENDING").length;
+  const cancelledSchedules = schedules.filter(s => s.isCancelled).length;
+  const completedSessions = schedules.filter(s => s.bookingStatus === "COMPLETED").length;
+  const noShowSchedules = schedules.filter(s => s.bookingStatus === "NO_SHOW").length;
 
-  const totalDuration = schedules.reduce((sum, s) => sum + (s.duration || 0), 0);
+  const totalDuration = schedules.reduce((sum, s) => sum + (s.timeSlot?.durationMinutes || 0), 0);
   const averageSessionDuration = totalSchedules > 0 ? Math.round(totalDuration / totalSchedules) : 0;
   const noShowRate = totalSchedules > 0 ? parseFloat(((noShowSchedules / totalSchedules) * 100).toFixed(1)) : 0;
 

@@ -124,6 +124,9 @@ model User {
   mentorTrainerAssignments    MentorTrainerAssignment[] @relation("MentorAssignments")
   trainerMentorAssignments    MentorTrainerAssignment[] @relation("TrainerMentorAssignments")
 
+  scheduleAlertsAsTrainer     ScheduleAlert[]        @relation("ScheduleAlerts_Trainer")
+  scheduleAlertsAsCustomer    ScheduleAlert[]        @relation("ScheduleAlerts_Customer")
+
   createdAt DateTime @default(now())
 }
 
@@ -299,6 +302,40 @@ model TrainerBooking {
   customer User            @relation("Customer_Booking", fields: [customerId], references: [id], onDelete: Cascade)
   trainer  User            @relation("Trainer_Booking", fields: [trainerId], references: [id], onDelete: Cascade)
   timeSlot TrainerTimeSlot @relation("TimeSlot_Booking", fields: [timeSlotId], references: [id], onDelete: Cascade)
+}
+
+enum AlertType {
+  no_confirmation
+  client_cancellation
+  no_show
+  reschedule_request
+  schedule_conflict
+}
+
+enum AlertUrgency {
+  high
+  medium
+  low
+}
+
+model ScheduleAlert {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId   String       @db.ObjectId
+  customerId  String?      @db.ObjectId
+  scheduleId  String?      @db.ObjectId
+  type        AlertType
+  urgency     AlertUrgency
+  message     String
+  resolved    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  trainer  User  @relation("ScheduleAlerts_Trainer", fields: [trainerId], references: [id], onDelete: Cascade)
+  customer User? @relation("ScheduleAlerts_Customer", fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([trainerId])
+  @@index([resolved])
+  @@index([createdAt])
 }
 
 model AssignedCustomer {
