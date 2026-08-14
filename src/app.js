@@ -49,6 +49,7 @@ import subscriptionRoutes from "./routes/subscription.routes.js";
 import trainerIssueReportRoutes from "./routes/trainer-issue-report.routes.js";
 import { stripeWebhookHandler } from "./controllers/subscription.controller.js";
 import mentorRoutes from "./routes/mentor.routes.js";
+import mentorMessagingRoutes from "./routes/mentor-messaging.routes.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -136,6 +137,7 @@ app.use("/api", reportRoutes);
 app.use("/api", customerReportRoutes);
 app.use("/api", subscriptionRoutes);
 app.use("/api", mentorRoutes);
+app.use("/api/mentor/messages", mentorMessagingRoutes);
 app.use("/api", trainerIssueReportRoutes);
 
 app.use(errorHandler);
