@@ -10,7 +10,8 @@ import {
 export const getAllReportsHandler = async (req, res) => {
   try {
     const { page, limit, status, priority, category, trainerId, search } = req.query;
-    const mentorId = req.user.userId;
+    
+    
 
     const result = await getAllReports(mentorId, {
       page: page ? parseInt(page) : 1,
