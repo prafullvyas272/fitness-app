@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 
-export const DEFAULT_PASSWORD = "Strong@123";
+export const DEFAULT_PASSWORD = "Upt123";
 
 export const getHashedPassword = async (password) => {
   const saltRounds = 10;
