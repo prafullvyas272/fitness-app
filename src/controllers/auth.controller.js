@@ -736,28 +736,6 @@ export const mentorLogin = async (req, res) => {
       });
     }
 
-    if (!user.phoneVerified) {
-      return res.status(200).json({
-        success: true,
-        message: "OTP sent to your registered email.",
-        data: {
-          user: {
-            id: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            phone: user.phone,
-            roleId: user.roleId,
-            isActive: user.isActive,
-            phoneVerified: user.phoneVerified,
-            gender: user.gender,
-            createdAt: user.createdAt,
-            provider: user.provider,
-          },
-        },
-      });
-    }
-
     const access_token = signToken({ userId: user.id }, { expiresIn: "24h" });
     const refresh_token = signToken({ userId: user.id, type: "refresh" }, { expiresIn: "30d" });
 
