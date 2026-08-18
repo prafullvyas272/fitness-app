@@ -1,5 +1,5 @@
 import prisma from "../utils/prisma.js";
-import { getHashedPassword } from "../utils/password.js";
+import { getHashedPassword, DEFAULT_PASSWORD } from "../utils/password.js";
 
 /**
  * Create a new Trainer user.
@@ -29,7 +29,7 @@ export const createTrainer = async (data) => {
     throw new Error("Email already in use.");
   }
 
-  const hashedPassword = await getHashedPassword(data.password);
+  const hashedPassword = await getHashedPassword(data.password || DEFAULT_PASSWORD);
 
   // Wrap all operations that should be atomic in a transaction
   const result = await prisma.$transaction(async (tx) => {

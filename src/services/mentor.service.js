@@ -1,5 +1,5 @@
 import prisma from "../utils/prisma.js";
-import { getHashedPassword } from "../utils/password.js";
+import { getHashedPassword, DEFAULT_PASSWORD } from "../utils/password.js";
 
 const getMentorRole = async () => {
   const role = await prisma.role.findUnique({ where: { name: "Mentor" } });
@@ -22,14 +22,13 @@ export const createMentor = async (data) => {
   const { firstName, lastName, email, phone, password, title, experience, region, maxPTs, avatarUrl, avatarPublicId, status, specialityIds } = data;
 
   if (!email) throw new Error("Email is required");
-  if (!password) throw new Error("Password is required");
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw new Error("Email already in use");
 
   const [mentorRole, hashedPassword, resolvedIds] = await Promise.all([
     getMentorRole(),
-    getHashedPassword(password),
+    getHashedPassword(password || DEFAULT_PASSWORD),
     resolveSpecialityIds(specialityIds),
   ]);
 
