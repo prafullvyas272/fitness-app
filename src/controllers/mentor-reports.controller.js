@@ -13,6 +13,7 @@ export const getAllReportsHandler = async (req, res) => {
     
     
 
+    const mentorId = req.user.userId;
     const result = await getAllReports(mentorId, {
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 20,
