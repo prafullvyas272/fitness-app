@@ -240,12 +240,10 @@ router.get("/subscriptions", authMiddleware, superadminMiddleware, getAllSubscri
 router.patch("/plans/:id/stripe-price", authMiddleware, superadminMiddleware, linkPlanToStripePriceHandler);
 
 // Billing Stats - Admin only
-router.get("/active/count", authMiddleware, superadminMiddleware, getActiveSubscriptionsCountHandler);
+router.get("/subscriptions/active/count", authMiddleware, superadminMiddleware, getActiveSubscriptionsCountHandler);
 
-router.get("/plans/count", authMiddleware, superadminMiddleware, getTotalPlansCountHandler);
+router.get("/subscriptions/plans/expiring/count", authMiddleware, superadminMiddleware, getExpiringPlansCountHandler);
 
-router.get("/plans/expiring/count", authMiddleware, superadminMiddleware, getExpiringPlansCountHandler);
-
-router.get("/stats", authMiddleware, superadminMiddleware, getBillingStatsHandler);
+router.get("/subscriptions/stats", authMiddleware, superadminMiddleware, getBillingStatsHandler);
 
 export default router;
