@@ -113,34 +113,27 @@ export const assignMultiplePlansToTrainer = async (trainerId, planIds) => {
     throw new Error("One or more plans not found");
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    const assignments = [];
-    for (const planId of planIds) {
-      const existing = await tx.trainerAssignedPlan.findUnique({
-        where: {
-          trainerId_planId: {
-            trainerId,
-            planId,
-          },
+  const assignments = [];
+  for (const planId of planIds) {
+    const assignment = await prisma.trainerAssignedPlan.upsert({
+      where: {
+        trainerId_planId: {
+          trainerId,
+          planId,
         },
-      });
+      },
+      update: { isActive: true },
+      create: {
+        trainerId,
+        planId,
+        isActive: true,
+      },
+      include: { plan: true },
+    });
+    assignments.push(assignment);
+  }
 
-      if (!existing) {
-        const assignment = await tx.trainerAssignedPlan.create({
-          data: {
-            trainerId,
-            planId,
-            isActive: true,
-          },
-          include: { plan: true },
-        });
-        assignments.push(assignment);
-      }
-    }
-    return assignments;
-  });
-
-  return result;
+  return assignments;
 };
 
 export const removeAllPlansFromTrainer = async (trainerId) => {
