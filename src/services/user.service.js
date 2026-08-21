@@ -71,6 +71,24 @@ export const getAllTrainers = async (loggedInUserId = null) => {
           price: true,
         }
       },
+      assignedPlans: {
+        where: { isActive: true },
+        select: {
+          id: true,
+          planId: true,
+          isActive: true,
+          createdAt: true,
+          plan: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              duration: true,
+              features: true,
+            }
+          }
+        }
+      },
       specialities: {
         select: {
           id: true,

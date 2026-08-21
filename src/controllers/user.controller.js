@@ -13,18 +13,18 @@ export const getAllTrainersHandler = async (req, res) => {
         
         console.log(trainers)
         const formattedTrainers = trainers.map(
-            ({ assignedCustomersAsTrainer, userProfileDetails, plan, ...trainer }) => ({
+            ({ assignedCustomersAsTrainer, userProfileDetails, plan, assignedPlans, ...trainer }) => ({
                 ...trainer,
                 assignedCustomers: assignedCustomersAsTrainer,
                 userProfileDetails: Array.isArray(userProfileDetails) && userProfileDetails.length > 0 ? userProfileDetails[0] : null,
-
                 plan: plan
                 ? {
                     id: plan.id,
                     name: plan.name,
                     price: plan.price,
                     }
-                : null
+                : null,
+                assignedPlans: Array.isArray(assignedPlans) ? assignedPlans.map(ap => ap.plan) : []
             })
         );
         res.status(200).json({
