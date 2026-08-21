@@ -8,6 +8,12 @@ import {
   getMyTrainerPlanHandler,
   confirmSubscriptionPaymentHandler,
 } from "../controllers/subscription.controller.js";
+import {
+  getActiveSubscriptionsCountHandler,
+  getTotalPlansCountHandler,
+  getExpiringPlansCountHandler,
+  getBillingStatsHandler,
+} from "../controllers/billing-stats.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
@@ -232,5 +238,14 @@ router.get("/subscriptions", authMiddleware, superadminMiddleware, getAllSubscri
  *         description: Plan linked to Stripe price
  */
 router.patch("/plans/:id/stripe-price", authMiddleware, superadminMiddleware, linkPlanToStripePriceHandler);
+
+// Billing Stats - Admin only
+router.get("/active/count", authMiddleware, superadminMiddleware, getActiveSubscriptionsCountHandler);
+
+router.get("/plans/count", authMiddleware, superadminMiddleware, getTotalPlansCountHandler);
+
+router.get("/plans/expiring/count", authMiddleware, superadminMiddleware, getExpiringPlansCountHandler);
+
+router.get("/stats", authMiddleware, superadminMiddleware, getBillingStatsHandler);
 
 export default router;

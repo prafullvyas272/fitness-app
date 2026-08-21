@@ -7,6 +7,7 @@ import {
   getPlanByIdHandler,
   assignPlanToTrainer,
 } from "../controllers/plan.controller.js";
+import { getTotalPlansCountHandler } from "../controllers/billing-stats.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
@@ -202,6 +203,8 @@ router.delete(
   superadminMiddleware,
   deletePlanHandler
 );
+
+router.get("/plans/count", authMiddleware, superadminMiddleware, getTotalPlansCountHandler);
 
 /**
  * @swagger
