@@ -107,7 +107,7 @@ export const deleteCustomerHandler = async (req, res) => {
  */
 export const showCustomerProfileDataHandler = async (req, res) => {
   try {
-    const customerId = req.params.id;
+    const customerId = req.user.userId;
     const profileData = await showCustomerProfileData(customerId);
 
     // Map assignedCustomersAsCustomer to assignedTrainers
