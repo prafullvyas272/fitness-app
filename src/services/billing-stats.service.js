@@ -15,15 +15,16 @@ export const getTotalPlansCount = async () => {
 };
 
 export const getExpiringPlansCount = async () => {
+  const now = new Date();
   const thirtyDaysFromNow = new Date();
   thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
   const count = await prisma.subscription.count({
     where: {
       status: "ACTIVE",
-      currentPeriodEnd: {
+      endDate: {
         lte: thirtyDaysFromNow,
-        gte: new Date(),
+        gte: now,
       },
     },
   });
