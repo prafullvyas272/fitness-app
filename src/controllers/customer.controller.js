@@ -110,20 +110,10 @@ export const showCustomerProfileDataHandler = async (req, res) => {
     const customerId = req.user.userId;
     const profileData = await showCustomerProfileData(customerId);
 
-    // Map assignedCustomersAsCustomer to assignedTrainers
-    const { assignedCustomersAsCustomer, ...restProfile } = profileData;
-
-    const assignedTrainers = Array.isArray(assignedCustomersAsCustomer)
-      ? assignedCustomersAsCustomer
-      : [];
-
     res.status(200).json({
       success: true,
       message: "Customer profile data fetched successfully.",
-      data: {
-        ...restProfile,
-        assignedTrainers,
-      },
+      data: profileData,
     });
   } catch (err) {
     res.status(400).json({
