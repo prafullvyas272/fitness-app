@@ -44,6 +44,7 @@ model User {
   planId        String?        @db.ObjectId
   plan          Plan?          @relation("TrainerPlan", fields: [planId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   subscriptions Subscription[]
+  assignedPlans TrainerAssignedPlan[] @relation("TrainerPlans")
 
   mealLogs MealLog[]
 
@@ -466,6 +467,24 @@ model Plan {
   subscriptions Subscription[]
 
   creator User @relation("UserPlans", fields: [createdBy], references: [id])
+  trainerAssignments TrainerAssignedPlan[] @relation("PlanAssignments")
+}
+
+model TrainerAssignedPlan {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId String   @db.ObjectId
+  planId    String   @db.ObjectId
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trainer User  @relation("TrainerPlans", fields: [trainerId], references: [id], onDelete: Cascade)
+  plan    Plan  @relation("PlanAssignments", fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([trainerId, planId])
+  @@index([trainerId])
+  @@index([planId])
 }
 
 enum TrainerRequestStatus {
