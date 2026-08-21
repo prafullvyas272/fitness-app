@@ -54,4 +54,47 @@ export const getAllTrainerVideos = async () => {
       createdAt: "desc"
     },
   });
+};
+
+export const updateTrainerVideo = async (videoId, trainerId, data) => {
+  const video = await prisma.trainerVideo.findUnique({
+    where: { id: videoId },
+  });
+
+  if (!video) throw new Error("Video not found");
+  if (video.trainerId !== trainerId) throw new Error("Unauthorized to update this video");
+
+  const { title, description, tags, videoLink, type } = data;
+  const updateData = {};
+
+  if (title !== undefined) updateData.title = title;
+  if (description !== undefined) updateData.description = description;
+  if (tags !== undefined) updateData.tags = tags;
+  if (videoLink !== undefined) updateData.videoLink = videoLink;
+  if (type !== undefined) updateData.type = type;
+
+  return await prisma.trainerVideo.update({
+    where: { id: videoId },
+    data: updateData,
+  });
+};
+
+export const deleteTrainerVideo = async (videoId, trainerId) => {
+  const video = await prisma.trainerVideo.findUnique({
+    where: { id: videoId },
+  });
+
+  if (!video) throw new Error("Video not found");
+  if (video.trainerId !== trainerId) throw new Error("Unauthorized to delete this video");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.trainerVideoAssignment.deleteMany({
+      where: { videoId },
+    });
+    await tx.trainerVideo.delete({
+      where: { id: videoId },
+    });
+  });
+
+  return { success: true, message: "Video deleted successfully" };
 }; 

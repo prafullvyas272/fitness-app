@@ -1,5 +1,5 @@
 import express from "express";
-import { addTrainerVideoHandler, getClientVideosHandler, getTrainerVideosHandler, assignVideoHandler, getAllTrainerVideosHandler } from "../controllers/trainer-video.controller.js";
+import { addTrainerVideoHandler, getClientVideosHandler, getTrainerVideosHandler, assignVideoHandler, getAllTrainerVideosHandler, updateTrainerVideoHandler, deleteTrainerVideoHandler } from "../controllers/trainer-video.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
@@ -55,5 +55,8 @@ router.get("/client", authMiddleware, getClientVideosHandler);
 
 router.get("/admin", authMiddleware, superadminMiddleware, getAllTrainerVideosHandler);
 
+router.put("/:videoId", authMiddleware, updateTrainerVideoHandler);
+
+router.delete("/:videoId", authMiddleware, deleteTrainerVideoHandler);
 
 export default router;

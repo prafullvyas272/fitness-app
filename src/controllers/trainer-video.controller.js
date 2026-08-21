@@ -1,9 +1,11 @@
-import { 
-  createTrainerVideo, 
+import {
+  createTrainerVideo,
   getTrainerVideo,
   assignVideoToClients,
   getVideoForClient,
-  getAllTrainerVideos 
+  getAllTrainerVideos,
+  updateTrainerVideo,
+  deleteTrainerVideo
 } from "../services/trainer-video.service.js";
 import { getYoutubeThumbnail } from "../utils/youtube.js";
 
@@ -127,6 +129,90 @@ export const getAllTrainerVideosHandler = async (req, res) => {
   } catch (err) {
     res.status(500).json({
       message: "Failed to fetch videos",
+    });
+  }
+};
+
+export const updateTrainerVideoHandler = async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    const { title, description, tags, videoLink, type } = req.body;
+    const trainerId = req.user.userId;
+
+    if (!videoId) {
+      return res.status(400).json({
+        success: false,
+        message: "Video ID is required",
+      });
+    }
+
+    const video = await updateTrainerVideo(videoId, trainerId, {
+      title,
+      description,
+      tags,
+      videoLink,
+      type,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Video updated successfully",
+      data: video,
+    });
+  } catch (err) {
+    if (err.message.includes("Unauthorized")) {
+      return res.status(403).json({
+        success: false,
+        message: err.message,
+      });
+    }
+    if (err.message === "Video not found") {
+      return res.status(404).json({
+        success: false,
+        message: err.message,
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: "Failed to update video",
+    });
+  }
+};
+
+export const deleteTrainerVideoHandler = async (req, res) => {
+  try {
+    const { videoId } = req.params;
+    const trainerId = req.user.userId;
+
+    if (!videoId) {
+      return res.status(400).json({
+        success: false,
+        message: "Video ID is required",
+      });
+    }
+
+    await deleteTrainerVideo(videoId, trainerId);
+
+    res.status(200).json({
+      success: true,
+      message: "Video deleted successfully",
+    });
+  } catch (err) {
+    if (err.message.includes("Unauthorized")) {
+      return res.status(403).json({
+        success: false,
+        message: err.message,
+      });
+    }
+    if (err.message === "Video not found") {
+      return res.status(404).json({
+        success: false,
+        message: err.message,
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete video",
     });
   }
 };
