@@ -1,12 +1,34 @@
 import prisma from "../utils/prisma.js";
+import stripe from "../utils/stripe.js";
 
 /**
- * Create a new plan.
+ * Create a new plan with auto-generated Stripe Product & Price
  * @param {Object} data - { name: string, price: number, features: string[], isPopular?: boolean, duration?: string, createdBy: string }
  * @returns {Promise<Object>}
  */
 export const createPlan = async (data) => {
   try {
+    const durationMap = {
+      WEEKLY: "week",
+      MONTHLY: "month",
+      QUARTERLY: "quarter",
+      YEARLY: "year"
+    };
+    const stripeInterval = durationMap[data.duration || "MONTHLY"];
+
+    const stripeProduct = await stripe.products.create({
+      name: data.name,
+      description: data.features?.join(", ") || "Fitness plan",
+      metadata: { duration: data.duration || "MONTHLY" }
+    });
+
+    const stripePrice = await stripe.prices.create({
+      product: stripeProduct.id,
+      unit_amount: Math.round(data.price * 100),
+      currency: "usd",
+      recurring: { interval: stripeInterval, interval_count: 1 }
+    });
+
     const newPlan = await prisma.plan.create({
       data: {
         name: data.name,
@@ -15,6 +37,7 @@ export const createPlan = async (data) => {
         isPopular: data.isPopular || false,
         duration: data.duration || "MONTHLY",
         createdBy: data.createdBy,
+        stripePriceId: stripePrice.id
       }
     });
     return newPlan;
