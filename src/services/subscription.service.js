@@ -237,7 +237,7 @@ export const confirmSubscriptionPayment = async (userId, stripeSubscriptionId) =
 
   // Fetch latest status directly from Stripe
   const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-  const endDate = new Date(stripeSub.current_period_end * 1000);
+  const endDate = stripeSub.current_period_end ? new Date(stripeSub.current_period_end * 1000) : null;
 
   let status = "INCOMPLETE";
   if (stripeSub.status === "active") status = "ACTIVE";
@@ -250,7 +250,7 @@ export const confirmSubscriptionPayment = async (userId, stripeSubscriptionId) =
       status,
       stripeStatus: stripeSub.status,
       startDate: new Date(),
-      endDate,
+      endDate: endDate || undefined,
     },
     include: { plan: true },
   });
