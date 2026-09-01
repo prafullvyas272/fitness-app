@@ -108,7 +108,7 @@ export const getMyTrainerPlanHandler = async (req, res) => {
     const data = await getMyTrainerPlan(customerId);
     res.status(200).json({
       success: true,
-      message: "Trainer plan fetched successfully",
+      message: "Trainer plans fetched successfully",
       data,
     });
   } catch (err) {

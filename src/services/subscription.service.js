@@ -259,7 +259,7 @@ export const confirmSubscriptionPayment = async (userId, stripeSubscriptionId) =
 };
 
 /**
- * Customer: get the plan assigned to their trainer.
+ * Customer: get all plans assigned to their trainer.
  */
 export const getMyTrainerPlan = async (customerId) => {
   const assignment = await prisma.assignedCustomer.findFirst({
@@ -272,13 +272,33 @@ export const getMyTrainerPlan = async (customerId) => {
           lastName: true,
           planId: true,
           plan: true,
+          assignedPlans: {
+            where: { isActive: true },
+            select: {
+              plan: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                  duration: true,
+                  features: true,
+                  stripePriceId: true,
+                }
+              }
+            }
+          }
         },
       },
     },
   });
 
   if (!assignment) throw new Error("You are not assigned to any trainer");
-  if (!assignment.trainer.plan) throw new Error("Your trainer does not have a plan assigned yet");
+
+  const allPlans = assignment.trainer.assignedPlans?.length > 0
+    ? assignment.trainer.assignedPlans.map(ap => ap.plan)
+    : (assignment.trainer.plan ? [assignment.trainer.plan] : []);
+
+  if (allPlans.length === 0) throw new Error("Your trainer does not have any plans assigned yet");
 
   return {
     trainer: {
@@ -286,7 +306,7 @@ export const getMyTrainerPlan = async (customerId) => {
       firstName: assignment.trainer.firstName,
       lastName: assignment.trainer.lastName,
     },
-    plan: assignment.trainer.plan,
+    plans: allPlans,
   };
 };
 
