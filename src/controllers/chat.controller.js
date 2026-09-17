@@ -32,7 +32,8 @@ export const sendMessageHandler = async (req, res) => {
 export const getConversationHandler = async (req, res) => {
   try {
     const { conversationId } = req.params;
-    const result = await chatService.getConversation(conversationId);
+    const currentUserId = req.user.userId;
+    const result = await chatService.getConversation(conversationId, currentUserId);
     res.status(200).json({
       success: true,
       message: "Conversation fetched",

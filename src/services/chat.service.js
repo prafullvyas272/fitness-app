@@ -138,18 +138,13 @@ export const sendMessage = async (data) => {
  * @param {String} conversationId 
  * @returns {Promise<Array>} Messages ordered by createdAt
  */
-export const getConversation = async (conversationId) => {
+export const getConversation = async (conversationId, currentUserId) => {
   try {
-    // Split the conversationId by underscore to extract the two user IDs
     const [userOne, userTwo] = conversationId.split("_");
     if (!userOne || !userTwo) {
       throw new Error("Invalid conversationId format");
     }
 
-    // Find the conversation where:
-    // (trainerId = userOne AND customerId = userTwo)
-    //   OR
-    // (trainerId = userTwo AND customerId = userOne)
     const conversation = await prisma.chatConversation.findFirst({
       where: {
         OR: [
@@ -160,27 +155,39 @@ export const getConversation = async (conversationId) => {
       }
     });
 
-
     if (!conversation) {
       throw new Error("Conversation not found");
     }
 
-    // Now fetch messages for this conversation
-    // Fetch messages for both the original and reversed conversationId (handles both ID orders)
-    // const revConversationId = conversationId.split("_").reverse().join("_");
-    // return await prisma.chatMessage.findMany({
-    //   where: {
-    //     OR: [
-    //       { conversationId: conversationId },
-    //       { conversationId: revConversationId }
-    //     ]
-    //   },
-    //   orderBy: { createdAt: "asc" },
-    // });
-    return await prisma.chatMessage.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: "asc" },
-    });
+    const oppositeUserId = currentUserId === userOne ? userTwo : userOne;
+
+    const [messages, oppositeUser] = await Promise.all([
+      prisma.chatMessage.findMany({
+        where: { conversationId },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.user.findUnique({
+        where: { id: oppositeUserId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          userProfileDetails: {
+            select: { avatarUrl: true }
+          }
+        }
+      })
+    ]);
+
+    return {
+      messages,
+      oppositeUser: oppositeUser ? {
+        id: oppositeUser.id,
+        firstName: oppositeUser.firstName,
+        lastName: oppositeUser.lastName,
+        photo: oppositeUser.userProfileDetails?.[0]?.avatarUrl || null
+      } : null
+    };
   } catch (error) {
     console.error("Error fetching conversation:", error);
     throw new Error("Failed to fetch conversation");

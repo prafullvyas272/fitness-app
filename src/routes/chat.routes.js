@@ -82,7 +82,7 @@ router.post(
  * @swagger
  * /api/chat/conversation/{conversationId}:
  *   get:
- *     summary: Get all messages in a conversation
+ *     summary: Get all messages in a conversation with opposite user details
  *     tags:
  *       - Chat
  *     security:
@@ -107,9 +107,24 @@ router.post(
  *                 message:
  *                   type: string
  *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/ChatMessage'
+ *                   type: object
+ *                   properties:
+ *                     messages:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/ChatMessage'
+ *                     oppositeUser:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         firstName:
+ *                           type: string
+ *                         lastName:
+ *                           type: string
+ *                         photo:
+ *                           type: string
+ *                           nullable: true
  *       400:
  *         description: Error fetching conversation
  *         content:
