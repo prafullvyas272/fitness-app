@@ -192,6 +192,11 @@ export const getTrainerAllTimeSlotHandler = async (req, res) => {
     console.log(trainerId)
 
     const customerId = req.user.userId;
+    const userRole = req.user.role;
+
+    // Filter admin slots to only show those trainer has selected (for customers)
+    // Admins see all slots
+    const filterAdminByTrainer = userRole !== 'Superadmin';
 
     const result = await getTrainerAllTimeSlot({
       date,
@@ -200,6 +205,7 @@ export const getTrainerAllTimeSlotHandler = async (req, res) => {
       year,
       trainerId,
       customerId,
+      filterAdminByTrainer,
       page: Number(page),
       pageSize: Number(pageSize)
     });
