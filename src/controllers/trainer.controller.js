@@ -196,3 +196,20 @@ export const updateTrainerBioAndSocialLinksHandler = async (req, res) => {
         });
     }
 };
+
+export const removeTrainerProfilePhotoHandler = async (req, res) => {
+    try {
+        const trainerId = req.user.userId;
+        const data = await trainerService.removeTrainerProfilePhoto(trainerId);
+        res.status(200).json({
+            success: true,
+            message: "Profile photo removed successfully",
+            data,
+        });
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};

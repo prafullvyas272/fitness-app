@@ -12,6 +12,7 @@ import {
   updateMyProfileHandler,
   getUPTRequestsHandler,
   updateUPTRequestStatusHandler,
+  removeCustomerProfilePhotoHandler,
 } from "../controllers/customer.controller.js";
 import {
   customerForgotPasswordHandler,
@@ -518,5 +519,40 @@ router.patch("/api/customer/me", authMiddleware, upload.single("avatar"), update
 
 router.get("/api/customers/upt-requests", authMiddleware, superadminMiddleware, getUPTRequestsHandler);
 router.patch("/api/customers/upt-requests/:requestId/status", authMiddleware, superadminMiddleware, updateUPTRequestStatusHandler);
+
+/**
+ * @swagger
+ * /api/customer/profile/photo:
+ *   delete:
+ *     summary: Remove customer profile photo
+ *     description: Customer removes their profile photo.
+ *     tags:
+ *       - Customer
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile photo removed successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Profile photo removed successfully
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Error occurred.
+ */
+router.delete(
+  "/api/customer/profile/photo",
+  authMiddleware,
+  removeCustomerProfilePhotoHandler
+);
 
 export default router;

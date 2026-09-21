@@ -426,3 +426,20 @@ export const updateMyProfileHandler = async (req, res) => {
     });
   }
 };
+
+export const removeCustomerProfilePhotoHandler = async (req, res) => {
+  try {
+    const customerId = req.user.userId;
+    const data = await customerService.removeCustomerProfilePhoto(customerId);
+    res.status(200).json({
+      success: true,
+      message: "Profile photo removed successfully",
+      data,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};

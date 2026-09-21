@@ -571,3 +571,43 @@ export const getUPTRequests = async () => {
     orderBy: { createdAt: "desc" }
   });
 };
+
+export const removeCustomerProfilePhoto = async (customerId) => {
+  try {
+    const profileDetail = await prisma.userProfileDetail.findFirst({
+      where: { userId: customerId }
+    });
+
+    if (!profileDetail || !profileDetail.avatarUrl) {
+      throw new Error("No profile photo found");
+    }
+
+    if (profileDetail.avatarPublicId) {
+      const { deleteFromCloudinaryByPublicId } = await import("../utils/uploadToCloudinary.js");
+      try {
+        await deleteFromCloudinaryByPublicId(profileDetail.avatarPublicId);
+      } catch (err) {
+        console.error("Failed to delete from Cloudinary:", err);
+      }
+    }
+
+    const updated = await prisma.userProfileDetail.update({
+      where: { id: profileDetail.id },
+      data: {
+        avatarUrl: null,
+        avatarPublicId: null
+      },
+      select: {
+        id: true,
+        userId: true,
+        avatarUrl: true,
+        bio: true,
+        address: true
+      }
+    });
+
+    return updated;
+  } catch (err) {
+    throw new Error(`Failed to remove profile photo: ${err.message}`);
+  }
+};

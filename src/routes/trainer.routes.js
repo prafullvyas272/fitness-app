@@ -7,6 +7,7 @@ import {
   getTrainerSessionsByMonthAndYearHandler,
   getAssignedCustomersByTrainerIdHandler,
   updateTrainerBioAndSocialLinksHandler,
+  removeTrainerProfilePhotoHandler,
 } from "../controllers/trainer.controller.js";
 import { getTrainerDashboardHandler } from "../controllers/trainer-dashboard.controller.js";
 import { createTrainerPayoutHandler, getTrainerPayoutsByAdminHandler, getTrainerPayoutHistoryHandler } from "../controllers/trainer-payout.controller.js";
@@ -612,6 +613,41 @@ router.patch(
   "/api/trainer/profile/bio-social",
   authMiddleware,
   updateTrainerBioAndSocialLinksHandler
+);
+
+/**
+ * @swagger
+ * /api/trainer/profile/photo:
+ *   delete:
+ *     summary: Remove trainer profile photo
+ *     description: Trainer removes their profile photo.
+ *     tags:
+ *       - Trainer
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile photo removed successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Profile photo removed successfully
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Error occurred.
+ */
+router.delete(
+  "/api/trainer/profile/photo",
+  authMiddleware,
+  removeTrainerProfilePhotoHandler
 );
 
 export default router;
