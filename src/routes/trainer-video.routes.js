@@ -216,12 +216,20 @@ router.get("/assigned", authMiddleware, getAssignedVideosHandler);
  * @swagger
  * /api/trainer-video/unassigned:
  *   get:
- *     summary: Get unassigned videos (videos not assigned to any customer)
- *     description: Trainer can view videos they haven't assigned yet to select and assign to customers
+ *     summary: Get unassigned videos (not assigned to a specific customer or anyone)
+ *     description: |
+ *       Trainer can view unassigned videos to select and assign to customers.
+ *       - With customerId: Shows videos not yet assigned to that specific customer
+ *       - Without customerId: Shows all videos not assigned to anyone
  *     tags: [Trainer Videos]
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: query
+ *         name: customerId
+ *         schema:
+ *           type: string
+ *         description: (Optional) Show videos not assigned to this specific customer. If omitted, shows all unassigned videos.
  *       - in: query
  *         name: page
  *         schema:
@@ -259,8 +267,18 @@ router.get("/assigned", authMiddleware, getAssignedVideosHandler);
  *                           isAssigned:
  *                             type: boolean
  *                             example: false
- *                           assignedToClientId:
- *                             type: "null"
+ *                           availableForCustomerId:
+ *                             type: string
+ *                             nullable: true
+ *                     filterInfo:
+ *                       type: object
+ *                       properties:
+ *                         customerId:
+ *                           type: string
+ *                           nullable: true
+ *                         filterType:
+ *                           type: string
+ *                           enum: ["unassigned-for-customer", "all-unassigned"]
  *                     pagination:
  *                       type: object
  */

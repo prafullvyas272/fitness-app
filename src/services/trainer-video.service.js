@@ -134,7 +134,7 @@ export const getAssignedVideosForCustomer = async (trainerId, customerId) => {
   }
 };
 
-export const getUnassignedVideos = async (trainerId, page = 1, pageSize = 10) => {
+export const getUnassignedVideos = async (trainerId, customerId = null, page = 1, pageSize = 10) => {
   const skip = (page - 1) * pageSize;
 
   try {
@@ -154,15 +154,29 @@ export const getUnassignedVideos = async (trainerId, page = 1, pageSize = 10) =>
       orderBy: { createdAt: "desc" },
     });
 
-    // Get all assigned videos for this trainer
-    const assignedVideoIds = await prisma.trainerVideoAssignment.findMany({
-      where: {
-        video: { trainerId },
-      },
-      select: { videoId: true },
-    });
+    // Get assigned videos based on scope
+    let assignedIds = new Set();
 
-    const assignedIds = new Set(assignedVideoIds.map((a) => a.videoId));
+    if (customerId) {
+      // Get videos already assigned to this specific customer
+      const customerAssignedVideoIds = await prisma.trainerVideoAssignment.findMany({
+        where: {
+          video: { trainerId },
+          clientId: customerId,
+        },
+        select: { videoId: true },
+      });
+      assignedIds = new Set(customerAssignedVideoIds.map((a) => a.videoId));
+    } else {
+      // Get all assigned videos for this trainer
+      const allAssignedVideoIds = await prisma.trainerVideoAssignment.findMany({
+        where: {
+          video: { trainerId },
+        },
+        select: { videoId: true },
+      });
+      assignedIds = new Set(allAssignedVideoIds.map((a) => a.videoId));
+    }
 
     // Filter unassigned videos
     const unassignedVideos = trainerVideos.filter((video) => !assignedIds.has(video.id));
@@ -173,7 +187,7 @@ export const getUnassignedVideos = async (trainerId, page = 1, pageSize = 10) =>
     const formattedVideos = paginatedVideos.map((video) => ({
       ...video,
       isAssigned: false,
-      assignedToClientId: null,
+      availableForCustomerId: customerId || null,
     }));
 
     return {
@@ -183,6 +197,10 @@ export const getUnassignedVideos = async (trainerId, page = 1, pageSize = 10) =>
         page,
         pageSize,
         totalPages: Math.ceil(total / pageSize),
+      },
+      filterInfo: {
+        customerId: customerId || null,
+        filterType: customerId ? "unassigned-for-customer" : "all-unassigned",
       },
     };
   } catch (err) {

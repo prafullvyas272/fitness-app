@@ -307,10 +307,11 @@ export const getAssignedVideosHandler = async (req, res) => {
 export const getUnassignedVideosHandler = async (req, res) => {
   try {
     const trainerId = req.user.userId;
+    const { customerId } = req.query;
     const page = Number(req.query.page) || 1;
     const pageSize = Number(req.query.pageSize) || 10;
 
-    const result = await getUnassignedVideos(trainerId, page, pageSize);
+    const result = await getUnassignedVideos(trainerId, customerId || null, page, pageSize);
 
     res.status(200).json({
       success: true,
