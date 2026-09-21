@@ -2,7 +2,7 @@ import express from "express";
 import { addTrainerVideoHandler, getClientVideosHandler, getTrainerVideosHandler, assignVideoHandler, getAllTrainerVideosHandler, updateTrainerVideoHandler, deleteTrainerVideoHandler, getTrainerAndAdminVideosHandler } from "../controllers/trainer-video.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
-import { upload } from "../middlewares/upload.middleware.js";
+import { videoUpload } from "../middlewares/upload.middleware.js";
 
 const router = express.Router();
 
@@ -62,7 +62,7 @@ const router = express.Router();
  *       400:
  *         description: Bad request - provide either video file or videoLink
  */
-router.post("/add", authMiddleware, upload.single("video"), addTrainerVideoHandler);
+router.post("/add", authMiddleware, videoUpload.single("video"), addTrainerVideoHandler);
 
 router.get("/trainer", authMiddleware, getTrainerVideosHandler);
 
