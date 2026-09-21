@@ -7,6 +7,7 @@ import {
   updateMyProfile,
   getUPTRequests,
   updateUPTRequestStatus,
+  removeCustomerProfilePhoto,
 } from "../services/customer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import prisma from "../utils/prisma.js";
@@ -433,7 +434,7 @@ export const updateMyProfileHandler = async (req, res) => {
 export const removeCustomerProfilePhotoHandler = async (req, res) => {
   try {
     const customerId = req.user.userId;
-    const data = await customerService.removeCustomerProfilePhoto(customerId);
+    const data = await removeCustomerProfilePhoto(customerId);
     res.status(200).json({
       success: true,
       message: "Profile photo removed successfully",

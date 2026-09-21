@@ -6,6 +6,7 @@ import {
     getTrainerSessionsByMonthAndYear,
     getAssignedCustomersByTrainerId,
     updateTrainerBioAndSocialLinks,
+    removeTrainerProfilePhoto,
 } from "../services/trainer.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
@@ -200,7 +201,7 @@ export const updateTrainerBioAndSocialLinksHandler = async (req, res) => {
 export const removeTrainerProfilePhotoHandler = async (req, res) => {
     try {
         const trainerId = req.user.userId;
-        const data = await trainerService.removeTrainerProfilePhoto(trainerId);
+        const data = await removeTrainerProfilePhoto(trainerId);
         res.status(200).json({
             success: true,
             message: "Profile photo removed successfully",
