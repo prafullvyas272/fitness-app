@@ -2,6 +2,7 @@ import express from "express";
 import { addTrainerVideoHandler, getClientVideosHandler, getTrainerVideosHandler, assignVideoHandler, getAllTrainerVideosHandler, updateTrainerVideoHandler, deleteTrainerVideoHandler, getTrainerAndAdminVideosHandler } from "../controllers/trainer-video.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
+import { upload } from "../middlewares/upload.middleware.js";
 
 const router = express.Router();
 
@@ -9,28 +10,59 @@ const router = express.Router();
  * @swagger
  * /api/trainer-video/add:
  *   post:
- *     summary: Trainer assigns video to clients
+ *     summary: Trainer uploads video (file or link)
+ *     description: Upload a video as a file or provide a video link. Support both multipart/form-data for file uploads and application/json for links.
  *     tags: [Trainer Videos]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: Chest Workout
+ *               description:
+ *                 type: string
+ *                 example: Complete chest routine
+ *               tags:
+ *                 type: string
+ *                 example: chest,fitness
+ *               video:
+ *                 type: string
+ *                 format: binary
+ *                 description: Video file (mp4, avi, mkv, mov, webm, etc.) - Use this OR videoLink
+ *               videoLink:
+ *                 type: string
+ *                 example: https://www.youtube.com/watch?v=abc123
+ *                 description: Video URL (YouTube, Vimeo, etc.) - Use this OR video file
  *         application/json:
  *           example:
  *             title: Chest Workout
  *             description: Do daily
- *             type: link
  *             tags: chest,fitness
  *             videoLink: https://www.youtube.com/watch?v=abc123
- *             clientIds: ["clientId1"]
  *     responses:
  *       201:
- *         description: Video assigned successfully
+ *         description: Video uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
  *       400:
- *         description: Bad request
+ *         description: Bad request - provide either video file or videoLink
  */
-router.post("/add", authMiddleware, addTrainerVideoHandler);
+router.post("/add", authMiddleware, upload.single("video"), addTrainerVideoHandler);
 
 router.get("/trainer", authMiddleware, getTrainerVideosHandler);
 

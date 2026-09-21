@@ -12,19 +12,21 @@ import { getYoutubeThumbnail } from "../utils/youtube.js";
 
 export const addTrainerVideoHandler = async (req, res) => {
   try {
-    const { title, description, tags, videoLink, type } = req.body;
-    const normalizedType = String(type || "link").trim().toUpperCase();
-    const allowedTypes = ["LINK", "VIDEO"];
+    const { title, description, tags, videoLink } = req.body;
+    const videoFile = req.file;
 
-    if (!title || !videoLink) {
+    // Validate: either file or link must be provided
+    if (!title) {
       return res.status(400).json({
-        message: "Title and videoLink are required",
+        success: false,
+        message: "Title is required",
       });
     }
 
-    if (!allowedTypes.includes(normalizedType)) {
+    if (!videoFile && !videoLink) {
       return res.status(400).json({
-        message: "type must be either 'link' or 'video'",
+        success: false,
+        message: "Provide either video file or videoLink",
       });
     }
 
@@ -35,26 +37,53 @@ export const addTrainerVideoHandler = async (req, res) => {
       else parsedTags = tags.split(",").map((t) => t.trim());
     }
 
-    // 🔥 Generate thumbnail
-    const thumbnail = getYoutubeThumbnail(videoLink);
+    let thumbnail = null;
+    let videoUrl = null;
+    let videoType = "VIDEO"; // File upload type
+
+    if (videoFile) {
+      // Handle file upload to Cloudinary
+      const { uploadToCloudinary } = await import("../utils/uploadToCloudinary.js");
+      try {
+        const uploadResult = await uploadToCloudinary(videoFile.buffer, "trainer-videos");
+        videoUrl = uploadResult.secure_url;
+        thumbnail = uploadResult.secure_url.replace(/\.(mp4|avi|mov|mkv|webm|flv)$/i, ".jpg");
+      } catch (uploadErr) {
+        console.error("Cloudinary upload error:", uploadErr);
+        return res.status(400).json({
+          success: false,
+          message: "Failed to upload video to cloud storage",
+        });
+      }
+    } else if (videoLink) {
+      // Handle video link
+      videoUrl = videoLink;
+      videoType = "LINK";
+      thumbnail = getYoutubeThumbnail(videoLink);
+    }
 
     const video = await createTrainerVideo({
       title,
       description,
       tags: parsedTags,
-      type: normalizedType,
-      videoLink,
+      type: videoType,
+      videoLink: videoUrl,
       thumbnail,
       trainerId: req.user.userId,
     });
 
     res.status(201).json({
       success: true,
+      message: "Video uploaded successfully",
       data: video,
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to add video" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to add video",
+      error: err.message,
+    });
   }
 };
 
