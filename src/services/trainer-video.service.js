@@ -97,4 +97,95 @@ export const deleteTrainerVideo = async (videoId, trainerId) => {
   });
 
   return { success: true, message: "Video deleted successfully" };
+};
+
+export const getTrainerAndAdminVideos = async (trainerId, page = 1, pageSize = 10) => {
+  const skip = (page - 1) * pageSize;
+
+  const [trainerVideos, adminVideos, totalTrainer, totalAdmin] = await Promise.all([
+    prisma.trainerVideo.findMany({
+      where: { trainerId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        tags: true,
+        type: true,
+        videoLink: true,
+        thumbnail: true,
+        trainerId: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.workoutTrainerAssignment.findMany({
+      where: { trainerId },
+      include: {
+        workout: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            tags: true,
+            videoUrl: true,
+            thumbnailUrl: true,
+            status: true,
+            uploadedBy: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: { assignedAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.trainerVideo.count({ where: { trainerId } }),
+    prisma.workoutTrainerAssignment.count({ where: { trainerId } }),
+  ]);
+
+  const formattedTrainerVideos = trainerVideos.map((video) => ({
+    id: video.id,
+    title: video.title,
+    description: video.description,
+    tags: video.tags,
+    type: video.type,
+    videoLink: video.videoLink,
+    thumbnail: video.thumbnail,
+    trainerId: video.trainerId,
+    createdAt: video.createdAt,
+    source: "TRAINER",
+  }));
+
+  const formattedAdminVideos = adminVideos.map((assignment) => ({
+    id: assignment.workout.id,
+    title: assignment.workout.title,
+    description: assignment.workout.description,
+    tags: assignment.workout.tags,
+    videoUrl: assignment.workout.videoUrl,
+    thumbnailUrl: assignment.workout.thumbnailUrl,
+    status: assignment.workout.status,
+    uploadedBy: assignment.workout.uploadedBy,
+    createdAt: assignment.workout.createdAt,
+    assignedAt: assignment.assignedAt,
+    source: "ADMIN",
+  }));
+
+  const allVideos = [
+    ...formattedTrainerVideos,
+    ...formattedAdminVideos,
+  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const totalRecords = totalTrainer + totalAdmin;
+
+  return {
+    videos: allVideos,
+    pagination: {
+      total: totalRecords,
+      page,
+      pageSize,
+      totalPages: Math.ceil(totalRecords / pageSize),
+    },
+  };
 }; 

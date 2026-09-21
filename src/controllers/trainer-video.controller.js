@@ -5,7 +5,8 @@ import {
   getVideoForClient,
   getAllTrainerVideos,
   updateTrainerVideo,
-  deleteTrainerVideo
+  deleteTrainerVideo,
+  getTrainerAndAdminVideos
 } from "../services/trainer-video.service.js";
 import { getYoutubeThumbnail } from "../utils/youtube.js";
 
@@ -213,6 +214,27 @@ export const deleteTrainerVideoHandler = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to delete video",
+    });
+  }
+};
+
+export const getTrainerAndAdminVideosHandler = async (req, res) => {
+  try {
+    const trainerId = req.user.userId;
+    const page = Number(req.query.page) || 1;
+    const pageSize = Number(req.query.pageSize) || 10;
+
+    const result = await getTrainerAndAdminVideos(trainerId, page, pageSize);
+
+    res.status(200).json({
+      success: true,
+      message: "Trainer and admin videos fetched successfully",
+      data: result,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
     });
   }
 };
