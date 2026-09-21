@@ -1,5 +1,5 @@
 import express from "express";
-import { addTrainerVideoHandler, getClientVideosHandler, getTrainerVideosHandler, assignVideoHandler, getAllTrainerVideosHandler, updateTrainerVideoHandler, deleteTrainerVideoHandler, getTrainerAndAdminVideosHandler } from "../controllers/trainer-video.controller.js";
+import { addTrainerVideoHandler, getClientVideosHandler, getTrainerVideosHandler, assignVideoHandler, getAllTrainerVideosHandler, updateTrainerVideoHandler, deleteTrainerVideoHandler, getTrainerAndAdminVideosHandler, getAssignedVideosHandler, getUnassignedVideosHandler, getAllVideosWithStatusHandler } from "../controllers/trainer-video.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 import { videoUpload } from "../middlewares/upload.middleware.js";
@@ -160,6 +160,173 @@ router.get("/admin", authMiddleware, superadminMiddleware, getAllTrainerVideosHa
  *         description: Bad request
  */
 router.get("/all", authMiddleware, getTrainerAndAdminVideosHandler);
+
+/**
+ * @swagger
+ * /api/trainer-video/assigned:
+ *   get:
+ *     summary: Get videos assigned to a specific customer
+ *     description: Trainer can view videos they have assigned to a particular customer
+ *     tags: [Trainer Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: customerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Customer/Client ID to see assigned videos for
+ *     responses:
+ *       200:
+ *         description: Assigned videos fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     videos:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                           videoLink:
+ *                             type: string
+ *                           isAssigned:
+ *                             type: boolean
+ *                             example: true
+ *                           assignedToClientId:
+ *                             type: string
+ *                           assignedAt:
+ *                             type: string
+ *                             format: date-time
+ */
+router.get("/assigned", authMiddleware, getAssignedVideosHandler);
+
+/**
+ * @swagger
+ * /api/trainer-video/unassigned:
+ *   get:
+ *     summary: Get unassigned videos (videos not assigned to any customer)
+ *     description: Trainer can view videos they haven't assigned yet to select and assign to customers
+ *     tags: [Trainer Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Unassigned videos fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     videos:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                           videoLink:
+ *                             type: string
+ *                           isAssigned:
+ *                             type: boolean
+ *                             example: false
+ *                           assignedToClientId:
+ *                             type: "null"
+ *                     pagination:
+ *                       type: object
+ */
+router.get("/unassigned", authMiddleware, getUnassignedVideosHandler);
+
+/**
+ * @swagger
+ * /api/trainer-video/status:
+ *   get:
+ *     summary: Get all trainer videos with assignment status and assigned customer info
+ *     description: Shows all videos with flags indicating if assigned and to whom
+ *     tags: [Trainer Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: All videos with status fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     videos:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                           isAssigned:
+ *                             type: boolean
+ *                           assignedTo:
+ *                             type: array
+ *                             items:
+ *                               type: object
+ *                               properties:
+ *                                 clientId:
+ *                                   type: string
+ *                                 firstName:
+ *                                   type: string
+ *                                 lastName:
+ *                                   type: string
+ *                                 email:
+ *                                   type: string
+ *                                 assignedAt:
+ *                                   type: string
+ */
+router.get("/status", authMiddleware, getAllVideosWithStatusHandler);
 
 router.put("/:videoId", authMiddleware, updateTrainerVideoHandler);
 

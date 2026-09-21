@@ -99,6 +99,172 @@ export const deleteTrainerVideo = async (videoId, trainerId) => {
   return { success: true, message: "Video deleted successfully" };
 };
 
+export const getAssignedVideosForCustomer = async (trainerId, customerId) => {
+  try {
+    const assignments = await prisma.trainerVideoAssignment.findMany({
+      where: {
+        clientId: customerId,
+        video: { trainerId },
+      },
+      include: {
+        video: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            tags: true,
+            videoLink: true,
+            thumbnail: true,
+            trainerId: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: { assignedAt: "desc" },
+    });
+
+    return assignments.map((assignment) => ({
+      ...assignment.video,
+      assignedAt: assignment.assignedAt,
+      assignedToClientId: customerId,
+      isAssigned: true,
+    }));
+  } catch (err) {
+    throw new Error(`Failed to fetch assigned videos: ${err.message}`);
+  }
+};
+
+export const getUnassignedVideos = async (trainerId, page = 1, pageSize = 10) => {
+  const skip = (page - 1) * pageSize;
+
+  try {
+    // Get all trainer videos
+    const trainerVideos = await prisma.trainerVideo.findMany({
+      where: { trainerId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        tags: true,
+        videoLink: true,
+        thumbnail: true,
+        trainerId: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Get all assigned videos for this trainer
+    const assignedVideoIds = await prisma.trainerVideoAssignment.findMany({
+      where: {
+        video: { trainerId },
+      },
+      select: { videoId: true },
+    });
+
+    const assignedIds = new Set(assignedVideoIds.map((a) => a.videoId));
+
+    // Filter unassigned videos
+    const unassignedVideos = trainerVideos.filter((video) => !assignedIds.has(video.id));
+
+    const total = unassignedVideos.length;
+    const paginatedVideos = unassignedVideos.slice(skip, skip + pageSize);
+
+    const formattedVideos = paginatedVideos.map((video) => ({
+      ...video,
+      isAssigned: false,
+      assignedToClientId: null,
+    }));
+
+    return {
+      videos: formattedVideos,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
+  } catch (err) {
+    throw new Error(`Failed to fetch unassigned videos: ${err.message}`);
+  }
+};
+
+export const getAllTrainerVideosWithAssignmentStatus = async (trainerId, page = 1, pageSize = 10) => {
+  const skip = (page - 1) * pageSize;
+
+  try {
+    const [trainerVideos, assignments, total] = await Promise.all([
+      prisma.trainerVideo.findMany({
+        where: { trainerId },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          tags: true,
+          videoLink: true,
+          thumbnail: true,
+          trainerId: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.trainerVideoAssignment.findMany({
+        where: { video: { trainerId } },
+        select: {
+          videoId: true,
+          clientId: true,
+          assignedAt: true,
+          client: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+      }),
+      prisma.trainerVideo.count({ where: { trainerId } }),
+    ]);
+
+    // Create a map of video -> assignments
+    const assignmentMap = new Map();
+    assignments.forEach((assignment) => {
+      if (!assignmentMap.has(assignment.videoId)) {
+        assignmentMap.set(assignment.videoId, []);
+      }
+      assignmentMap.get(assignment.videoId).push({
+        clientId: assignment.clientId,
+        firstName: assignment.client.firstName,
+        lastName: assignment.client.lastName,
+        email: assignment.client.email,
+        assignedAt: assignment.assignedAt,
+      });
+    });
+
+    const formattedVideos = trainerVideos.map((video) => ({
+      ...video,
+      isAssigned: assignmentMap.has(video.id),
+      assignedTo: assignmentMap.get(video.id) || [],
+    }));
+
+    return {
+      videos: formattedVideos,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
+  } catch (err) {
+    throw new Error(`Failed to fetch videos: ${err.message}`);
+  }
+};
+
 export const getTrainerAndAdminVideos = async (trainerId, page = 1, pageSize = 10) => {
   const skip = (page - 1) * pageSize;
 

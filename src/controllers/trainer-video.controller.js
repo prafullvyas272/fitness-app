@@ -6,7 +6,10 @@ import {
   getAllTrainerVideos,
   updateTrainerVideo,
   deleteTrainerVideo,
-  getTrainerAndAdminVideos
+  getTrainerAndAdminVideos,
+  getAssignedVideosForCustomer,
+  getUnassignedVideos,
+  getAllTrainerVideosWithAssignmentStatus
 } from "../services/trainer-video.service.js";
 import { getYoutubeThumbnail } from "../utils/youtube.js";
 
@@ -260,6 +263,79 @@ export const getTrainerAndAdminVideosHandler = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Trainer and admin videos fetched successfully",
+      data: result,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getAssignedVideosHandler = async (req, res) => {
+  try {
+    const trainerId = req.user.userId;
+    const { customerId } = req.query;
+
+    if (!customerId) {
+      return res.status(400).json({
+        success: false,
+        message: "customerId is required",
+      });
+    }
+
+    const videos = await getAssignedVideosForCustomer(trainerId, customerId);
+
+    res.status(200).json({
+      success: true,
+      message: "Assigned videos fetched successfully",
+      data: {
+        videos,
+        assignedToCustomerId: customerId,
+        total: videos.length,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getUnassignedVideosHandler = async (req, res) => {
+  try {
+    const trainerId = req.user.userId;
+    const page = Number(req.query.page) || 1;
+    const pageSize = Number(req.query.pageSize) || 10;
+
+    const result = await getUnassignedVideos(trainerId, page, pageSize);
+
+    res.status(200).json({
+      success: true,
+      message: "Unassigned videos fetched successfully",
+      data: result,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getAllVideosWithStatusHandler = async (req, res) => {
+  try {
+    const trainerId = req.user.userId;
+    const page = Number(req.query.page) || 1;
+    const pageSize = Number(req.query.pageSize) || 10;
+
+    const result = await getAllTrainerVideosWithAssignmentStatus(trainerId, page, pageSize);
+
+    res.status(200).json({
+      success: true,
+      message: "All videos with assignment status fetched successfully",
       data: result,
     });
   } catch (err) {
