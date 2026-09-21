@@ -109,18 +109,31 @@ export const getAllTrainers = async (loggedInUserId = null) => {
     },
   });
 
-  // For each trainer, attach conversationId with loggedInUserId if it exists
+  // For each trainer, attach conversationId and applied flag with loggedInUserId if it exists
   if (loggedInUserId) {
     // Use Promise.all for concurrent lookups
     const trainersWithConversation = await Promise.all(
       trainers.map(async (trainer) => {
         if (trainer.id === loggedInUserId) {
           // Don't need to look up conversation with self
-          return { ...trainer, conversationId: null };
+          return { ...trainer, conversationId: null, applied: false };
         }
-        const conversation = await getConversationByUsers(loggedInUserId, trainer.id);
+        const [conversation, trainerRequest] = await Promise.all([
+          getConversationByUsers(loggedInUserId, trainer.id),
+          prisma.trainerRequest.findFirst({
+            where: {
+              customerId: loggedInUserId,
+              trainerId: trainer.id,
+              status: "PENDING"
+            }
+          })
+        ]);
         // If found, attach conversationId, else null
-        return { ...trainer, conversationId: conversation ? conversation.conversationId : null };
+        return {
+          ...trainer,
+          conversationId: conversation ? conversation.conversationId : null,
+          applied: !!trainerRequest
+        };
       })
     );
     return trainersWithConversation;

@@ -140,7 +140,10 @@ export const applyForUPTHandler = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Trainer request submitted successfully.",
-      data: trainerRequest,
+      data: {
+        ...trainerRequest,
+        applied: true,
+      },
     });
   } catch (err) {
     res.status(400).json({
