@@ -43,16 +43,18 @@ export const addTrainerVideoHandler = async (req, res) => {
 
     if (videoFile) {
       // Handle file upload to Cloudinary
-      const { uploadToCloudinary } = await import("../utils/uploadToCloudinary.js");
+      const { uploadVideoToCloudinary } = await import("../utils/uploadToCloudinary.js");
       try {
-        const uploadResult = await uploadToCloudinary(videoFile.buffer, "trainer-videos");
+        const uploadResult = await uploadVideoToCloudinary(videoFile.buffer, "trainer-videos");
         videoUrl = uploadResult.secure_url;
-        thumbnail = uploadResult.secure_url.replace(/\.(mp4|avi|mov|mkv|webm|flv)$/i, ".jpg");
+        // Use eager thumbnail if generated, otherwise use video URL
+        thumbnail = uploadResult.eager && uploadResult.eager[0] ? uploadResult.eager[0].secure_url : uploadResult.secure_url;
       } catch (uploadErr) {
         console.error("Cloudinary upload error:", uploadErr);
         return res.status(400).json({
           success: false,
           message: "Failed to upload video to cloud storage",
+          error: uploadErr.message,
         });
       }
     } else if (videoLink) {

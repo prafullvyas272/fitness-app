@@ -18,6 +18,31 @@ export const uploadToCloudinary = (fileBuffer, folder = "avatars") => {
   });
 };
 
+/**
+ * Upload video to Cloudinary
+ * @param {Buffer} fileBuffer - Video file buffer
+ * @param {string} folder - Cloudinary folder path
+ * @returns {Promise<object>} - Upload result with secure_url, public_id, etc.
+ */
+export const uploadVideoToCloudinary = (fileBuffer, folder = "trainer-videos") => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: "video",
+        eager: [
+          { width: 300, height: 300, crop: "fill", format: "jpg" } // Generate thumbnail
+        ],
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    streamifier.createReadStream(fileBuffer).pipe(stream);
+  });
+};
 
 /**
  * Deletes an image from Cloudinary by its public ID.
