@@ -9,7 +9,9 @@ import {
   getTrainerAndAdminVideos,
   getAssignedVideosForCustomer,
   getUnassignedVideos,
-  getAllTrainerVideosWithAssignmentStatus
+  getAllTrainerVideosWithAssignmentStatus,
+  unassignVideoFromClients,
+  unassignVideoFromAllClients
 } from "../services/trainer-video.service.js";
 import { getYoutubeThumbnail } from "../utils/youtube.js";
 
@@ -124,13 +126,98 @@ export const assignVideoHandler = async (req, res) => {
         }
         await assignVideoToClients(videoId, clientIds);
 
-        res.status(200).json({  
+        res.status(200).json({
             success: true,
             message: "Video assigned to clients successfully",
         });
     } catch (err) {
         res.status(500).json({
             message: "Failed to assign video",
+        });
+    }
+};
+
+export const unassignVideoHandler = async (req, res) => {
+    try {
+        const trainerId = req.user.userId;
+        const { videoId, clientIds } = req.body;
+
+        if (!videoId) {
+            return res.status(400).json({
+                success: false,
+                message: "videoId is required",
+            });
+        }
+
+        if (!clientIds || !Array.isArray(clientIds) || clientIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "clientIds array is required and must not be empty",
+            });
+        }
+
+        const result = await unassignVideoFromClients(trainerId, videoId, clientIds);
+
+        res.status(200).json({
+            success: true,
+            message: "Video unassigned from clients successfully",
+            data: result,
+        });
+    } catch (err) {
+        if (err.message.includes("Unauthorized")) {
+            return res.status(403).json({
+                success: false,
+                message: err.message,
+            });
+        }
+        if (err.message.includes("not found")) {
+            return res.status(404).json({
+                success: false,
+                message: err.message,
+            });
+        }
+        res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
+
+export const unassignVideoFromAllHandler = async (req, res) => {
+    try {
+        const trainerId = req.user.userId;
+        const { videoId } = req.body;
+
+        if (!videoId) {
+            return res.status(400).json({
+                success: false,
+                message: "videoId is required",
+            });
+        }
+
+        const result = await unassignVideoFromAllClients(trainerId, videoId);
+
+        res.status(200).json({
+            success: true,
+            message: "Video unassigned from all clients successfully",
+            data: result,
+        });
+    } catch (err) {
+        if (err.message.includes("Unauthorized")) {
+            return res.status(403).json({
+                success: false,
+                message: err.message,
+            });
+        }
+        if (err.message.includes("not found")) {
+            return res.status(404).json({
+                success: false,
+                message: err.message,
+            });
+        }
+        res.status(400).json({
+            success: false,
+            message: err.message,
         });
     }
 };

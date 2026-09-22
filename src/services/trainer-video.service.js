@@ -26,6 +26,71 @@ export const assignVideoToClients = async (videoId, clientIds) => {
     });
 };
 
+export const unassignVideoFromClients = async (trainerId, videoId, clientIds) => {
+  try {
+    // Verify video belongs to trainer
+    const video = await prisma.trainerVideo.findUnique({
+      where: { id: videoId },
+    });
+
+    if (!video) {
+      throw new Error("Video not found");
+    }
+
+    if (video.trainerId !== trainerId) {
+      throw new Error("Unauthorized to unassign this video");
+    }
+
+    // Delete assignments for specified clients
+    const result = await prisma.trainerVideoAssignment.deleteMany({
+      where: {
+        videoId,
+        clientId: { in: clientIds },
+      },
+    });
+
+    return {
+      success: true,
+      videoId,
+      unassignedFromCount: result.count,
+      unassignedFromClients: clientIds,
+    };
+  } catch (err) {
+    throw new Error(`Failed to unassign video: ${err.message}`);
+  }
+};
+
+export const unassignVideoFromAllClients = async (trainerId, videoId) => {
+  try {
+    // Verify video belongs to trainer
+    const video = await prisma.trainerVideo.findUnique({
+      where: { id: videoId },
+    });
+
+    if (!video) {
+      throw new Error("Video not found");
+    }
+
+    if (video.trainerId !== trainerId) {
+      throw new Error("Unauthorized to unassign this video");
+    }
+
+    // Delete all assignments for this video
+    const result = await prisma.trainerVideoAssignment.deleteMany({
+      where: { videoId },
+    });
+
+    return {
+      success: true,
+      videoId,
+      unassignedFromCount: result.count,
+      message: `Video unassigned from ${result.count} customer(s)`,
+    };
+  } catch (err) {
+    throw new Error(`Failed to unassign video: ${err.message}`);
+  }
+};
+
 export const getVideoForClient = async (clientId) => {
   return await prisma.trainerVideoAssignment.findMany({
     where: { clientId },

@@ -1,5 +1,5 @@
 import express from "express";
-import { addTrainerVideoHandler, getClientVideosHandler, getTrainerVideosHandler, assignVideoHandler, getAllTrainerVideosHandler, updateTrainerVideoHandler, deleteTrainerVideoHandler, getTrainerAndAdminVideosHandler, getAssignedVideosHandler, getUnassignedVideosHandler, getAllVideosWithStatusHandler } from "../controllers/trainer-video.controller.js";
+import { addTrainerVideoHandler, getClientVideosHandler, getTrainerVideosHandler, assignVideoHandler, getAllTrainerVideosHandler, updateTrainerVideoHandler, deleteTrainerVideoHandler, getTrainerAndAdminVideosHandler, getAssignedVideosHandler, getUnassignedVideosHandler, getAllVideosWithStatusHandler, unassignVideoHandler, unassignVideoFromAllHandler } from "../controllers/trainer-video.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 import { videoUpload } from "../middlewares/upload.middleware.js";
@@ -67,6 +67,119 @@ router.post("/add", authMiddleware, videoUpload.single("video"), addTrainerVideo
 router.get("/trainer", authMiddleware, getTrainerVideosHandler);
 
 router.post("/assign", authMiddleware, assignVideoHandler);
+
+/**
+ * @swagger
+ * /api/trainer-video/unassign:
+ *   post:
+ *     summary: Unassign video from specific clients
+ *     description: Trainer can remove video assignments from specific customers
+ *     tags: [Trainer Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - videoId
+ *               - clientIds
+ *             properties:
+ *               videoId:
+ *                 type: string
+ *                 example: "69bce853116052a244abba4f"
+ *               clientIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["customerId1", "customerId2"]
+ *           example:
+ *             videoId: "video_id"
+ *             clientIds: ["client1", "client2"]
+ *     responses:
+ *       200:
+ *         description: Video unassigned from clients successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     videoId:
+ *                       type: string
+ *                     unassignedFromCount:
+ *                       type: integer
+ *                     unassignedFromClients:
+ *                       type: array
+ *       400:
+ *         description: Bad request
+ *       403:
+ *         description: Unauthorized - video not owned by trainer
+ *       404:
+ *         description: Video not found
+ */
+router.post("/unassign", authMiddleware, unassignVideoHandler);
+
+/**
+ * @swagger
+ * /api/trainer-video/unassign-all:
+ *   post:
+ *     summary: Unassign video from ALL clients
+ *     description: Trainer can remove video assignment from all customers at once
+ *     tags: [Trainer Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - videoId
+ *             properties:
+ *               videoId:
+ *                 type: string
+ *                 example: "69bce853116052a244abba4f"
+ *           example:
+ *             videoId: "video_id"
+ *     responses:
+ *       200:
+ *         description: Video unassigned from all clients successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     videoId:
+ *                       type: string
+ *                     unassignedFromCount:
+ *                       type: integer
+ *       400:
+ *         description: Bad request
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: Video not found
+ */
+router.post("/unassign-all", authMiddleware, unassignVideoFromAllHandler);
 
 
 /**
