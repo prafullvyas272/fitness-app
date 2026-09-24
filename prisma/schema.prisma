@@ -1251,7 +1251,6 @@ model SessionReview {
 
   @@index([customerId])
   @@index([trainerId])
-  @@index([bookingId])
 }
 
 enum ReportStatus {
