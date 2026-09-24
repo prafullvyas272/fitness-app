@@ -322,7 +322,7 @@ model TrainerBooking {
 
   reviews  SessionReview?  @relation("BookingReviews")
   reports  TrainerReport[] @relation("BookingReports")
-  customerReports CustomerReport[] @relation("BookingCustomerReports")
+  trainerCustomerReports TrainerCustomerReport[] @relation("BookingCustomerReports")
 }
 
 enum AlertType {
