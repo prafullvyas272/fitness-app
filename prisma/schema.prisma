@@ -1286,7 +1286,7 @@ model TrainerReport {
   @@index([status])
 }
 
-model CustomerReport {
+model TrainerCustomerReport {
   id          String       @id @default(auto()) @map("_id") @db.ObjectId
   bookingId   String       @db.ObjectId
   trainerId   String       @db.ObjectId

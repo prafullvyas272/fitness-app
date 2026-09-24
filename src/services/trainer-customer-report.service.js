@@ -37,7 +37,7 @@ export const createCustomerReport = async (trainerId, bookingId, data) => {
       throw new Error("Report can only be submitted within 24 hours of session attended");
     }
 
-    const existingReport = await prisma.customerReport.findFirst({
+    const existingReport = await prisma.trainerCustomerReport.findFirst({
       where: {
         bookingId,
         trainerId
@@ -53,7 +53,7 @@ export const createCustomerReport = async (trainerId, bookingId, data) => {
       select: { mentorId: true }
     });
 
-    const report = await prisma.customerReport.create({
+    const report = await prisma.trainerCustomerReport.create({
       data: {
         trainerId,
         bookingId,
@@ -85,7 +85,7 @@ export const getCustomerReportsByAdmin = async (page = 1, pageSize = 10, status 
     const where = status ? { status } : {};
 
     const [reports, total] = await Promise.all([
-      prisma.customerReport.findMany({
+      prisma.trainerCustomerReport.findMany({
         where,
         skip,
         take: pageSize,
@@ -96,7 +96,7 @@ export const getCustomerReportsByAdmin = async (page = 1, pageSize = 10, status 
         },
         orderBy: { createdAt: "desc" }
       }),
-      prisma.customerReport.count({ where })
+      prisma.trainerCustomerReport.count({ where })
     ]);
 
     return {
@@ -113,7 +113,7 @@ export const getCustomerReportsByTrainer = async (trainerId, page = 1, pageSize 
     const skip = (page - 1) * pageSize;
 
     const [reports, total] = await Promise.all([
-      prisma.customerReport.findMany({
+      prisma.trainerCustomerReport.findMany({
         where: { trainerId },
         skip,
         take: pageSize,
@@ -123,7 +123,7 @@ export const getCustomerReportsByTrainer = async (trainerId, page = 1, pageSize 
         },
         orderBy: { createdAt: "desc" }
       }),
-      prisma.customerReport.count({ where: { trainerId } })
+      prisma.trainerCustomerReport.count({ where: { trainerId } })
     ]);
 
     return {
@@ -140,7 +140,7 @@ export const getCustomerReportsByCustomer = async (customerId, page = 1, pageSiz
     const skip = (page - 1) * pageSize;
 
     const [reports, total] = await Promise.all([
-      prisma.customerReport.findMany({
+      prisma.trainerCustomerReport.findMany({
         where: { customerId },
         skip,
         take: pageSize,
@@ -150,7 +150,7 @@ export const getCustomerReportsByCustomer = async (customerId, page = 1, pageSiz
         },
         orderBy: { createdAt: "desc" }
       }),
-      prisma.customerReport.count({ where: { customerId } })
+      prisma.trainerCustomerReport.count({ where: { customerId } })
     ]);
 
     return {
@@ -164,7 +164,7 @@ export const getCustomerReportsByCustomer = async (customerId, page = 1, pageSiz
 
 export const getReportByBooking = async (bookingId) => {
   try {
-    const report = await prisma.customerReport.findFirst({
+    const report = await prisma.trainerCustomerReport.findFirst({
       where: { bookingId },
       include: {
         trainer: { select: { id: true, firstName: true, lastName: true } },
@@ -188,7 +188,7 @@ export const updateReportStatus = async (reportId, adminId, status) => {
       throw new Error("Invalid status. Must be PENDING, RESOLVED, or REJECTED");
     }
 
-    const report = await prisma.customerReport.update({
+    const report = await prisma.trainerCustomerReport.update({
       where: { id: reportId },
       data: {
         status,
@@ -209,7 +209,7 @@ export const updateReportStatus = async (reportId, adminId, status) => {
 
 export const deleteReport = async (reportId, trainerId) => {
   try {
-    const report = await prisma.customerReport.findUnique({
+    const report = await prisma.trainerCustomerReport.findUnique({
       where: { id: reportId }
     });
 
@@ -221,7 +221,7 @@ export const deleteReport = async (reportId, trainerId) => {
       throw new Error("Unauthorized - you can only delete your own report");
     }
 
-    await prisma.customerReport.delete({
+    await prisma.trainerCustomerReport.delete({
       where: { id: reportId }
     });
 

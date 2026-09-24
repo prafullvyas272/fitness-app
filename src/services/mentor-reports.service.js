@@ -58,7 +58,7 @@ export const getAllReports = async (mentorId, { page = 1, limit = 20, status = n
         customer: { select: { id: true, firstName: true, lastName: true, email: true } }
       }
     }),
-    prisma.customerReport.findMany({
+    prisma.trainerCustomerReport.findMany({
       where: { mentorId, ...(status && { status }), ...(trainerId && { trainerId }) },
       skip: 0,
       take: limit,
