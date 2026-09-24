@@ -427,10 +427,11 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       (a, b) => new Date(a.startTime) - new Date(b.startTime)
     );
 
-    const slotIds = trainerCreatedSlots.map((slot) => slot.id);
+    // Include bookings for BOTH trainer-created AND admin-created slots
+    const allSlotIds = filteredSlots.map((slot) => slot.id);
     const bookings = await prisma.trainerBooking.findMany({
       where: {
-        timeSlotId: { in: slotIds },
+        timeSlotId: { in: allSlotIds },
       },
       select: {
         timeSlotId: true,
