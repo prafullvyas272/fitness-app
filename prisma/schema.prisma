@@ -1306,8 +1306,8 @@ model TrainerCustomerReport {
   mentor   User? @relation("MentorCustomerReports", fields: [mentorId], references: [id], onDelete: Cascade)
   admin    User? @relation("AdminCustomerReportsResolved", fields: [resolvedBy], references: [id], onDelete: NoAction)
 
+  @@unique([bookingId])
   @@index([trainerId])
   @@index([customerId])
-  @@index([bookingId])
   @@index([status])
 }
