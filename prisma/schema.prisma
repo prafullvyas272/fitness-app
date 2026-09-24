@@ -1215,6 +1215,5 @@ model GymRent {
   trainer User @relation("TrainerGymRent", fields: [trainerId], references: [id], onDelete: Cascade)
   admin   User @relation("AdminGymRentCreated", fields: [createdBy], references: [id], onDelete: Cascade)
 
-  @@index([trainerId])
   @@index([createdBy])
 }
