@@ -1077,7 +1077,7 @@ model Report {
   category            ComplaintCategory
   priority            PriorityLevel     @default(ROUTINE)
   description         String
-  status              ReportStatus      @default(OPEN)
+  status              ReportStatus      @default(PENDING)
   incidentDate        DateTime
   incidentLocation    String?
   resolutionNotes     String?
