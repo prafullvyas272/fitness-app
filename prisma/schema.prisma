@@ -134,15 +134,15 @@ model User {
   customerReviews     SessionReview[]  @relation("CustomerReviews")
   trainerReviews      SessionReview[]  @relation("TrainerReviews")
 
-  customerReports     TrainerReport[]  @relation("CustomerReports")
+  myTrainerReports    TrainerReport[]  @relation("CustomerReports")
   trainerReportsReceived TrainerReport[] @relation("TrainerReportsReceived")
   adminReportsResolved TrainerReport[] @relation("AdminReportsResolved")
   mentorTrainerReports TrainerReport[] @relation("MentorTrainerReports")
 
-  trainerCustomerReports   CustomerReport[]  @relation("TrainerCustomerReports")
-  customerReportsReceived  CustomerReport[]  @relation("CustomerReportsReceived")
-  adminCustomerReportsResolved CustomerReport[] @relation("AdminCustomerReportsResolved")
-  mentorCustomerReports CustomerReport[] @relation("MentorCustomerReports")
+  trainerCustomerReports   TrainerCustomerReport[]  @relation("TrainerCustomerReports")
+  customerReportsReceived  TrainerCustomerReport[]  @relation("CustomerReportsReceived")
+  adminCustomerReportsResolved TrainerCustomerReport[] @relation("AdminCustomerReportsResolved")
+  mentorCustomerReports TrainerCustomerReport[] @relation("MentorCustomerReports")
 
   createdAt DateTime @default(now())
 }
