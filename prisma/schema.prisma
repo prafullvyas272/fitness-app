@@ -138,6 +138,10 @@ model User {
   trainerReportsReceived TrainerReport[] @relation("TrainerReportsReceived")
   adminReportsResolved TrainerReport[] @relation("AdminReportsResolved")
 
+  trainerCustomerReports   CustomerReport[]  @relation("TrainerCustomerReports")
+  customerReportsReceived  CustomerReport[]  @relation("CustomerReportsReceived")
+  adminCustomerReportsResolved CustomerReport[] @relation("AdminCustomerReportsResolved")
+
   createdAt DateTime @default(now())
 }
 
@@ -316,6 +320,7 @@ model TrainerBooking {
 
   reviews  SessionReview?  @relation("BookingReviews")
   reports  TrainerReport[] @relation("BookingReports")
+  customerReports CustomerReport[] @relation("BookingCustomerReports")
 }
 
 enum AlertType {
@@ -1273,6 +1278,30 @@ model TrainerReport {
 
   @@index([customerId])
   @@index([trainerId])
+  @@index([bookingId])
+  @@index([status])
+}
+
+model CustomerReport {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  bookingId   String       @db.ObjectId
+  trainerId   String       @db.ObjectId
+  customerId  String       @db.ObjectId
+  reason      String       // Reason for report
+  description String?      // Detailed description
+  status      ReportStatus @default(PENDING)
+  resolvedBy  String?      @db.ObjectId // Admin who resolved it
+  resolvedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  trainer User @relation("TrainerCustomerReports", fields: [trainerId], references: [id], onDelete: Cascade)
+  customer User @relation("CustomerReportsReceived", fields: [customerId], references: [id], onDelete: Cascade)
+  booking  TrainerBooking @relation("BookingCustomerReports", fields: [bookingId], references: [id], onDelete: Cascade)
+  admin    User? @relation("AdminCustomerReportsResolved", fields: [resolvedBy], references: [id], onDelete: NoAction)
+
+  @@index([trainerId])
+  @@index([customerId])
   @@index([bookingId])
   @@index([status])
 }
