@@ -447,19 +447,6 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
 
     for (const slot of filteredSlots) {
       const slotEnd = new Date(slot.endTime);
-
-      if (slot.source === "ADMIN") {
-        if (slotEnd >= now) {
-          upcomingSessions.push(slot);
-        } else {
-          allPastSessions.push({
-            ...slot,
-            isAttended: false,
-          });
-        }
-        continue;
-      }
-
       const booking = bookingMap.get(slot.id);
 
       if (slotEnd >= now) {
