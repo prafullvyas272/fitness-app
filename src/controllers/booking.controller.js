@@ -1,5 +1,6 @@
 import { BookingStatus } from "../constants/constants.js";
 import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById, rescheduleBooking, getBookingDetailsById, updateBookingAccolades, getBookingAndAvailabilityData } from "../services/booking.service.js";
+import { pusher } from "../utils/pusher.js";
 
 /**
  * Extracts trainerId from params and pagination from query, calls service, and returns response.
@@ -118,6 +119,19 @@ export const markAsAttendedHandler = async (req, res) => {
     }
 
     const booking = await markAsAttended(bookingId, bookingStatus);
+
+    await pusher.trigger(
+      `booking-${booking.customerId}`,
+      "session-attended",
+      {
+        bookingId: booking.id,
+        status: bookingStatus,
+        trainerId: booking.trainerId,
+        trainerName: booking.trainer?.firstName + " " + booking.trainer?.lastName,
+        timeSlot: booking.timeSlot,
+        message: bookingStatus === BookingStatus.ATTENDED ? "Your session has been marked as attended" : "Your session has been marked as not attended"
+      }
+    );
 
     res.status(200).json({
       success: true,

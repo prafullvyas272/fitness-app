@@ -56,6 +56,8 @@ import mentorDashboardRoutes from "./routes/mentor-dashboard.routes.js";
 import adminMentorRoutes from "./routes/admin-mentor.routes.js";
 import trainerPlanAssignmentRoutes from "./routes/trainer-plan-assignment.routes.js";
 import gymRentRoutes from "./routes/gym-rent.routes.js";
+import reviewSessionRoutes from "./routes/review-session.routes.js";
+import trainerReportRoutes from "./routes/trainer-report.routes.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -151,6 +153,8 @@ app.use("/api/admin/mentors", adminMentorRoutes);
 app.use("/api", trainerIssueReportRoutes);
 app.use("/api/trainer-plans", trainerPlanAssignmentRoutes);
 app.use("/api/admin/gym-rent", gymRentRoutes);
+app.use("/api/session-reviews", reviewSessionRoutes);
+app.use("/api/trainer-reports", trainerReportRoutes);
 
 app.use(errorHandler);
 

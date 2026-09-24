@@ -131,6 +131,13 @@ model User {
   gymRent           GymRent?  @relation("TrainerGymRent")
   gymRentsCreated   GymRent[] @relation("AdminGymRentCreated")
 
+  customerReviews     SessionReview[]  @relation("CustomerReviews")
+  trainerReviews      SessionReview[]  @relation("TrainerReviews")
+
+  customerReports     TrainerReport[]  @relation("CustomerReports")
+  trainerReportsReceived TrainerReport[] @relation("TrainerReportsReceived")
+  adminReportsResolved TrainerReport[] @relation("AdminReportsResolved")
+
   createdAt DateTime @default(now())
 }
 
@@ -306,6 +313,9 @@ model TrainerBooking {
   customer User            @relation("Customer_Booking", fields: [customerId], references: [id], onDelete: Cascade)
   trainer  User            @relation("Trainer_Booking", fields: [trainerId], references: [id], onDelete: Cascade)
   timeSlot TrainerTimeSlot @relation("TimeSlot_Booking", fields: [timeSlotId], references: [id], onDelete: Cascade)
+
+  reviews  SessionReview?  @relation("BookingReviews")
+  reports  TrainerReport[] @relation("BookingReports")
 }
 
 enum AlertType {
@@ -1216,4 +1226,53 @@ model GymRent {
   admin   User @relation("AdminGymRentCreated", fields: [createdBy], references: [id], onDelete: Cascade)
 
   @@index([createdBy])
+}
+
+model SessionReview {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  bookingId String   @unique @db.ObjectId
+  customerId String  @db.ObjectId
+  trainerId String   @db.ObjectId
+  rating    Int      // 1-5 rating
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer User @relation("CustomerReviews", fields: [customerId], references: [id], onDelete: Cascade)
+  trainer  User @relation("TrainerReviews", fields: [trainerId], references: [id], onDelete: Cascade)
+  booking  TrainerBooking @relation("BookingReviews", fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([trainerId])
+  @@index([bookingId])
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  REJECTED
+}
+
+model TrainerReport {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  bookingId   String       @db.ObjectId
+  customerId  String       @db.ObjectId
+  trainerId   String       @db.ObjectId
+  reason      String       // Reason for report (behavior, quality, no-show, etc.)
+  description String?      // Detailed description
+  status      ReportStatus @default(PENDING)
+  resolvedBy  String?      @db.ObjectId // Admin who resolved it
+  resolvedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  customer User @relation("CustomerReports", fields: [customerId], references: [id], onDelete: Cascade)
+  trainer  User @relation("TrainerReportsReceived", fields: [trainerId], references: [id], onDelete: Cascade)
+  booking  TrainerBooking @relation("BookingReports", fields: [bookingId], references: [id], onDelete: Cascade)
+  admin    User? @relation("AdminReportsResolved", fields: [resolvedBy], references: [id], onDelete: NoAction)
+
+  @@index([customerId])
+  @@index([trainerId])
+  @@index([bookingId])
+  @@index([status])
 }
