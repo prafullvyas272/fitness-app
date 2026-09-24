@@ -128,6 +128,9 @@ model User {
   scheduleAlertsAsTrainer     ScheduleAlert[]        @relation("ScheduleAlerts_Trainer")
   scheduleAlertsAsCustomer    ScheduleAlert[]        @relation("ScheduleAlerts_Customer")
 
+  gymRent           GymRent?  @relation("TrainerGymRent")
+  gymRentsCreated   GymRent[] @relation("AdminGymRentCreated")
+
   createdAt DateTime @default(now())
 }
 
@@ -1195,4 +1198,23 @@ model ReportActivity {
 
   @@index([reportId])
   @@index([timestamp])
+}
+
+model GymRent {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  trainerId     String   @unique @db.ObjectId
+  rentAmount    Float    @default(0)
+  rentFrequency String   @default("MONTHLY") // DAILY, WEEKLY, MONTHLY, YEARLY
+  currency      String   @default("USD")
+  description   String?
+  notes         String?
+  createdBy     String   @db.ObjectId
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  trainer User @relation("TrainerGymRent", fields: [trainerId], references: [id], onDelete: Cascade)
+  admin   User @relation("AdminGymRentCreated", fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@index([trainerId])
+  @@index([createdBy])
 }
