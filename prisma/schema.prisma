@@ -1060,7 +1060,7 @@ enum PriorityLevel {
   CRITICAL
 }
 
-enum ReportStatus {
+enum GeneralReportStatus {
   OPEN
   IN_REVIEW
   RESOLVED
@@ -1077,7 +1077,7 @@ model Report {
   category            ComplaintCategory
   priority            PriorityLevel     @default(ROUTINE)
   description         String
-  status              ReportStatus      @default(PENDING)
+  status              GeneralReportStatus @default(OPEN)
   incidentDate        DateTime
   incidentLocation    String?
   resolutionNotes     String?
