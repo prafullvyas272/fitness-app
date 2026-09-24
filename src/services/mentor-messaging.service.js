@@ -1,4 +1,5 @@
 import prisma from "../utils/prisma.js";
+import { pusher } from "../utils/pusher.js";
 
 export const getConversationList = async (mentorId) => {
   const mentor = await prisma.user.findUnique({ where: { id: mentorId } });
@@ -158,6 +159,22 @@ export const sendMessage = async (mentorId, conversationId, ptId, message) => {
       status: "SENT",
     },
   });
+
+  // Send real-time notification to trainer via Pusher
+  await pusher.trigger(
+    `mentor-trainer-${ptId}`,
+    "new-message",
+    {
+      messageId: chatMessage.id,
+      conversationId,
+      senderId: chatMessage.senderId,
+      senderType: "mentor",
+      senderName: `${mentor.firstName} ${mentor.lastName}`,
+      message: chatMessage.message,
+      timestamp: chatMessage.createdAt.toISOString(),
+      read: false
+    }
+  );
 
   return {
     messageId: chatMessage.id,
