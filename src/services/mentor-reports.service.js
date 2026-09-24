@@ -35,11 +35,32 @@ export const getAllReports = async (mentorId, { page = 1, limit = 20, status = n
     })
   };
 
-  const [total, reports] = await Promise.all([
+  // Fetch reports from three sources
+  const [total, reports, trainerReports, customerReports] = await Promise.all([
     prisma.report.count({ where }),
     prisma.report.findMany({
       where,
-      skip,
+      skip: 0,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        trainer: { select: { id: true, firstName: true, lastName: true, userProfileDetails: true } },
+        customer: { select: { id: true, firstName: true, lastName: true, email: true } }
+      }
+    }),
+    prisma.trainerReport.findMany({
+      where: { mentorId, ...(status && { status }), ...(trainerId && { trainerId }) },
+      skip: 0,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        trainer: { select: { id: true, firstName: true, lastName: true, userProfileDetails: true } },
+        customer: { select: { id: true, firstName: true, lastName: true, email: true } }
+      }
+    }),
+    prisma.customerReport.findMany({
+      where: { mentorId, ...(status && { status }), ...(trainerId && { trainerId }) },
+      skip: 0,
       take: limit,
       orderBy: { createdAt: "desc" },
       include: {
@@ -49,8 +70,10 @@ export const getAllReports = async (mentorId, { page = 1, limit = 20, status = n
     })
   ]);
 
+  // Format reports
   const formattedReports = reports.map(report => ({
     id: report.reportId || report.id,
+    type: "GENERAL",
     trainerName: `${report.trainer.firstName || ''} ${report.trainer.lastName || ''}`.trim(),
     trainerAvatar: report.trainer.userProfileDetails?.[0]?.avatarUrl || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 50)}`,
     trainerId: report.trainerId,
@@ -66,13 +89,47 @@ export const getAllReports = async (mentorId, { page = 1, limit = 20, status = n
     updatedAt: report.updatedAt.toISOString()
   }));
 
+  const formattedTrainerReports = trainerReports.map(report => ({
+    id: report.id,
+    type: "TRAINER_REPORT",
+    trainerName: `${report.trainer.firstName || ''} ${report.trainer.lastName || ''}`.trim(),
+    trainerAvatar: report.trainer.userProfileDetails?.[0]?.avatarUrl || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 50)}`,
+    trainerId: report.trainerId,
+    customerName: `${report.customer.firstName || ''} ${report.customer.lastName || ''}`.trim(),
+    reason: report.reason,
+    status: report.status,
+    date: report.createdAt.toISOString(),
+    description: report.description,
+    createdAt: report.createdAt.toISOString(),
+    updatedAt: report.updatedAt.toISOString()
+  }));
+
+  const formattedCustomerReports = customerReports.map(report => ({
+    id: report.id,
+    type: "CUSTOMER_REPORT",
+    trainerName: `${report.trainer.firstName || ''} ${report.trainer.lastName || ''}`.trim(),
+    trainerAvatar: report.trainer.userProfileDetails?.[0]?.avatarUrl || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 50)}`,
+    trainerId: report.trainerId,
+    customerName: `${report.customer.firstName || ''} ${report.customer.lastName || ''}`.trim(),
+    reason: report.reason,
+    status: report.status,
+    date: report.createdAt.toISOString(),
+    description: report.description,
+    createdAt: report.createdAt.toISOString(),
+    updatedAt: report.updatedAt.toISOString()
+  }));
+
+  const allReports = [...formattedReports, ...formattedTrainerReports, ...formattedCustomerReports]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(skip, skip + limit);
+
   return {
-    reports: formattedReports,
+    reports: allReports,
     pagination: {
       page,
       limit,
-      total,
-      totalPages: Math.ceil(total / limit)
+      total: total + trainerReports.length + customerReports.length,
+      totalPages: Math.ceil((total + trainerReports.length + customerReports.length) / limit)
     }
   };
 };

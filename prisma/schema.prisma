@@ -137,10 +137,12 @@ model User {
   customerReports     TrainerReport[]  @relation("CustomerReports")
   trainerReportsReceived TrainerReport[] @relation("TrainerReportsReceived")
   adminReportsResolved TrainerReport[] @relation("AdminReportsResolved")
+  mentorTrainerReports TrainerReport[] @relation("MentorTrainerReports")
 
   trainerCustomerReports   CustomerReport[]  @relation("TrainerCustomerReports")
   customerReportsReceived  CustomerReport[]  @relation("CustomerReportsReceived")
   adminCustomerReportsResolved CustomerReport[] @relation("AdminCustomerReportsResolved")
+  mentorCustomerReports CustomerReport[] @relation("MentorCustomerReports")
 
   createdAt DateTime @default(now())
 }
@@ -1263,6 +1265,7 @@ model TrainerReport {
   bookingId   String       @db.ObjectId
   customerId  String       @db.ObjectId
   trainerId   String       @db.ObjectId
+  mentorId    String?      @db.ObjectId // Mentor of the trainer who gets notified
   reason      String       // Reason for report (behavior, quality, no-show, etc.)
   description String?      // Detailed description
   status      ReportStatus @default(PENDING)
@@ -1274,6 +1277,7 @@ model TrainerReport {
   customer User @relation("CustomerReports", fields: [customerId], references: [id], onDelete: Cascade)
   trainer  User @relation("TrainerReportsReceived", fields: [trainerId], references: [id], onDelete: Cascade)
   booking  TrainerBooking @relation("BookingReports", fields: [bookingId], references: [id], onDelete: Cascade)
+  mentor   User? @relation("MentorTrainerReports", fields: [mentorId], references: [id], onDelete: Cascade)
   admin    User? @relation("AdminReportsResolved", fields: [resolvedBy], references: [id], onDelete: NoAction)
 
   @@index([customerId])
@@ -1287,6 +1291,7 @@ model CustomerReport {
   bookingId   String       @db.ObjectId
   trainerId   String       @db.ObjectId
   customerId  String       @db.ObjectId
+  mentorId    String?      @db.ObjectId // Mentor of the trainer who gets notified
   reason      String       // Reason for report
   description String?      // Detailed description
   status      ReportStatus @default(PENDING)
@@ -1298,6 +1303,7 @@ model CustomerReport {
   trainer User @relation("TrainerCustomerReports", fields: [trainerId], references: [id], onDelete: Cascade)
   customer User @relation("CustomerReportsReceived", fields: [customerId], references: [id], onDelete: Cascade)
   booking  TrainerBooking @relation("BookingCustomerReports", fields: [bookingId], references: [id], onDelete: Cascade)
+  mentor   User? @relation("MentorCustomerReports", fields: [mentorId], references: [id], onDelete: Cascade)
   admin    User? @relation("AdminCustomerReportsResolved", fields: [resolvedBy], references: [id], onDelete: NoAction)
 
   @@index([trainerId])

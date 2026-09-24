@@ -36,11 +36,17 @@ export const createTrainerReport = async (customerId, bookingId, data) => {
       throw new Error("Report already exists for this booking");
     }
 
+    const mentorAssignment = await prisma.mentorTrainerAssignment.findFirst({
+      where: { trainerId },
+      select: { mentorId: true }
+    });
+
     const report = await prisma.trainerReport.create({
       data: {
         customerId,
         bookingId,
         trainerId,
+        mentorId: mentorAssignment?.mentorId || null,
         reason,
         description: description || null,
         status: "PENDING",
@@ -49,6 +55,7 @@ export const createTrainerReport = async (customerId, bookingId, data) => {
       include: {
         customer: { select: { id: true, firstName: true, lastName: true, email: true } },
         trainer: { select: { id: true, firstName: true, lastName: true, email: true } },
+        mentor: { select: { id: true, firstName: true, lastName: true } },
         booking: { select: { id: true, timeSlot: true } }
       }
     });
