@@ -428,10 +428,24 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
     );
 
     // Include bookings for BOTH trainer-created AND admin-created slots
-    const allSlotIds = filteredSlots.map((slot) => slot.id);
+    // For admin slots, need to use TrainerTimeSlot ID (not admin TimeSlot ID) for booking lookup
+    const slotIdsForBookingLookup = [];
+    filteredSlots.forEach((slot) => {
+      if (slot.source === "ADMIN") {
+        // For admin slots, find the corresponding TrainerTimeSlot ID
+        const trainerSlot = trainerSlotByAdminTimeSlotId.get(slot.id);
+        if (trainerSlot) {
+          slotIdsForBookingLookup.push(trainerSlot.id);
+        }
+      } else {
+        // For trainer slots, use the slot ID directly
+        slotIdsForBookingLookup.push(slot.id);
+      }
+    });
+
     const bookings = await prisma.trainerBooking.findMany({
       where: {
-        timeSlotId: { in: allSlotIds },
+        timeSlotId: { in: slotIdsForBookingLookup },
       },
       select: {
         timeSlotId: true,
@@ -440,7 +454,9 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
     });
 
     const bookingMap = new Map();
-    bookings.forEach((booking) => bookingMap.set(booking.timeSlotId, booking));
+    bookings.forEach((booking) => {
+      bookingMap.set(booking.timeSlotId, booking);
+    });
 
     const now = new Date();
     const upcomingSessions = [];
@@ -448,7 +464,11 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
 
     for (const slot of filteredSlots) {
       const slotEnd = new Date(slot.endTime);
-      const booking = bookingMap.get(slot.id);
+      // For admin slots, lookup booking by TrainerTimeSlot ID; for trainer slots, use slot ID
+      const bookingLookupId = slot.source === "ADMIN"
+        ? trainerSlotByAdminTimeSlotId.get(slot.id)?.id
+        : slot.id;
+      const booking = bookingMap.get(bookingLookupId);
 
       if (slotEnd >= now) {
         upcomingSessions.push(slot);
