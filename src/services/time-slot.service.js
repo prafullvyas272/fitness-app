@@ -450,6 +450,18 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       select: {
         timeSlotId: true,
         bookingStatus: true,
+        trainer: {
+          select: {
+            firstName: true,
+            lastName: true,
+            userProfileDetails: {
+              select: {
+                hostGymName: true,
+              },
+              take: 1,
+            },
+          },
+        },
       },
     });
 
@@ -476,6 +488,10 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
           bookingId: booking.timeSlotId,
           bookingStatus: booking.bookingStatus,
           isCancelled: booking.bookingStatus === "CANCELLED",
+          trainer: {
+            name: `${booking.trainer.firstName} ${booking.trainer.lastName}`,
+            gymName: booking.trainer.userProfileDetails?.[0]?.hostGymName || null,
+          },
         }),
       };
 
