@@ -149,29 +149,60 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
   }
 
   // Book the slot: create booking and update slot to isBooked: true
-  try {
-    const booking = await prisma.$transaction(async (tx) => {
-      const newBooking = await tx.trainerBooking.create({
-        data: {
-          customerId,
-          trainerId,
-          timeSlotId: slot.id,
-          originalTimeSlotId: slot.id,
+  // Retry logic for handling transaction conflicts/deadlocks
+  const maxRetries = 3;
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const booking = await prisma.$transaction(async (tx) => {
+        // Re-check slot availability inside transaction to prevent race condition
+        const currentSlot = await tx.trainerTimeSlot.findUnique({
+          where: { id: slot.id }
+        });
+
+        if (!currentSlot) {
+          throw new Error("Time slot not found");
         }
+        if (currentSlot.isBooked) {
+          throw new Error("Time slot is already booked");
+        }
+
+        const newBooking = await tx.trainerBooking.create({
+          data: {
+            customerId,
+            trainerId,
+            timeSlotId: slot.id,
+            originalTimeSlotId: slot.id,
+          }
+        });
+
+        await tx.trainerTimeSlot.update({
+          where: { id: slot.id },
+          data: { isBooked: true }
+        });
+
+        return newBooking;
       });
 
-      await tx.trainerTimeSlot.update({
-        where: { id: slot.id },
-        data: { isBooked: true }
-      });
-
-      return newBooking;
-    });
-
-    return booking;
-  } catch (err) {
-    throw new Error("Failed to book slot: " + err.message);
+      return booking;
+    } catch (err) {
+      lastError = err;
+      // Retry on transaction conflict/deadlock errors
+      if (err.message?.includes("write conflict") || err.message?.includes("deadlock")) {
+        if (attempt < maxRetries) {
+          // Exponential backoff: 100ms, 200ms, 400ms
+          await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, attempt - 1)));
+          continue;
+        }
+      }
+      // Non-transient errors, throw immediately
+      throw new Error("Failed to book slot: " + err.message);
+    }
   }
+
+  throw new Error("Failed to book slot after retries: " + lastError?.message);
+};
 };
 
 
