@@ -22,7 +22,7 @@ export const startReminderCron = () => {
       }
 
     } catch (error) {
-      console.error("Cron Error:", error);
+      console.error("Cron Error:", error.message);
     }
   });
 };

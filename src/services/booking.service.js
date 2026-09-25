@@ -203,7 +203,6 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
 
   throw new Error("Failed to book slot after retries: " + lastError?.message);
 };
-};
 
 
 export const markAsAttended = async (bookingId, bookingStatus) => {

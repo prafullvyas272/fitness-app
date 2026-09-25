@@ -451,6 +451,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         timeSlotId: { in: slotIdsForBookingLookup },
       },
       select: {
+        id: true,
         timeSlotId: true,
         bookingStatus: true,
         trainer: {
@@ -492,7 +493,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       const sessionWithBookingInfo = {
         ...slot,
         ...(booking && {
-          bookingId: booking.timeSlotId,
+          bookingId: booking.id,
           bookingStatus: booking.bookingStatus,
           isCancelled: booking.bookingStatus === "CANCELLED",
           trainer: {
