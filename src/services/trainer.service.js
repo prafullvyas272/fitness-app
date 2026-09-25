@@ -148,6 +148,7 @@ export const updateTrainer = async (trainerId, data) => {
     hostGymAddress,
     address,
     bio,
+    socialMediaLinks,
     avatarUrl,
     avatar,
     avatarPublicId,
@@ -173,6 +174,7 @@ export const updateTrainer = async (trainerId, data) => {
     if (hostGymAddress !== undefined) profileFields.hostGymAddress = hostGymAddress;
     if (address !== undefined) profileFields.address = address;
     if (bio !== undefined) profileFields.bio = bio;
+    if (socialMediaLinks !== undefined) profileFields.socialMediaLinks = socialMediaLinks;
     if (avatarUrl !== undefined) profileFields.avatarUrl = avatarUrl;
     if (avatarPublicId !== undefined) profileFields.avatarPublicId = avatarPublicId;
 
