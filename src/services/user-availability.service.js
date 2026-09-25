@@ -246,9 +246,10 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
     }
 
     for (const slot of slots) {
-        // Check if a slot already exists with same date and same timeSlotId
+        // Scoped to the trainer: the same admin slot may be offered by several trainers.
         const exists = await prisma.trainerTimeSlot.findFirst({
             where: {
+                trainerId: slot.trainerId,
                 date: slot.date,
                 timeSlotId: slot.timeSlotId,
             },
