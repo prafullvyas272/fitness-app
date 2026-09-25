@@ -470,11 +470,20 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         : slot.id;
       const booking = bookingMap.get(bookingLookupId);
 
+      const sessionWithBookingInfo = {
+        ...slot,
+        ...(booking && {
+          bookingId: booking.timeSlotId,
+          bookingStatus: booking.bookingStatus,
+          isCancelled: booking.bookingStatus === "CANCELLED",
+        }),
+      };
+
       if (slotEnd >= now) {
-        upcomingSessions.push(slot);
+        upcomingSessions.push(sessionWithBookingInfo);
       } else {
         allPastSessions.push({
-          ...slot,
+          ...sessionWithBookingInfo,
           isAttended: booking?.bookingStatus === "ATTENDED",
         });
       }
