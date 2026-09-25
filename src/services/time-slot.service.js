@@ -436,6 +436,9 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         const trainerSlot = trainerSlotByAdminTimeSlotId.get(slot.id);
         if (trainerSlot) {
           slotIdsForBookingLookup.push(trainerSlot.id);
+        } else {
+          // If no TrainerTimeSlot mapping, booking might reference admin slot ID directly
+          slotIdsForBookingLookup.push(slot.id);
         }
       } else {
         // For trainer slots, use the slot ID directly
@@ -476,10 +479,14 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
 
     for (const slot of filteredSlots) {
       const slotEnd = new Date(slot.endTime);
-      // For admin slots, lookup booking by TrainerTimeSlot ID; for trainer slots, use slot ID
-      const bookingLookupId = slot.source === "ADMIN"
-        ? trainerSlotByAdminTimeSlotId.get(slot.id)?.id
-        : slot.id;
+      // For admin slots, try TrainerTimeSlot ID first, then admin slot ID
+      let bookingLookupId;
+      if (slot.source === "ADMIN") {
+        const trainerSlot = trainerSlotByAdminTimeSlotId.get(slot.id);
+        bookingLookupId = trainerSlot?.id || slot.id;
+      } else {
+        bookingLookupId = slot.id;
+      }
       const booking = bookingMap.get(bookingLookupId);
 
       const sessionWithBookingInfo = {
