@@ -1,5 +1,5 @@
 import { BookingStatus } from "../constants/constants.js";
-import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById, rescheduleBooking, getBookingDetailsById, updateBookingAccolades, getBookingAndAvailabilityData } from "../services/booking.service.js";
+import { getBookingsByTrainerWithPagination, bookSlot, markAsAttended, cancelBookingById, rescheduleBooking, getBookingDetailsById, updateBookingAccolades, getBookingAndAvailabilityData, trainerCancelBooking } from "../services/booking.service.js";
 import { pusher } from "../utils/pusher.js";
 
 /**
@@ -139,6 +139,74 @@ export const markAsAttendedHandler = async (req, res) => {
       data: booking
     });
   } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+
+/**
+ * Controller: trainerCancelBookingHandler
+ * Trainer cancels a booking - sends notification to customer
+ */
+export const trainerCancelBookingHandler = async (req, res) => {
+  try {
+    const trainerId = req.user?.userId;
+    const { bookingId } = req.params;
+    const { cancellationReason } = req.body || {};
+
+    if (!trainerId) {
+      return res.status(403).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+
+    if (!bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: "bookingId is required"
+      });
+    }
+
+    const booking = await trainerCancelBooking(trainerId, bookingId, cancellationReason);
+
+    const trainerName = booking.trainer?.firstName + " " + booking.trainer?.lastName;
+
+    await pusher.trigger(
+      `booking-${booking.customerId}`,
+      "booking-cancelled",
+      {
+        bookingId: booking.id,
+        status: BookingStatus.CANCELLED,
+        trainerId: booking.trainerId,
+        trainerName: trainerName,
+        timeSlot: booking.timeSlotId,
+        reason: cancellationReason || "Session cancelled by trainer",
+        message: `Your session with ${trainerName} has been cancelled`
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Booking cancelled successfully",
+      data: booking
+    });
+  } catch (err) {
+    if (err.message.includes("not authorized")) {
+      return res.status(403).json({
+        success: false,
+        message: err.message
+      });
+    }
+    if (err.message.includes("not found")) {
+      return res.status(404).json({
+        success: false,
+        message: err.message
+      });
+    }
     res.status(400).json({
       success: false,
       message: err.message

@@ -266,6 +266,68 @@ export const cancelBookingById = async (bookingId, remarks) => {
 
 
 /**
+ * Cancel booking from trainer side.
+ * @param {string} trainerId - The trainer ID.
+ * @param {string} bookingId - The booking ID to cancel.
+ * @param {string} [cancellationReason] - Optional reason for cancellation.
+ * @returns {Promise<object>} - The cancelled booking with customer and trainer info.
+ */
+export const trainerCancelBooking = async (trainerId, bookingId, cancellationReason) => {
+  if (!trainerId || !bookingId) {
+    throw new Error("trainerId and bookingId are required");
+  }
+
+  const booking = await prisma.trainerBooking.findUnique({
+    where: { id: bookingId },
+    include: {
+      customer: { include: { userProfileDetails: true } },
+      trainer: { include: { userProfileDetails: true } }
+    }
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+
+  if (booking.trainerId !== trainerId) {
+    throw new Error("You are not authorized to cancel this booking");
+  }
+
+  if (booking.bookingStatus === "CANCELLED") {
+    throw new Error("Booking is already cancelled");
+  }
+
+  try {
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      const cancelled = await tx.trainerBooking.update({
+        where: { id: bookingId },
+        data: {
+          bookingStatus: "CANCELLED",
+          isCancelled: true,
+          remarks: cancellationReason || null
+        },
+        include: {
+          customer: { include: { userProfileDetails: true } },
+          trainer: { include: { userProfileDetails: true } }
+        }
+      });
+
+      await tx.trainerTimeSlot.update({
+        where: { id: booking.timeSlotId },
+        data: { isBooked: false }
+      });
+
+      return cancelled;
+    });
+
+    return updatedBooking;
+  } catch (err) {
+    throw new Error("Failed to cancel booking: " + err.message);
+  }
+};
+
+
+/**
  * Reschedule a booking by changing its timeslot.
  * @param {string} bookingId - The booking ID to reschedule.
  * @param {string} newTimeSlotId - The new timeslot ID to assign.

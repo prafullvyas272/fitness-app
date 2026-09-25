@@ -298,6 +298,7 @@ enum BookingStatus {
   PENDING
   ATTENDED
   NOTATTENDED
+  CANCELLED
 }
 
 model TrainerBooking {
