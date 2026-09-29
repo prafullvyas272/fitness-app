@@ -492,6 +492,9 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
 
       const sessionWithBookingInfo = {
         ...slot,
+        // Attendance is a property of the booking, not of whether the slot has
+        // elapsed: a trainer may mark a session attended while it is still running.
+        isAttended: booking?.bookingStatus === "ATTENDED",
         ...(booking && {
           bookingId: booking.id,
           bookingStatus: booking.bookingStatus,
@@ -506,10 +509,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       if (slotEnd >= now) {
         upcomingSessions.push(sessionWithBookingInfo);
       } else {
-        allPastSessions.push({
-          ...sessionWithBookingInfo,
-          isAttended: booking?.bookingStatus === "ATTENDED",
-        });
+        allPastSessions.push(sessionWithBookingInfo);
       }
     }
 
