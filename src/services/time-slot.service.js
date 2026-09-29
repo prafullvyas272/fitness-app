@@ -297,6 +297,23 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       throw new Error("trainerId is required");
     }
 
+    // Fetch the requesting trainer's own info once; every slot in this response
+    // belongs to this trainerId, so attach it regardless of booking status.
+    const trainerInfo = await prisma.user.findUnique({
+      where: { id: trainerId },
+      select: {
+        firstName: true,
+        lastName: true,
+        userProfileDetails: { select: { hostGymName: true }, take: 1 },
+      },
+    });
+    const trainerSummary = trainerInfo
+      ? {
+          name: `${trainerInfo.firstName} ${trainerInfo.lastName}`,
+          gymName: trainerInfo.userProfileDetails?.[0]?.hostGymName || null,
+        }
+      : null;
+
     const safePage = Math.max(parseInt(page) || 1, 1);
     const safePageSize = Math.min(Math.max(parseInt(pageSize) || 20, 1), 100);
     const skip = (safePage - 1) * safePageSize;
@@ -454,18 +471,6 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         id: true,
         timeSlotId: true,
         bookingStatus: true,
-        trainer: {
-          select: {
-            firstName: true,
-            lastName: true,
-            userProfileDetails: {
-              select: {
-                hostGymName: true,
-              },
-              take: 1,
-            },
-          },
-        },
       },
     });
 
@@ -495,14 +500,13 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         // Attendance is a property of the booking, not of whether the slot has
         // elapsed: a trainer may mark a session attended while it is still running.
         isAttended: booking?.bookingStatus === "ATTENDED",
+        // Every slot in this response belongs to the requested trainerId, so the
+        // trainer's name/gym is always available, independent of booking status.
+        trainer: trainerSummary,
         ...(booking && {
           bookingId: booking.id,
           bookingStatus: booking.bookingStatus,
           isCancelled: booking.bookingStatus === "CANCELLED",
-          trainer: {
-            name: `${booking.trainer.firstName} ${booking.trainer.lastName}`,
-            gymName: booking.trainer.userProfileDetails?.[0]?.hostGymName || null,
-          },
         }),
       };
 
