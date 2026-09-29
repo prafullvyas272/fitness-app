@@ -224,8 +224,12 @@ export const markAsAttended = async (bookingId, bookingStatus) => {
   try {
     const updatedBooking = await prisma.trainerBooking.update({
       where: { id: bookingId },
-      data: { 
+      data: {
         bookingStatus: bookingStatus
+      },
+      include: {
+        trainer: { select: { firstName: true, lastName: true } },
+        timeSlot: true,
       },
     });
     return updatedBooking;
