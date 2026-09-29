@@ -186,7 +186,10 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
         );
     }
 
-    // If there are no alternativeSlots, delete all ALTERNATIVE slots for that date for this user
+    // If there are no alternativeSlots, delete all UNBOOKED ALTERNATIVE slots for that date.
+    // Never touch a booked slot here — this call may simply be updating PEAK slots and
+    // omitting alternativeSlots entirely, which does not mean the trainer withdrew a slot
+    // a customer has already booked.
     if (alternativeSlots.length === 0) {
         await prisma.trainerTimeSlot.deleteMany({
             where: {
@@ -194,6 +197,7 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
                 trainerId: userId,
                 date: new Date(date),
                 slotType: "ALTERNATIVE",
+                isBooked: false,
             },
         });
     }
@@ -505,9 +509,11 @@ export const calculateAndDeleteAlternativeSlots = async (
                     .map(slot => String(slot.timeSlotId))
             );
 
-            // Find which slots to delete
+            // Find which slots to delete. Never delete a slot that's already booked —
+            // "absent from this payload" just means this save call didn't mention it,
+            // not that the trainer withdrew a slot a customer has already booked.
             const slotsToDelete = existingSlots.filter(
-                slot => !validPayloadIds.has(String(slot.id))
+                slot => !validPayloadIds.has(String(slot.id)) && !slot.isBooked
             );
 
             // Delete those slots
@@ -566,18 +572,25 @@ export const calculateAndDeletePeakSlots = async (
                 }
             });
 
-            console.log(1)
-
-            // Gather IDs that should be kept (present in new payload with timeSlotId)
+            // Gather admin TimeSlot IDs that should be kept (present in new payload).
+            // For PEAK slots, payload.timeSlotId refers to the admin TimeSlot, not the
+            // TrainerTimeSlot's own id — so existing rows must be matched by their own
+            // timeSlotId FK, not by their id (comparing against .id compared two different
+            // ID spaces and deleted almost every existing slot on every save).
             const validPayloadIds = new Set(
                 currentPeakSlotsPayload
                     .filter(slot => slot.timeSlotId)
                     .map(slot => String(slot.timeSlotId))
             );
 
-            // Find which slots to delete
+            // Find which slots to delete. A slot that already has a booking must never be
+            // removed just because this particular save call didn't happen to mention it —
+            // trainers save availability incrementally (one slot at a time), so "absent from
+            // this payload" does not mean "the trainer withdrew it." Deleting a booked slot
+            // cascades and destroys the TrainerBooking row itself, silently losing real
+            // customer session data.
             const slotsToDelete = existingSlots.filter(
-                slot => !validPayloadIds.has(String(slot.id))
+                slot => !validPayloadIds.has(String(slot.timeSlotId)) && !slot.isBooked
             );
 
             // Delete those slots
