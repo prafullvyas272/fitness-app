@@ -10,14 +10,19 @@ export const createCustomerReportHandler = async (req, res) => {
     const customerId = req.user.userId;
     const { subject, category, priority, description } = req.body;
 
-    if (!subject || !category) {
+    if (!description && !subject) {
       return res.status(400).json({
         success: false,
-        message: "subject and category are required",
+        message: "description is required",
       });
     }
 
-    const data = await createCustomerReport({ customerId, subject, category, priority, description });
+    // subject and category are stored fields (used by the admin reports table)
+    // but the mobile app only collects a free-text description, so derive them.
+    const finalSubject = subject || description.slice(0, 60);
+    const finalCategory = category || "OTHER";
+
+    const data = await createCustomerReport({ customerId, subject: finalSubject, category: finalCategory, priority, description });
 
     res.status(201).json({
       success: true,
