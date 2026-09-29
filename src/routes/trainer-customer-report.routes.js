@@ -15,7 +15,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/customer-reports:
+ * /api/customer-reports/report-customer:
  *   post:
  *     summary: Report a customer for issues during session (Trainer only)
  *     description: Trainer can report a customer only within 24 hours after session is marked as ATTENDED
@@ -55,7 +55,7 @@ const router = express.Router();
  *       409:
  *         description: Report already exists for this booking
  */
-router.post("/", authMiddleware, createCustomerReportHandler);
+router.post("/report-customer", authMiddleware, createCustomerReportHandler);
 
 /**
  * @swagger
