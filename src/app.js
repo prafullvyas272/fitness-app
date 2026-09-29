@@ -61,6 +61,7 @@ import gymRentRoutes from "./routes/gym-rent.routes.js";
 import reviewSessionRoutes from "./routes/review-session.routes.js";
 import trainerReportRoutes from "./routes/trainer-report.routes.js";
 import trainerCustomerReportRoutes from "./routes/trainer-customer-report.routes.js";
+import adminDashboardRoutes from "./routes/admin-dashboard.routes.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -161,6 +162,7 @@ app.use("/api/admin/gym-rent", gymRentRoutes);
 app.use("/api/session-reviews", reviewSessionRoutes);
 app.use("/api/trainer-reports", trainerReportRoutes);
 app.use("/api/customer-reports", trainerCustomerReportRoutes);
+app.use("/api/admin/dashboard", adminDashboardRoutes);
 
 app.use(errorHandler);
 
