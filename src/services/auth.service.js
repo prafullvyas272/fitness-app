@@ -27,7 +27,8 @@ export const registerUser = async (
   gender = null,
   hostGymName,
   hostGymAddress,
-  profilePhotoFile = null
+  profilePhotoFile = null,
+  countryCode = null
 ) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -59,6 +60,7 @@ export const registerUser = async (
       lastName,
       email,
       phone,
+      countryCode,
       gender,
       phoneVerified: true,
       password: hashedPassword,

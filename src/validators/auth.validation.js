@@ -20,6 +20,11 @@ export const registerSchema = z
       .string()
       .min(10, "Phone number must be at least 10 digits"),
 
+    countryCode: z
+      .string()
+      .regex(/^\+\d{1,4}$/, "Country code must be in the format +<1 to 4 digits>, e.g. +1, +44, +91")
+      .optional(),
+
     gender: z
       .enum(["MALE", "FEMALE", "OTHER"], {
         errorMap: () => ({ message: "Gender is required. It must be either MALE, FEMALE, OTHER" }),

@@ -49,6 +49,7 @@ model User {
   mealLogs MealLog[]
 
   phone         String?
+  countryCode   String?
   password      String?
   provider      String  @default("LOCAL")
   providerId    String?

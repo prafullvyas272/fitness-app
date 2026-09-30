@@ -35,6 +35,7 @@ export const register = async (req, res) => {
       lastName,
       email,
       phone,
+      countryCode,
       password,
       role,
       gender,
@@ -52,7 +53,8 @@ export const register = async (req, res) => {
       gender,
       hostGymName,
       hostGymAddress,
-      profilePhotoFile
+      profilePhotoFile,
+      countryCode
     );
 
     console.log('role')
