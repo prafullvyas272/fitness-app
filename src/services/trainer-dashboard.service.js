@@ -81,7 +81,7 @@ const buildChartData = (bookings, period) => {
 export const getTrainerDashboard = async (trainerId, period = "weekly") => {
   const { start, end } = getPeriodRange(period);
 
-  const [allBookings, clients, latestPayout] = await Promise.all([
+  const [allBookings, clients, latestPayout, gymRent] = await Promise.all([
     prisma.trainerBooking.findMany({
       where: {
         trainerId,
@@ -101,6 +101,10 @@ export const getTrainerDashboard = async (trainerId, period = "weekly") => {
       where: { trainerId, createdAt: { gte: start, lte: end } },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.gymRent.findUnique({
+      where: { trainerId },
+      select: { rentAmount: true },
+    }),
   ]);
 
   const booked = allBookings.length;
@@ -118,7 +122,7 @@ export const getTrainerDashboard = async (trainerId, period = "weekly") => {
     booked,
     attended,
     clients,
-    gymRent: 0,
+    gymRent: gymRent?.rentAmount ?? 0,
     totalWorkingHours,
     totalPayout: latestPayout?.totalPayout ?? null,
     netPayout: latestPayout?.netPayout ?? null,
