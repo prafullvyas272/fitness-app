@@ -401,6 +401,78 @@ const updateOrCreateDailyData = async (userId, date, trainerWeekId, isAvailable)
 //     return true;
 // }
 
+/**
+ * Delete a trainer's own ALTERNATIVE slot for a given day.
+ * A booked slot can never be deleted through this path — that would silently
+ * destroy the associated booking (same protection applied to the availability
+ * save flow). Cancel the booking first if it needs to be removed.
+ * @param {string} trainerId
+ * @param {string} timeSlotId - The TrainerTimeSlot's own id (self-referential for ALTERNATIVE slots)
+ * @returns {Promise<object>} confirmation info
+ */
+export const deleteAlternativeSlot = async (trainerId, timeSlotId) => {
+    if (!trainerId || !timeSlotId) {
+        throw new Error("trainerId and timeSlotId are required");
+    }
+
+    const slot = await prisma.trainerTimeSlot.findUnique({
+        where: { id: timeSlotId },
+    });
+
+    if (!slot) {
+        throw new Error("Alternative slot not found");
+    }
+
+    if (slot.trainerId !== trainerId) {
+        throw new Error("You are not authorized to delete this slot");
+    }
+
+    if (slot.slotType !== "ALTERNATIVE") {
+        throw new Error("This is not an alternative slot");
+    }
+
+    if (slot.isBooked) {
+        throw new Error("Cannot delete a slot that is already booked");
+    }
+
+    await prisma.trainerTimeSlot.delete({ where: { id: timeSlotId } });
+
+    // Recompute totalDayMinutes for the day (same authoritative recompute the
+    // save flow uses), and remove this slot's contribution from the week total.
+    const remainingDaySlots = await prisma.trainerTimeSlot.findMany({
+        where: {
+            dailyAvailabilityId: slot.dailyAvailabilityId,
+            trainerId,
+            date: slot.date,
+        },
+        select: { durationMinutes: true },
+    });
+    const totalDayMinutes = remainingDaySlots.reduce(
+        (sum, s) => sum + (s.durationMinutes || 0),
+        0
+    );
+
+    const dailyDoc = await prisma.trainerDailyAvailability.update({
+        where: { id: slot.dailyAvailabilityId },
+        data: { totalDayMinutes },
+    });
+
+    const week = await prisma.trainerWeeklyAvailability.findUnique({
+        where: { id: dailyDoc.trainerWeekId },
+        select: { totalBookedMinutes: true },
+    });
+    if (week) {
+        await prisma.trainerWeeklyAvailability.update({
+            where: { id: dailyDoc.trainerWeekId },
+            data: {
+                totalBookedMinutes: Math.max(0, week.totalBookedMinutes - (slot.durationMinutes || 0)),
+            },
+        });
+    }
+
+    return { success: true, deletedSlotId: timeSlotId };
+};
+
 export const canTrainerApplyLeave = async (trainerId, date) => {
     const { monthStartDate, monthEndDate } = getMonthStartAndEndDates(date);
 

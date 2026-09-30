@@ -4,6 +4,7 @@ import {
     setUserAvailabilityForDate,
     canTrainerApplyLeave,
     applyLeave,
+    deleteAlternativeSlot,
 } from "../services/user-availability.service.js";
 
 /**
@@ -110,6 +111,48 @@ export const getUserWeeklyAvailability = async (req, res) => {
             data: weeklyData,
         });
     } catch (err) {
+        res.status(400).json({
+            success: false,
+            message: err.message,
+        });
+    }
+};
+
+/**
+ * Delete a trainer's own alternative slot by its timeSlotId
+ */
+export const deleteAlternativeSlotHandler = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { timeSlotId } = req.params;
+
+        if (!timeSlotId) {
+            return res.status(400).json({
+                success: false,
+                message: "timeSlotId is required",
+            });
+        }
+
+        const result = await deleteAlternativeSlot(userId, timeSlotId);
+
+        res.status(200).json({
+            success: true,
+            message: "Alternative slot deleted successfully",
+            data: result,
+        });
+    } catch (err) {
+        if (err.message.includes("not found")) {
+            return res.status(404).json({
+                success: false,
+                message: err.message,
+            });
+        }
+        if (err.message.includes("not authorized") || err.message.includes("already booked")) {
+            return res.status(403).json({
+                success: false,
+                message: err.message,
+            });
+        }
         res.status(400).json({
             success: false,
             message: err.message,

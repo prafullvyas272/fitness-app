@@ -5,6 +5,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { setUserAvailability } from "../controllers/user-availability.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { userAvailabilitySchema } from "../validators/user-availability.validation.js";
+import { deleteAlternativeSlotHandler } from "../controllers/user-availability.controller.js";
 
 const router = Router();
 
@@ -95,6 +96,34 @@ router.get("/availability/weekly", authMiddleware, getUserWeeklyAvailability);
  *         description: Missing or invalid fields
  */
 router.post("/availability", authMiddleware, validate(userAvailabilitySchema), setUserAvailability);
+
+/**
+ * @swagger
+ * /api/user/availability/alternative-slot/{timeSlotId}:
+ *   delete:
+ *     tags:
+ *       - Trainer
+ *     summary: Delete the trainer's own alternative slot
+ *     description: Cannot delete a slot that is already booked.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: timeSlotId
+ *         required: true
+ *         schema: { type: string }
+ *         description: The timeSlotId returned for this slot in alternativeSlots (GET /api/user/availability)
+ *     responses:
+ *       200:
+ *         description: Alternative slot deleted successfully
+ *       400:
+ *         description: Bad Request
+ *       403:
+ *         description: Not authorized, or slot is already booked
+ *       404:
+ *         description: Slot not found
+ */
+router.delete("/availability/alternative-slot/:timeSlotId", authMiddleware, deleteAlternativeSlotHandler);
 
 
 export default router;
