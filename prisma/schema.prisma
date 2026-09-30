@@ -111,6 +111,7 @@ model User {
   customerWorkoutPlans  CustomerWorkoutPlan[]  @relation("CustomerWorkoutPlans")
   trainerWorkoutPlans        TrainerWorkoutPlan[]   @relation("TrainerWorkoutPlans")
   customerPremiumWorkoutPlans TrainerWorkoutPlan[]  @relation("CustomerPremiumWorkoutPlans")
+  exerciseSetLogs             ExerciseSetLog[]      @relation("CustomerExerciseSetLogs")
   trainerPremiumStepGoals     PremiumStepGoal[]     @relation("TrainerPremiumStepGoals")
   customerPremiumStepGoals    PremiumStepGoal[]     @relation("CustomerPremiumStepGoals")
   trainerPremiumWeightGoals   PremiumWeightGoal[]   @relation("TrainerPremiumWeightGoals")
@@ -967,7 +968,32 @@ model TrainerWorkoutExercise {
 
   createdAt DateTime @default(now())
 
-  day TrainerWorkoutDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  day     TrainerWorkoutDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  setLogs ExerciseSetLog[]
+}
+
+model ExerciseSetLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  exerciseId String   @db.ObjectId
+  customerId String   @db.ObjectId
+  date       DateTime
+
+  set1 Boolean @default(false)
+  set2 Boolean @default(false)
+  set3 Boolean @default(false)
+  set4 Boolean @default(false)
+  set5 Boolean @default(false)
+  set6 Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  exercise TrainerWorkoutExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  customer User                   @relation("CustomerExerciseSetLogs", fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([exerciseId, customerId, date])
+  @@index([customerId])
+  @@index([exerciseId])
 }
 
 model CustomerWorkoutPlan {
