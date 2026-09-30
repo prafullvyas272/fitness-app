@@ -45,6 +45,24 @@ const percentChange = (current, previous) => {
 const monthLabel = (year, month) =>
   new Date(Date.UTC(year, month - 1, 1)).toLocaleString("en-US", { month: "short", timeZone: "UTC" });
 
+const monthYearLabel = (year, month) =>
+  new Date(Date.UTC(year, month - 1, 1)).toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+
+const parseYyyyMmDd = (dateStr, fieldName) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr || ""));
+  if (!match) {
+    throw new Error(`${fieldName} must be in YYYY-MM-DD format`);
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
+    throw new Error(`${fieldName} is not a valid date`);
+  }
+  return { year, month, day };
+};
+
 /**
  * Sum of monthly-equivalent price for subscriptions that were ACTIVE at any point
  * during [start, end]. This is an estimate derived from current Subscription rows
@@ -71,14 +89,115 @@ const estimateMonthlyRevenue = async (start, end) => {
   return Math.round(total);
 };
 
+/** Sum of the 12 months' estimateMonthlyRevenue for a given calendar year. */
+const estimateYearlyRevenue = async (year) => {
+  const monthlyValues = await Promise.all(
+    Array.from({ length: 12 }, (_, i) => {
+      const { start, end } = getMonthRangeUtc(year, i + 1);
+      return estimateMonthlyRevenue(start, end);
+    })
+  );
+  return monthlyValues.reduce((sum, v) => sum + v, 0);
+};
+
+const MAX_CUSTOM_MONTH_BUCKETS = 60;
+
+/**
+ * Builds { categories, series } for the revenue chart under one of three modes:
+ *   monthly — last 6 calendar months ending at year/month (default: current month)
+ *   yearly  — last 5 calendar years ending at year (default: current year), each
+ *             point is that year's total (sum of its 12 monthly estimates)
+ *   custom  — one point per calendar month intersecting [startDate, endDate],
+ *             each bucket clipped to the requested range
+ */
+const buildRevenueChart = async (period, { year, month, startDate, endDate }) => {
+  if (period === "yearly") {
+    const years = [];
+    for (let i = 4; i >= 0; i--) years.push(year - i);
+
+    const series = await Promise.all(years.map((y) => estimateYearlyRevenue(y)));
+    return {
+      categories: years.map((y) => String(y)),
+      series,
+    };
+  }
+
+  if (period === "custom") {
+    if (!startDate || !endDate) {
+      throw new Error("startDate and endDate are required when period=custom");
+    }
+    const start = parseYyyyMmDd(startDate, "startDate");
+    const end = parseYyyyMmDd(endDate, "endDate");
+
+    const rangeStart = new Date(Date.UTC(start.year, start.month - 1, start.day, 0, 0, 0, 0));
+    const rangeEnd = new Date(Date.UTC(end.year, end.month - 1, end.day, 23, 59, 59, 999));
+    if (rangeStart > rangeEnd) {
+      throw new Error("startDate must be on or before endDate");
+    }
+
+    const buckets = [];
+    let cursorYear = start.year;
+    let cursorMonth = start.month;
+    while (
+      cursorYear < end.year ||
+      (cursorYear === end.year && cursorMonth <= end.month)
+    ) {
+      buckets.push({ year: cursorYear, month: cursorMonth });
+      if (buckets.length > MAX_CUSTOM_MONTH_BUCKETS) {
+        throw new Error(`Custom range is too large — max ${MAX_CUSTOM_MONTH_BUCKETS} months`);
+      }
+      cursorMonth += 1;
+      if (cursorMonth > 12) {
+        cursorMonth = 1;
+        cursorYear += 1;
+      }
+    }
+
+    const series = await Promise.all(
+      buckets.map(({ year: y, month: m }) => {
+        const { start: monthStart, end: monthEnd } = getMonthRangeUtc(y, m);
+        const clippedStart = monthStart < rangeStart ? rangeStart : monthStart;
+        const clippedEnd = monthEnd > rangeEnd ? rangeEnd : monthEnd;
+        return estimateMonthlyRevenue(clippedStart, clippedEnd);
+      })
+    );
+
+    return {
+      categories: buckets.map(({ year: y, month: m }) => monthYearLabel(y, m)),
+      series,
+    };
+  }
+
+  // monthly (default): last 6 months ending at year/month, unchanged from before
+  const chartMonths = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(Date.UTC(year, month - 1 - i, 1));
+    chartMonths.push({ year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 });
+  }
+  const series = await Promise.all(
+    chartMonths.map(({ year: y, month: m }) => {
+      const { start, end } = getMonthRangeUtc(y, m);
+      return estimateMonthlyRevenue(start, end);
+    })
+  );
+  return {
+    categories: chartMonths.map(({ year: y, month: m }) => monthLabel(y, m)),
+    series,
+  };
+};
+
 export const getAdminDashboardStats = async (filter = {}) => {
   const now = new Date();
   const year = filter.year ? Number(filter.year) : now.getUTCFullYear();
   const month = filter.month ? Number(filter.month) : now.getUTCMonth() + 1;
   const limit = filter.limit ? Math.min(Math.max(Number(filter.limit), 1), 50) : 5;
+  const period = filter.period ? String(filter.period) : "monthly";
 
   if (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(year)) {
     throw new Error("Invalid month/year filter");
+  }
+  if (!["monthly", "yearly", "custom"].includes(period)) {
+    throw new Error("period must be one of: monthly, yearly, custom");
   }
 
   const { start: thisMonthStart, end: thisMonthEnd } = getMonthRangeUtc(year, month);
@@ -140,22 +259,13 @@ export const getAdminDashboardStats = async (filter = {}) => {
     },
   };
 
-  // --- Revenue chart: last 6 months ending at the requested month ---
-  const chartMonths = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(Date.UTC(year, month - 1 - i, 1));
-    chartMonths.push({ year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 });
-  }
-  const revenueSeries = await Promise.all(
-    chartMonths.map(({ year: y, month: m }) => {
-      const { start, end } = getMonthRangeUtc(y, m);
-      return estimateMonthlyRevenue(start, end);
-    })
-  );
-  const revenueChart = {
-    categories: chartMonths.map(({ year: y, month: m }) => monthLabel(y, m)),
-    series: revenueSeries,
-  };
+  // --- Revenue chart: shape depends on period (monthly/yearly/custom) ---
+  const revenueChart = await buildRevenueChart(period, {
+    year,
+    month,
+    startDate: filter.startDate,
+    endDate: filter.endDate,
+  });
 
   // --- Membership split ---
   // Grouped by each customer's most recent Subscription: ACTIVE -> plan name,
@@ -232,7 +342,7 @@ export const getAdminDashboardStats = async (filter = {}) => {
 
   return {
     cards,
-    revenueChart,
+    revenueChart: { period, ...revenueChart },
     membershipSplit,
     recentMembers,
     totalRevenue,

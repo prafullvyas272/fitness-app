@@ -25,6 +25,18 @@ const router = express.Router();
  *         name: limit
  *         schema: { type: integer, default: 5 }
  *         description: Number of recent members to return
+ *       - in: query
+ *         name: period
+ *         schema: { type: string, enum: [monthly, yearly, custom], default: monthly }
+ *         description: Shape of revenueChart - monthly (last 6 months), yearly (last 5 years), or custom (bucketed by month across startDate/endDate)
+ *       - in: query
+ *         name: startDate
+ *         schema: { type: string, format: date }
+ *         description: Required when period=custom. Format YYYY-MM-DD.
+ *       - in: query
+ *         name: endDate
+ *         schema: { type: string, format: date }
+ *         description: Required when period=custom. Format YYYY-MM-DD.
  *     responses:
  *       200:
  *         description: Dashboard stats fetched successfully
