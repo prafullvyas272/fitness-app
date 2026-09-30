@@ -10,6 +10,7 @@ import {
   unassignTrainerHandler,
   getAssignedPTsHandler,
   getAssignedPTByIdHandler,
+  getMentorProfileHandler,
 } from "../controllers/mentor.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
@@ -316,6 +317,53 @@ router.delete("/mentors/:id/unassign-trainer/:trainerId", authMiddleware, supera
  *                       type: object
  */
 router.get("/mentor/assigned-pts", authMiddleware, getAssignedPTsHandler);
+
+/**
+ * @swagger
+ * /api/mentor/me:
+ *   get:
+ *     summary: Get the logged-in mentor's own profile
+ *     description: Always scoped to the authenticated mentor - no other mentor's data is ever reachable through this endpoint.
+ *     tags:
+ *       - Mentor
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Mentor profile fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string }
+ *                     firstName: { type: string }
+ *                     lastName: { type: string }
+ *                     fullName: { type: string }
+ *                     email: { type: string }
+ *                     phone: { type: string }
+ *                     countryCode: { type: string, nullable: true }
+ *                     gender: { type: string, nullable: true }
+ *                     isActive: { type: boolean }
+ *                     createdAt: { type: string, format: date-time }
+ *                     title: { type: string, nullable: true }
+ *                     experience: { type: number, nullable: true }
+ *                     region: { type: string, nullable: true }
+ *                     maxPTs: { type: number, nullable: true }
+ *                     profilePhoto: { type: string, nullable: true }
+ *                     status: { type: string, nullable: true }
+ *       404:
+ *         description: Mentor not found
+ */
+router.get("/mentor/me", authMiddleware, getMentorProfileHandler);
 
 /**
  * @swagger

@@ -1,4 +1,4 @@
-import { createMentor, getAllMentors, getMentorById, updateMentor, deleteMentor, getUnassignedTrainers, assignTrainers, unassignTrainer, getAssignedPTs, getAssignedPTById } from "../services/mentor.service.js";
+import { createMentor, getAllMentors, getMentorById, updateMentor, deleteMentor, getUnassignedTrainers, assignTrainers, unassignTrainer, getAssignedPTs, getAssignedPTById, getMentorProfile } from "../services/mentor.service.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 export const createMentorHandler = async (req, res) => {
@@ -153,6 +153,30 @@ export const getAssignedPTByIdHandler = async (req, res) => {
         success: false,
         message: err.message,
         error: "NOT_FOUND",
+      });
+    }
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getMentorProfileHandler = async (req, res) => {
+  try {
+    const mentorId = req.user.userId;
+    const data = await getMentorProfile(mentorId);
+
+    res.status(200).json({
+      success: true,
+      message: "Mentor profile fetched successfully",
+      data,
+    });
+  } catch (err) {
+    if (err.message.includes("not found")) {
+      return res.status(404).json({
+        success: false,
+        message: err.message,
       });
     }
     res.status(400).json({

@@ -423,6 +423,60 @@ export const getAssignedPTById = async (mentorId, ptId) => {
   };
 };
 
+/**
+ * The logged-in mentor's own profile — everything from signup plus mentor-
+ * specific fields (title, avatar, experience, region, maxPTs, status).
+ * Self-service: always scoped to the caller's own userId, never a param, so
+ * one mentor can never fetch another's profile through this endpoint.
+ */
+export const getMentorProfile = async (mentorId) => {
+  const mentor = await prisma.user.findUnique({
+    where: { id: mentorId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      countryCode: true,
+      gender: true,
+      isActive: true,
+      createdAt: true,
+      mentorProfile: {
+        select: {
+          title: true,
+          experience: true,
+          region: true,
+          maxPTs: true,
+          avatarUrl: true,
+          status: true,
+        },
+      },
+    },
+  });
+
+  if (!mentor) throw new Error("Mentor not found");
+
+  return {
+    id: mentor.id,
+    firstName: mentor.firstName,
+    lastName: mentor.lastName,
+    fullName: `${mentor.firstName || ""} ${mentor.lastName || ""}`.trim(),
+    email: mentor.email,
+    phone: mentor.phone,
+    countryCode: mentor.countryCode,
+    gender: mentor.gender,
+    isActive: mentor.isActive,
+    createdAt: mentor.createdAt,
+    title: mentor.mentorProfile?.title || null,
+    experience: mentor.mentorProfile?.experience || null,
+    region: mentor.mentorProfile?.region || null,
+    maxPTs: mentor.mentorProfile?.maxPTs || null,
+    profilePhoto: mentor.mentorProfile?.avatarUrl || null,
+    status: mentor.mentorProfile?.status || null,
+  };
+};
+
 const sortPTs = (pts, sortBy) => {
   const copy = [...pts];
   switch (sortBy) {
