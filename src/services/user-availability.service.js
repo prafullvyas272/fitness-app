@@ -104,6 +104,7 @@ export const getUserAvailabilityDataByDate = async (userId, date) => {
         isAvailable,
         peakSlots,
         alternativeSlots,
+        hasPeakSlot: peakSlots.length > 0,
     };
 };
 

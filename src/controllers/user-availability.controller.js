@@ -29,6 +29,7 @@ export const getUserAvailability = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 message: 'No availability found for this date.',
+                data: { hasPeakSlot: false },
             });
         }
 
