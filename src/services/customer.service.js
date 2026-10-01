@@ -52,6 +52,7 @@ export const createCustomer = async (data) => {
         lastName: true,
         email: true,
         phone: true,
+        countryCode: true,
         isActive: true,
         gender: true,
         roleId: true,
@@ -142,6 +143,7 @@ export const updateCustomer = async (customerId, data) => {
         lastName: true,
         email: true,
         phone: true,
+        countryCode: true,
         isActive: true,
         gender: true,
         roleId: true,
@@ -186,6 +188,7 @@ export const updateCustomer = async (customerId, data) => {
         lastName: true,
         email: true,
         phone: true,
+        countryCode: true,
         isActive: true,
         gender: true,
         roleId: true,
@@ -255,6 +258,7 @@ export const deleteCustomer = async (customerId) => {
         lastName: true,
         email: true,
         phone: true,
+        countryCode: true,
         isActive: true,
         roleId: true,
         createdAt: true,
@@ -284,6 +288,7 @@ export const showCustomerProfileData = async (customerId) => {
       lastName: true,
       email: true,
       phone: true,
+      countryCode: true,
       isActive: true,
       isPremiumMember: true,
       roleId: true,
@@ -303,6 +308,7 @@ export const showCustomerProfileData = async (customerId) => {
               lastName: true,
               email: true,
               phone: true,
+              countryCode: true,
               userProfileDetails: {
                 take: 1,
                 select: {
@@ -471,6 +477,7 @@ export const getTrainerPlanForCustomer = async (customerId) => {
           lastName: true,
           email: true,
           phone: true,
+          countryCode: true,
           plan: true,
         },
       },
@@ -562,10 +569,10 @@ export const getUPTRequests = async () => {
   return prisma.trainerRequest.findMany({
     include: {
       customer: {
-        select: { id: true, firstName: true, lastName: true, email: true, phone: true }
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true, countryCode: true }
       },
       trainer: {
-        select: { id: true, firstName: true, lastName: true, email: true, phone: true }
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true, countryCode: true }
       }
     },
     orderBy: { createdAt: "desc" }
