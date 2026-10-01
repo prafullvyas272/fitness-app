@@ -293,14 +293,22 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
         data: { totalDayMinutes }
     });
 
-    // Update weekly data for totalBookedMinutes
+    // Recompute the week's totalBookedMinutes authoritatively from all its days,
+    // same as totalDayMinutes above - incrementing by this day's total on every
+    // save double(or more)-counted it each time the same day was saved again
+    // (e.g. once per slot added), inflating the figure far past reality.
+    const allWeekDays = await prisma.trainerDailyAvailability.findMany({
+        where: { trainerWeekId: weekDoc.id },
+        select: { totalDayMinutes: true },
+    });
+    const totalBookedMinutes = allWeekDays.reduce(
+        (sum, day) => sum + (day.totalDayMinutes || 0),
+        0
+    );
+
     await prisma.trainerWeeklyAvailability.update({
         where: { id: weekDoc.id },
-        data: {
-            totalBookedMinutes: {
-                increment: totalDayMinutes
-            }
-        }
+        data: { totalBookedMinutes }
     });
 
     // 7. Return saved daily availability (include time slots)
@@ -458,18 +466,22 @@ export const deleteAlternativeSlot = async (trainerId, timeSlotId) => {
         data: { totalDayMinutes },
     });
 
-    const week = await prisma.trainerWeeklyAvailability.findUnique({
-        where: { id: dailyDoc.trainerWeekId },
-        select: { totalBookedMinutes: true },
+    // Recompute the week total the same authoritative way as the save flow,
+    // rather than subtracting a delta from whatever the stored value happened
+    // to be - keeps this in lockstep with setUserAvailabilityForDate's fix and
+    // can never drift regardless of what else touched the week's total.
+    const allWeekDays = await prisma.trainerDailyAvailability.findMany({
+        where: { trainerWeekId: dailyDoc.trainerWeekId },
+        select: { totalDayMinutes: true },
     });
-    if (week) {
-        await prisma.trainerWeeklyAvailability.update({
-            where: { id: dailyDoc.trainerWeekId },
-            data: {
-                totalBookedMinutes: Math.max(0, week.totalBookedMinutes - (slot.durationMinutes || 0)),
-            },
-        });
-    }
+    const totalBookedMinutes = allWeekDays.reduce(
+        (sum, day) => sum + (day.totalDayMinutes || 0),
+        0
+    );
+    await prisma.trainerWeeklyAvailability.update({
+        where: { id: dailyDoc.trainerWeekId },
+        data: { totalBookedMinutes },
+    });
 
     return { success: true, deletedSlotId: timeSlotId };
 };
