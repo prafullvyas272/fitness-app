@@ -485,6 +485,7 @@ model Plan {
   duration         PlanDurationCycle @default(MONTHLY)
   isPopular        Boolean           @default(false)
   stripePriceId    String?
+  maxSlots         Int?
   createdBy        String            @db.ObjectId
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt

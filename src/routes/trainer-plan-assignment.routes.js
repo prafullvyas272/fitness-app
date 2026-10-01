@@ -2,6 +2,7 @@ import express from "express";
 import {
   assignPlanToTrainerHandler,
   getTrainerPlansHandler,
+  getMyPlansHandler,
   removePlanFromTrainerHandler,
   updatePlanAssignmentHandler,
   assignMultiplePlansToTrainerHandler,
@@ -100,6 +101,7 @@ router.post("/assign-multiple", authMiddleware, superadminMiddleware, assignMult
  *       400:
  *         description: Trainer not found
  */
+router.get("/me", authMiddleware, getMyPlansHandler);
 router.get("/:trainerId", authMiddleware, getTrainerPlansHandler);
 
 /**

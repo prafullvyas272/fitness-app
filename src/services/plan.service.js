@@ -37,7 +37,8 @@ export const createPlan = async (data) => {
         isPopular: data.isPopular || false,
         duration: data.duration || "MONTHLY",
         createdBy: data.createdBy,
-        stripePriceId: stripePrice.id
+        stripePriceId: stripePrice.id,
+        maxSlots: data.maxSlots ?? null
       }
     });
     return newPlan;

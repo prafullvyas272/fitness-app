@@ -15,7 +15,7 @@ const ALLOWED_PLAN_DURATIONS = ["WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY"];
  */
 export const createPlanHandler = async (req, res) => {
   try {
-    const { name, price, features, isPopular, duration } = req.body;
+    const { name, price, features, isPopular, duration, maxSlots } = req.body;
     const createdBy = req.user?.userId;
 
     if (!name || price === undefined || !features || !createdBy) {
@@ -32,6 +32,13 @@ export const createPlanHandler = async (req, res) => {
       });
     }
 
+    if (maxSlots !== undefined && maxSlots !== null && (!Number.isInteger(maxSlots) || maxSlots < 1)) {
+      return res.status(400).json({
+        success: false,
+        message: "maxSlots must be a positive integer if provided",
+      });
+    }
+
     const plan = await createPlan({
       name,
       price,
@@ -39,6 +46,7 @@ export const createPlanHandler = async (req, res) => {
       isPopular,
       duration,
       createdBy,
+      maxSlots,
     });
 
     res.status(201).json({
@@ -60,7 +68,7 @@ export const createPlanHandler = async (req, res) => {
 export const updatePlanHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, features, isPopular } = req.body;
+    const { name, price, features, isPopular, maxSlots } = req.body;
 
     if (!id) {
       return res.status(400).json({
@@ -69,11 +77,19 @@ export const updatePlanHandler = async (req, res) => {
       });
     }
 
+    if (maxSlots !== undefined && maxSlots !== null && (!Number.isInteger(maxSlots) || maxSlots < 1)) {
+      return res.status(400).json({
+        success: false,
+        message: "maxSlots must be a positive integer if provided",
+      });
+    }
+
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (price !== undefined) updateData.price = price;
     if (features !== undefined) updateData.features = features;
     if (isPopular !== undefined) updateData.isPopular = isPopular;
+    if (maxSlots !== undefined) updateData.maxSlots = maxSlots;
 
     const updatedPlan = await updatePlan(id, updateData);
 

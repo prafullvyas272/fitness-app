@@ -110,6 +110,22 @@ export const getUserAvailabilityDataByDate = async (userId, date) => {
 
 
 /**
+ * Total slot allowance across this trainer's active assigned plans (peak +
+ * alternative combined, any date). Returns null for "no cap": either no
+ * active plan assignment, or every active plan has maxSlots unset - keeps
+ * every trainer/plan that predates this field completely unaffected.
+ */
+const getTrainerMaxSlots = async (trainerId) => {
+    const assignments = await prisma.trainerAssignedPlan.findMany({
+        where: { trainerId, isActive: true },
+        select: { plan: { select: { maxSlots: true } } },
+    });
+    if (assignments.length === 0) return null;
+    const total = assignments.reduce((sum, a) => sum + (a.plan?.maxSlots || 0), 0);
+    return total > 0 ? total : null;
+};
+
+/**
  * Stores a user's daily availability and its time slots
  * @param {string} userId - The trainer's user id (string/ObjectId)
  * @param {object} availability - Object with fields: date (YYYY-MM-DD), isAvailable (bool), peakSlots ([{start,end}]), alternativeSlots ([{start,end}])
@@ -127,6 +143,35 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
     let dailyDoc = await updateOrCreateDailyData(userId, date, weekDoc.id, isAvailable);
 
     // await deleteExistinTimeSlots(dailyDoc.id);
+
+    // Enforce the trainer's plan-granted slot cap (peak + alternative combined,
+    // across their whole schedule) before creating anything. null = no cap.
+    const maxSlots = await getTrainerMaxSlots(userId);
+    if (maxSlots !== null) {
+        const existingTrainerSlots = await prisma.trainerTimeSlot.findMany({
+            where: { trainerId: userId },
+            select: { timeSlotId: true },
+        });
+        const linkedAdminIds = new Set(existingTrainerSlots.map((s) => s.timeSlotId).filter(Boolean));
+
+        let newSlotsRequested = 0;
+        for (const slot of peakSlots) {
+            if (slot.timeSlotId && !linkedAdminIds.has(slot.timeSlotId)) newSlotsRequested++;
+        }
+        for (const slot of alternativeSlots) {
+            // Conservative: a brand-new alternative slot has no id to check against
+            // yet, so every one without a timeSlotId counts here even if it later
+            // turns out to be an exact-time duplicate that gets skipped - safe to
+            // over-count toward the cap, never safe to under-count.
+            if (!slot.timeSlotId) newSlotsRequested++;
+        }
+
+        if (newSlotsRequested > 0 && existingTrainerSlots.length + newSlotsRequested > maxSlots) {
+            throw new Error(
+                `Slot limit reached: your assigned plan allows a maximum of ${maxSlots} total slots (peak + alternative combined). You currently have ${existingTrainerSlots.length} and this request would add ${newSlotsRequested} more.`
+            );
+        }
+    }
 
     // 5. Add new slots and calculate totalDayMinutes for the day
     const slots = [];

@@ -33,6 +33,31 @@ export const assignPlanToTrainerHandler = async (req, res) => {
   }
 };
 
+/**
+ * Self-service: the logged-in trainer's own assigned plans. Always scoped to
+ * the caller's own userId (never a param), so one trainer can never fetch
+ * another's plan assignment through this endpoint.
+ */
+export const getMyPlansHandler = async (req, res) => {
+  try {
+    const trainerId = req.user.userId;
+    const { onlyActive } = req.query;
+
+    const plans = await getTrainerPlans(trainerId, onlyActive !== "false");
+
+    res.status(200).json({
+      success: true,
+      message: "Your assigned plans fetched successfully",
+      data: plans,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 export const getTrainerPlansHandler = async (req, res) => {
   try {
     const { trainerId } = req.params;
