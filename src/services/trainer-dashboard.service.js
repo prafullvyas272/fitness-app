@@ -1,5 +1,66 @@
 import prisma from "../utils/prisma.js";
 
+const IST_OFFSET_MINUTES = 330; // Asia/Kolkata (+05:30)
+
+/** "HH:mm" in IST — used as the grouping key (unambiguous, 24h). */
+const istHhmmKey = (dateObj) => {
+  const istMs = new Date(dateObj).getTime() + IST_OFFSET_MINUTES * 60 * 1000;
+  const istDate = new Date(istMs);
+  const hh = String(istDate.getUTCHours()).padStart(2, "0");
+  const mm = String(istDate.getUTCMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+};
+
+/** "11:30 AM" in IST — used for the display label. */
+const istHhmmDisplay = (dateObj) => {
+  const istMs = new Date(dateObj).getTime() + IST_OFFSET_MINUTES * 60 * 1000;
+  const istDate = new Date(istMs);
+  let hours = istDate.getUTCHours();
+  const minutes = String(istDate.getUTCMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  return `${hours}:${minutes} ${ampm}`;
+};
+
+/**
+ * Among a bucket's bookings, finds the time-of-day range (ignoring calendar
+ * date, so a 11:30-12:15 slot on two different days in the same bucket counts
+ * together) that was booked most often.
+ */
+const getMostBookedSlot = (bucketBookings) => {
+  const slotCounts = new Map();
+
+  for (const b of bucketBookings) {
+    if (!b.timeSlot?.startTime || !b.timeSlot?.endTime) continue;
+    const key = `${istHhmmKey(b.timeSlot.startTime)}|${istHhmmKey(b.timeSlot.endTime)}`;
+    const entry = slotCounts.get(key);
+    if (entry) {
+      entry.count += 1;
+    } else {
+      slotCounts.set(key, {
+        count: 1,
+        startTime: b.timeSlot.startTime,
+        endTime: b.timeSlot.endTime,
+      });
+    }
+  }
+
+  let best = null;
+  for (const entry of slotCounts.values()) {
+    if (!best || entry.count > best.count) best = entry;
+  }
+
+  if (!best) {
+    return { mostBookedTimeSlot: null, mostBookedTimeSlotCount: 0 };
+  }
+
+  return {
+    mostBookedTimeSlot: `${istHhmmDisplay(best.startTime)} - ${istHhmmDisplay(best.endTime)}`,
+    mostBookedTimeSlotCount: best.count,
+  };
+};
+
 const getPeriodRange = (period) => {
   const now = new Date();
   const start = new Date(now);
@@ -31,13 +92,17 @@ const buildChartData = (bookings, period) => {
       };
     });
 
-    return months.map(({ label, year, month }) => ({
-      label,
-      bookings: bookings.filter((b) => {
+    return months.map(({ label, year, month }) => {
+      const bucketBookings = bookings.filter((b) => {
         const d = new Date(b.createdAt);
         return d.getFullYear() === year && d.getMonth() === month;
-      }).length,
-    }));
+      });
+      return {
+        label,
+        bookings: bucketBookings.length,
+        ...getMostBookedSlot(bucketBookings),
+      };
+    });
   }
 
   if (period === "monthly") {
@@ -51,13 +116,17 @@ const buildChartData = (bookings, period) => {
       return { label: `Week ${i + 1}`, start: weekStart, end: weekEnd };
     });
 
-    return weeks.map(({ label, start, end }) => ({
-      label,
-      bookings: bookings.filter((b) => {
+    return weeks.map(({ label, start, end }) => {
+      const bucketBookings = bookings.filter((b) => {
         const d = new Date(b.createdAt);
         return d >= start && d <= end;
-      }).length,
-    }));
+      });
+      return {
+        label,
+        bookings: bucketBookings.length,
+        ...getMostBookedSlot(bucketBookings),
+      };
+    });
   }
 
   // weekly — last 7 days
@@ -70,12 +139,16 @@ const buildChartData = (bookings, period) => {
     };
   });
 
-  return days.map(({ label, date }) => ({
-    label,
-    bookings: bookings.filter((b) => {
+  return days.map(({ label, date }) => {
+    const bucketBookings = bookings.filter((b) => {
       return new Date(b.createdAt).toISOString().split("T")[0] === date;
-    }).length,
-  }));
+    });
+    return {
+      label,
+      bookings: bucketBookings.length,
+      ...getMostBookedSlot(bucketBookings),
+    };
+  });
 };
 
 export const getTrainerDashboard = async (trainerId, period = "weekly") => {
@@ -91,7 +164,7 @@ export const getTrainerDashboard = async (trainerId, period = "weekly") => {
       select: {
         bookingStatus: true,
         createdAt: true,
-        timeSlot: { select: { durationMinutes: true } },
+        timeSlot: { select: { durationMinutes: true, startTime: true, endTime: true } },
       },
     }),
     prisma.assignedCustomer.count({
