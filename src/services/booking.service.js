@@ -174,7 +174,11 @@ export const bookSlot = async (customerId, trainerId, timeSlotId) => {
             trainerId,
             timeSlotId: slot.id,
             originalTimeSlotId: slot.id,
-          }
+          },
+          include: {
+            customer: { select: { firstName: true, lastName: true } },
+            timeSlot: true,
+          },
         });
 
         await tx.trainerTimeSlot.update({

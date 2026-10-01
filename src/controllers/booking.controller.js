@@ -89,6 +89,28 @@ export const bookSlotHandler = async (req, res) => {
 
     const booking = await bookSlot(customerId, trainerId, timeSlotId);
 
+    // Notify the trainer in real time. Isolated in its own try/catch so a
+    // Pusher hiccup can never turn an already-successful booking into a
+    // reported failure for the customer.
+    try {
+      const customerName = `${booking.customer?.firstName || ""} ${booking.customer?.lastName || ""}`.trim();
+      await pusher.trigger(
+        `booking-${booking.trainerId}`,
+        "new-booking",
+        {
+          bookingId: booking.id,
+          customerId: booking.customerId,
+          customerName,
+          trainerId: booking.trainerId,
+          timeSlot: booking.timeSlot,
+          bookingStatus: booking.bookingStatus,
+          message: `${customerName || "A customer"} booked a session with you`
+        }
+      );
+    } catch (pusherErr) {
+      console.error("Pusher notification failed for new booking:", pusherErr.message);
+    }
+
     res.status(201).json({
       success: true,
       message: "Slot booked successfully",
