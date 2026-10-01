@@ -480,6 +480,15 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       bookingMap.set(booking.timeSlotId, booking);
     });
 
+    const bookingIdsForReportLookup = bookings.map((b) => b.id);
+    const trainerReports = bookingIdsForReportLookup.length > 0
+      ? await prisma.trainerReport.findMany({
+          where: { bookingId: { in: bookingIdsForReportLookup } },
+          select: { bookingId: true },
+        })
+      : [];
+    const reportedBookingIds = new Set(trainerReports.map((r) => r.bookingId));
+
     const now = new Date();
     const upcomingSessions = [];
     const allPastSessions = [];
@@ -504,6 +513,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         // Every slot in this response belongs to the requested trainerId, so the
         // trainer's name/gym is always available, independent of booking status.
         trainer: trainerSummary,
+        reported: booking ? reportedBookingIds.has(booking.id) : false,
         ...(booking && {
           bookingId: booking.id,
           bookingStatus: booking.bookingStatus,
