@@ -291,7 +291,7 @@ export const getAllTimeSlot = async (filter = {}) => {
 
 export const getTrainerAllTimeSlot = async (filter = {}) => {
   try {
-    const { trainerId, customerId, date, day, month, year, page = 1, pageSize = 20, filterAdminByTrainer = false } = filter;
+    const { trainerId, date, day, month, year, page = 1, pageSize = 20, filterAdminByTrainer = false } = filter;
 
     if (!trainerId) {
       throw new Error("trainerId is required");
@@ -304,6 +304,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       select: {
         firstName: true,
         lastName: true,
+        createdAt: true,
         userProfileDetails: { select: { hostGymName: true }, take: 1 },
       },
     });
@@ -517,22 +518,20 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       }
     }
 
-    // Determine the earliest date a customer can see past sessions from (their account creation date)
-    let customerCreatedAt = null;
-    if (customerId) {
-      const customer = await prisma.user.findUnique({
-        where: { id: customerId },
-        select: { createdAt: true },
-      });
-      if (customer?.createdAt) {
-        customerCreatedAt = new Date(customer.createdAt);
-        customerCreatedAt.setHours(0, 0, 0, 0);
-      }
+    // No one (the trainer themselves, a new trainer, or a customer browsing
+    // them) can see sessions from before this trainer's account existed —
+    // they couldn't possibly have worked then. Keyed to the trainer being
+    // viewed (trainerId), not the viewer, so this holds regardless of who's
+    // asking. Reuses trainerInfo already fetched above, no extra query.
+    let trainerCreatedAt = null;
+    if (trainerInfo?.createdAt) {
+      trainerCreatedAt = new Date(trainerInfo.createdAt);
+      trainerCreatedAt.setHours(0, 0, 0, 0);
     }
 
     const pastSessions = allPastSessions.filter((slot) => {
       const slotStart = new Date(slot.startTime);
-      if (customerCreatedAt && slotStart < customerCreatedAt) return false;
+      if (trainerCreatedAt && slotStart < trainerCreatedAt) return false;
       return slotStart >= weekStart && slotStart <= weekEnd;
     });
 
