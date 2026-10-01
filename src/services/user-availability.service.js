@@ -219,6 +219,23 @@ export const setUserAvailabilityForDate = async (userId, availability) => {
         const durationMinutes = Math.round((endTime - startTime) / 60000);
 
         if (!slot?.timeSlotId) {
+            // A new alternative slot has no admin-slot id to dedupe against like
+            // peak slots do, so check by trainer+date+exact time range instead -
+            // otherwise resubmitting the same time (double-tap, retry, etc.)
+            // creates a second identical slot every time.
+            const duplicate = await prisma.trainerTimeSlot.findFirst({
+                where: {
+                    trainerId: userId,
+                    date: new Date(date),
+                    slotType: "ALTERNATIVE",
+                    startTime,
+                    endTime,
+                },
+            });
+            if (duplicate) {
+                continue;
+            }
+
             // First, create the time slot
             const createdSlot = await prisma.trainerTimeSlot.create({
                 data: {
