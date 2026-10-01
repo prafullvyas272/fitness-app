@@ -66,18 +66,64 @@ export const updateTrainerRequestStatus = async ({ requestId, status }) => {
         // throw new Error("Trainer does not have a plan assigned. Cannot approve request.");
       }
       // Check for existing assignment to avoid duplicates
+      // customerId_trainerId is the compound unique key (customerId, trainerId
+      // only - isActive/startDate aren't part of it and throw if included).
       const existingAssignment = await prisma.assignedCustomer.findUnique({
         where: {
           customerId_trainerId: {
             customerId: trainerRequest.customerId,
             trainerId: trainerRequest.trainerId,
-            isActive: true,
-            startDate: new Date(),
           },
         },
       });
 
       if (!existingAssignment) {
+        // Switching trainers: deactivate any other currently-active assignment
+        // for this customer, and cancel their not-yet-occurred bookings with
+        // that old trainer so the old trainer's future schedule stops showing
+        // as this customer's upcoming sessions. Already-past bookings are left
+        // untouched - they remain as history, same as the plain cancel flow.
+        const now = new Date();
+        const priorAssignments = await prisma.assignedCustomer.findMany({
+          where: {
+            customerId: trainerRequest.customerId,
+            isActive: true,
+            trainerId: { not: trainerRequest.trainerId },
+          },
+          select: { id: true, trainerId: true },
+        });
+
+        if (priorAssignments.length > 0) {
+          await prisma.assignedCustomer.updateMany({
+            where: { id: { in: priorAssignments.map((a) => a.id) } },
+            data: { isActive: false, endDate: now },
+          });
+
+          for (const prior of priorAssignments) {
+            const futureBookings = await prisma.trainerBooking.findMany({
+              where: {
+                customerId: trainerRequest.customerId,
+                trainerId: prior.trainerId,
+                isCancelled: false,
+                bookingStatus: { notIn: ["ATTENDED", "CANCELLED"] },
+                timeSlot: { startTime: { gt: now } },
+              },
+              select: { id: true, timeSlotId: true },
+            });
+
+            if (futureBookings.length > 0) {
+              await prisma.trainerBooking.updateMany({
+                where: { id: { in: futureBookings.map((b) => b.id) } },
+                data: { bookingStatus: "CANCELLED", isCancelled: true },
+              });
+              await prisma.trainerTimeSlot.updateMany({
+                where: { id: { in: futureBookings.map((b) => b.timeSlotId) } },
+                data: { isBooked: false },
+              });
+            }
+          }
+        }
+
         assignedCustomer = await prisma.assignedCustomer.create({
           data: {
             customerId: trainerRequest.customerId,
