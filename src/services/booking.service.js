@@ -89,8 +89,18 @@ export const getBookingsByTrainerWithPagination = async ( trainerId, date = null
 
   const totalPages = Math.ceil(total / pageSize);
 
+  const bookingIds = bookings.map((b) => b.id);
+  const reportedBookings = bookingIds.length > 0
+    ? await prisma.trainerCustomerReport.findMany({
+        where: { bookingId: { in: bookingIds } },
+        select: { bookingId: true },
+      })
+    : [];
+  const reportedBookingIds = new Set(reportedBookings.map((r) => r.bookingId));
+
   const formattedBookings = bookings.map((booking) => ({
     ...booking,
+    reported: reportedBookingIds.has(booking.id),
     timeSlot: booking.timeSlot
       ? {
           ...booking.timeSlot,
