@@ -90,6 +90,58 @@ export const getSessionReviewsByTrainer = async (trainerId, page = 1, pageSize =
   }
 };
 
+export const getSessionReviewsForMentor = async (mentorId, page = 1, pageSize = 10, trainerId = null) => {
+  try {
+    const assignedTrainers = await prisma.mentorTrainerAssignment.findMany({
+      where: { mentorId },
+      select: { trainerId: true }
+    });
+    const trainerIds = assignedTrainers.map((a) => a.trainerId);
+
+    if (trainerIds.length === 0) {
+      return {
+        reviews: [],
+        pagination: { total: 0, page, pageSize, totalPages: 0 },
+        averageRating: 0
+      };
+    }
+
+    if (trainerId && !trainerIds.includes(trainerId)) {
+      throw new Error("Unauthorized - this trainer is not assigned to you");
+    }
+
+    const where = { trainerId: trainerId ? trainerId : { in: trainerIds } };
+    const skip = (page - 1) * pageSize;
+
+    const [reviews, total] = await Promise.all([
+      prisma.sessionReview.findMany({
+        where,
+        skip,
+        take: pageSize,
+        include: {
+          customer: { select: { id: true, firstName: true, lastName: true, email: true } },
+          trainer: { select: { id: true, firstName: true, lastName: true } },
+          booking: { select: { id: true, timeSlot: true } }
+        },
+        orderBy: { createdAt: "desc" }
+      }),
+      prisma.sessionReview.count({ where })
+    ]);
+
+    const averageRating = reviews.length > 0
+      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+      : 0;
+
+    return {
+      reviews,
+      pagination: { total, page, pageSize, totalPages: Math.ceil(total / pageSize) },
+      averageRating
+    };
+  } catch (err) {
+    throw new Error(`Failed to fetch reviews: ${err.message}`);
+  }
+};
+
 export const getSessionReviewByBooking = async (bookingId) => {
   try {
     const review = await prisma.sessionReview.findFirst({

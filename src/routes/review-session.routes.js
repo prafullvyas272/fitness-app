@@ -2,6 +2,7 @@ import express from "express";
 import {
   createSessionReviewHandler,
   getSessionReviewsByTrainerHandler,
+  getSessionReviewsForMentorHandler,
   getSessionReviewByBookingHandler,
   updateSessionReviewHandler,
   deleteSessionReviewHandler
@@ -91,6 +92,37 @@ router.post("/", authMiddleware, createSessionReviewHandler);
  *         description: Reviews fetched successfully
  */
 router.get("/trainer/:trainerId", authMiddleware, getSessionReviewsByTrainerHandler);
+
+/**
+ * @swagger
+ * /api/session-reviews/mentor/me:
+ *   get:
+ *     summary: Get feedback for all trainers assigned to the logged-in mentor
+ *     tags:
+ *       - Session Reviews
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: trainerId
+ *         schema:
+ *           type: string
+ *         description: Optional - filter to one specific assigned trainer
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Reviews fetched successfully
+ */
+router.get("/mentor/me", authMiddleware, getSessionReviewsForMentorHandler);
 
 /**
  * @swagger

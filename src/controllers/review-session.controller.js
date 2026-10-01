@@ -1,4 +1,4 @@
-import { createSessionReview, getSessionReviewsByTrainer, getSessionReviewByBooking, updateSessionReview, deleteSessionReview } from "../services/review-session.service.js";
+import { createSessionReview, getSessionReviewsByTrainer, getSessionReviewsForMentor, getSessionReviewByBooking, updateSessionReview, deleteSessionReview } from "../services/review-session.service.js";
 
 export const createSessionReviewHandler = async (req, res) => {
   try {
@@ -72,6 +72,37 @@ export const getSessionReviewsByTrainerHandler = async (req, res) => {
       data: result
     });
   } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+/**
+ * Mentor-side: feedback for all trainers assigned to the logged-in mentor.
+ * Always scoped to req.user.userId as mentorId, never a param, so a mentor
+ * can only ever see reviews for their own assigned trainers.
+ */
+export const getSessionReviewsForMentorHandler = async (req, res) => {
+  try {
+    const mentorId = req.user.userId;
+    const { page = 1, pageSize = 10, trainerId } = req.query;
+
+    const result = await getSessionReviewsForMentor(mentorId, Number(page), Number(pageSize), trainerId || null);
+
+    res.status(200).json({
+      success: true,
+      message: "Reviews fetched successfully",
+      data: result
+    });
+  } catch (err) {
+    if (err.message.includes("Unauthorized")) {
+      return res.status(403).json({
+        success: false,
+        message: err.message
+      });
+    }
     res.status(400).json({
       success: false,
       message: err.message
