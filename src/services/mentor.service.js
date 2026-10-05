@@ -341,6 +341,8 @@ export const getAssignedPTs = async (mentorId, { page = 1, limit = 10, status = 
       joinDate: trainer.createdAt.toISOString().split('T')[0],
       status: trainer.isActive ? "active" : "inactive",
       avatar: trainer.userProfileDetails?.[0]?.avatarUrl || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 50)}`,
+      hostGymName: trainer.userProfileDetails?.[0]?.hostGymName || "",
+      hostGymAddress: trainer.userProfileDetails?.[0]?.hostGymAddress || "",
     };
   });
 
