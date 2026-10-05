@@ -72,14 +72,7 @@ export const resolveReportForMentorHandler = async (req, res) => {
     const { reportId } = req.params;
     const { reportType } = req.body;
 
-    if (!reportType) {
-      return res.status(400).json({
-        success: false,
-        message: "reportType is required (CUSTOMER_REPORTED_TRAINER or TRAINER_REPORTED_CUSTOMER)",
-      });
-    }
-
-    const result = await resolveReportForMentor(mentorId, reportId, reportType);
+    const result = await resolveReportForMentor(mentorId, reportId, reportType || null);
 
     res.status(200).json({
       success: true,

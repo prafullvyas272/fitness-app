@@ -190,15 +190,34 @@ const reportInclude = {
  * this mentor. The same row is what GET /api/admin/reports reads, so the
  * status change is immediately visible there too.
  */
-export const resolveReportForMentor = async (mentorId, reportId, reportType) => {
-  if (!["CUSTOMER_REPORTED_TRAINER", "TRAINER_REPORTED_CUSTOMER"].includes(reportType)) {
-    throw new Error("reportType must be CUSTOMER_REPORTED_TRAINER or TRAINER_REPORTED_CUSTOMER");
+export const resolveReportForMentor = async (mentorId, reportId, reportType = null) => {
+  // The requested reportType is tried first, but since the two report
+  // directions are easy to mix up from the client side, we fall back to
+  // checking the other table automatically rather than failing outright.
+  const candidates =
+    reportType === "TRAINER_REPORTED_CUSTOMER"
+      ? [
+          { model: prisma.trainerCustomerReport, formatter: formatTrainerCustomerReport },
+          { model: prisma.trainerReport, formatter: formatTrainerReport },
+        ]
+      : [
+          { model: prisma.trainerReport, formatter: formatTrainerReport },
+          { model: prisma.trainerCustomerReport, formatter: formatTrainerCustomerReport },
+        ];
+
+  let model = null;
+  let formatter = null;
+  let existing = null;
+  for (const candidate of candidates) {
+    const found = await candidate.model.findUnique({ where: { id: reportId } });
+    if (found) {
+      model = candidate.model;
+      formatter = candidate.formatter;
+      existing = found;
+      break;
+    }
   }
 
-  const model = reportType === "CUSTOMER_REPORTED_TRAINER" ? prisma.trainerReport : prisma.trainerCustomerReport;
-  const formatter = reportType === "CUSTOMER_REPORTED_TRAINER" ? formatTrainerReport : formatTrainerCustomerReport;
-
-  const existing = await model.findUnique({ where: { id: reportId } });
   if (!existing) {
     throw new Error("Report not found");
   }
