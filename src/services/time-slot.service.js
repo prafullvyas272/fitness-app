@@ -489,6 +489,14 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
       : [];
     const reportedBookingIds = new Set(trainerReports.map((r) => r.bookingId));
 
+    const sessionReviews = bookingIdsForReportLookup.length > 0
+      ? await prisma.sessionReview.findMany({
+          where: { bookingId: { in: bookingIdsForReportLookup } },
+          select: { bookingId: true },
+        })
+      : [];
+    const reviewedBookingIds = new Set(sessionReviews.map((r) => r.bookingId));
+
     const now = new Date();
     const upcomingSessions = [];
     const allPastSessions = [];
@@ -514,6 +522,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         // trainer's name/gym is always available, independent of booking status.
         trainer: trainerSummary,
         reported: booking ? reportedBookingIds.has(booking.id) : false,
+        reviewed: booking ? reviewedBookingIds.has(booking.id) : false,
         ...(booking && {
           bookingId: booking.id,
           bookingStatus: booking.bookingStatus,
