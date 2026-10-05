@@ -1,27 +1,30 @@
 import {
-  getAllReports,
   getReportById,
   updateReportStatus,
   getActivityFeed,
   getReportStats,
   getReportsSummary
 } from "../services/mentor-reports.service.js";
+import { getAllReportsForMentor } from "../services/combined-report.service.js";
 
+/**
+ * Reuses the same merge logic as GET /api/admin/reports and
+ * GET /api/mentor/all-reports so this endpoint's response shape matches
+ * the admin one exactly. Other mentor-reports endpoints (stats, activity
+ * feed, summary, single-report, status-update) are untouched and keep
+ * reading the older general Report model as before.
+ */
 export const getAllReportsHandler = async (req, res) => {
   try {
-    const { page, limit, status, priority, category, trainerId, search } = req.query;
-    
-    
+    const { page, limit, status, reportType, trainerId } = req.query;
 
     const mentorId = req.user.userId;
-    const result = await getAllReports(mentorId, {
-      page: page ? parseInt(page) : 1,
-      limit: limit ? parseInt(limit) : 20,
-      status: status || null,
-      priority: priority || null,
-      category: category || null,
+    const result = await getAllReportsForMentor(mentorId, {
       trainerId: trainerId || null,
-      search: search || null
+      page: page ? parseInt(page) : 1,
+      pageSize: limit ? parseInt(limit) : 20,
+      status: status || null,
+      reportType: reportType || null
     });
 
     res.status(200).json({
@@ -30,6 +33,13 @@ export const getAllReportsHandler = async (req, res) => {
       data: result
     });
   } catch (error) {
+    if (error.message.includes("Unauthorized")) {
+      return res.status(403).json({
+        success: false,
+        message: error.message,
+        error: "FORBIDDEN"
+      });
+    }
     res.status(400).json({
       success: false,
       message: error.message,
