@@ -173,8 +173,17 @@ export const getSessionReviewsForMentor = async (mentorId, page = 1, pageSize = 
         skip,
         take: pageSize,
         include: {
-          customer: { select: { id: true, firstName: true, lastName: true, email: true } },
-          trainer: { select: { id: true, firstName: true, lastName: true } },
+          customer: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+          trainer: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              userProfileDetails: { select: { hostGymName: true, hostGymAddress: true } },
+            },
+          },
           booking: { select: { id: true, timeSlot: true } }
         },
         orderBy: { createdAt: "desc" }
@@ -182,12 +191,23 @@ export const getSessionReviewsForMentor = async (mentorId, page = 1, pageSize = 
       prisma.sessionReview.count({ where })
     ]);
 
+    const formattedReviews = reviews.map((r) => ({
+      ...r,
+      trainer: r.trainer
+        ? {
+            ...r.trainer,
+            hostGymName: r.trainer.userProfileDetails?.[0]?.hostGymName || "",
+            hostGymAddress: r.trainer.userProfileDetails?.[0]?.hostGymAddress || "",
+          }
+        : null,
+    }));
+
     const averageRating = reviews.length > 0
       ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
       : 0;
 
     return {
-      reviews,
+      reviews: formattedReviews,
       pagination: { total, page, pageSize, totalPages: Math.ceil(total / pageSize) },
       averageRating
     };
