@@ -2,12 +2,14 @@ import express from "express";
 import {
   createSessionReviewHandler,
   getSessionReviewsByTrainerHandler,
+  getAllSessionReviewsForAdminHandler,
   getSessionReviewsForMentorHandler,
   getSessionReviewByBookingHandler,
   updateSessionReviewHandler,
   deleteSessionReviewHandler
 } from "../controllers/review-session.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
 const router = express.Router();
 
@@ -92,6 +94,37 @@ router.post("/", authMiddleware, createSessionReviewHandler);
  *         description: Reviews fetched successfully
  */
 router.get("/trainer/:trainerId", authMiddleware, getSessionReviewsByTrainerHandler);
+
+/**
+ * @swagger
+ * /api/session-reviews/admin/all:
+ *   get:
+ *     summary: (Admin) Get all customer reviews across all trainers
+ *     tags:
+ *       - Session Reviews
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: trainerId
+ *         schema:
+ *           type: string
+ *         description: Optional - filter to one specific trainer
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Reviews fetched successfully
+ */
+router.get("/admin/all", authMiddleware, superadminMiddleware, getAllSessionReviewsForAdminHandler);
 
 /**
  * @swagger

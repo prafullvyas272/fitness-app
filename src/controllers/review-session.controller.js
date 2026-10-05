@@ -1,4 +1,4 @@
-import { createSessionReview, getSessionReviewsByTrainer, getSessionReviewsForMentor, getSessionReviewByBooking, updateSessionReview, deleteSessionReview } from "../services/review-session.service.js";
+import { createSessionReview, getSessionReviewsByTrainer, getAllSessionReviewsForAdmin, getSessionReviewsForMentor, getSessionReviewByBooking, updateSessionReview, deleteSessionReview } from "../services/review-session.service.js";
 
 export const createSessionReviewHandler = async (req, res) => {
   try {
@@ -65,6 +65,29 @@ export const getSessionReviewsByTrainerHandler = async (req, res) => {
     }
 
     const result = await getSessionReviewsByTrainer(trainerId, Number(page), Number(pageSize));
+
+    res.status(200).json({
+      success: true,
+      message: "Reviews fetched successfully",
+      data: result
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+/**
+ * Admin-side: every customer review across every trainer, optionally
+ * filtered to one trainerId.
+ */
+export const getAllSessionReviewsForAdminHandler = async (req, res) => {
+  try {
+    const { page = 1, pageSize = 10, trainerId } = req.query;
+
+    const result = await getAllSessionReviewsForAdmin(Number(page), Number(pageSize), trainerId || null);
 
     res.status(200).json({
       success: true,
