@@ -523,6 +523,7 @@ export const getTrainerAllTimeSlot = async (filter = {}) => {
         trainer: trainerSummary,
         reported: booking ? reportedBookingIds.has(booking.id) : false,
         reviewed: booking ? reviewedBookingIds.has(booking.id) : false,
+        expired: slotEnd < now,
         ...(booking && {
           bookingId: booking.id,
           bookingStatus: booking.bookingStatus,
