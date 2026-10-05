@@ -1,5 +1,9 @@
 import express from "express";
-import { getAllReportsForAdminHandler, getAllReportsForMentorHandler } from "../controllers/combined-report.controller.js";
+import {
+  getAllReportsForAdminHandler,
+  getAllReportsForMentorHandler,
+  resolveReportForMentorHandler,
+} from "../controllers/combined-report.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
@@ -81,6 +85,38 @@ router.get("/reports", authMiddleware, superadminMiddleware, getAllReportsForAdm
  *         description: Reports fetched successfully
  */
 mentorRouter.get("/all-reports", authMiddleware, getAllReportsForMentorHandler);
+
+/**
+ * @swagger
+ * /api/mentor/all-reports/{reportId}/resolve:
+ *   put:
+ *     summary: (Mentor) Mark a report as resolved - for a trainer assigned to the logged-in mentor
+ *     tags: [Mentor Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: reportId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reportType
+ *             properties:
+ *               reportType:
+ *                 type: string
+ *                 enum: [CUSTOMER_REPORTED_TRAINER, TRAINER_REPORTED_CUSTOMER]
+ *     responses:
+ *       200:
+ *         description: Report marked as resolved
+ */
+mentorRouter.put("/all-reports/:reportId/resolve", authMiddleware, resolveReportForMentorHandler);
 
 export { mentorRouter };
 export default router;

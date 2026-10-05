@@ -175,3 +175,46 @@ export const getAllReportsForMentor = async (
     pageSize,
   });
 };
+
+const reportInclude = {
+  customer: { select: customerSelect },
+  trainer: { select: trainerSelect },
+  booking: bookingSelect,
+  mentor: { select: { id: true, firstName: true, lastName: true } },
+};
+
+/**
+ * Mentor: mark a report as resolved. Works for either report direction
+ * (CUSTOMER_REPORTED_TRAINER -> TrainerReport, TRAINER_REPORTED_CUSTOMER ->
+ * TrainerCustomerReport), as long as the report's trainer is assigned to
+ * this mentor. The same row is what GET /api/admin/reports reads, so the
+ * status change is immediately visible there too.
+ */
+export const resolveReportForMentor = async (mentorId, reportId, reportType) => {
+  if (!["CUSTOMER_REPORTED_TRAINER", "TRAINER_REPORTED_CUSTOMER"].includes(reportType)) {
+    throw new Error("reportType must be CUSTOMER_REPORTED_TRAINER or TRAINER_REPORTED_CUSTOMER");
+  }
+
+  const model = reportType === "CUSTOMER_REPORTED_TRAINER" ? prisma.trainerReport : prisma.trainerCustomerReport;
+  const formatter = reportType === "CUSTOMER_REPORTED_TRAINER" ? formatTrainerReport : formatTrainerCustomerReport;
+
+  const existing = await model.findUnique({ where: { id: reportId } });
+  if (!existing) {
+    throw new Error("Report not found");
+  }
+
+  const assignment = await prisma.mentorTrainerAssignment.findFirst({
+    where: { mentorId, trainerId: existing.trainerId },
+  });
+  if (!assignment) {
+    throw new Error("Unauthorized - this report's trainer is not assigned to you");
+  }
+
+  const updated = await model.update({
+    where: { id: reportId },
+    data: { status: "RESOLVED", resolvedBy: mentorId, resolvedAt: new Date() },
+    include: reportInclude,
+  });
+
+  return formatter(updated);
+};

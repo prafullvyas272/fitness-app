@@ -1,4 +1,4 @@
-import { getAllReportsForAdmin, getAllReportsForMentor } from "../services/combined-report.service.js";
+import { getAllReportsForAdmin, getAllReportsForMentor, resolveReportForMentor } from "../services/combined-report.service.js";
 
 export const getAllReportsForAdminHandler = async (req, res) => {
   try {
@@ -49,6 +49,52 @@ export const getAllReportsForMentorHandler = async (req, res) => {
   } catch (err) {
     if (err.message.includes("Unauthorized")) {
       return res.status(403).json({
+        success: false,
+        message: err.message,
+      });
+    }
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+/**
+ * Mentor-side: mark one report (either direction) as resolved. Scoped to
+ * req.user.userId as the mentor; the report's trainer must be assigned to
+ * them. Updates the same row GET /api/admin/reports reads, so admin sees
+ * the resolved status immediately too.
+ */
+export const resolveReportForMentorHandler = async (req, res) => {
+  try {
+    const mentorId = req.user.userId;
+    const { reportId } = req.params;
+    const { reportType } = req.body;
+
+    if (!reportType) {
+      return res.status(400).json({
+        success: false,
+        message: "reportType is required (CUSTOMER_REPORTED_TRAINER or TRAINER_REPORTED_CUSTOMER)",
+      });
+    }
+
+    const result = await resolveReportForMentor(mentorId, reportId, reportType);
+
+    res.status(200).json({
+      success: true,
+      message: "Report marked as resolved",
+      data: result,
+    });
+  } catch (err) {
+    if (err.message.includes("Unauthorized")) {
+      return res.status(403).json({
+        success: false,
+        message: err.message,
+      });
+    }
+    if (err.message.includes("not found")) {
+      return res.status(404).json({
         success: false,
         message: err.message,
       });
