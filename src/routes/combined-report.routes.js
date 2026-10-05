@@ -1,9 +1,10 @@
 import express from "express";
-import { getAllReportsForAdminHandler } from "../controllers/combined-report.controller.js";
+import { getAllReportsForAdminHandler, getAllReportsForMentorHandler } from "../controllers/combined-report.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { superadminMiddleware } from "../middlewares/superadmin.middleware.js";
 
 const router = express.Router();
+const mentorRouter = express.Router();
 
 /**
  * @swagger
@@ -41,4 +42,45 @@ const router = express.Router();
  */
 router.get("/reports", authMiddleware, superadminMiddleware, getAllReportsForAdminHandler);
 
+/**
+ * @swagger
+ * /api/mentor/all-reports:
+ *   get:
+ *     summary: (Mentor) Get all reports for trainers assigned to the logged-in mentor - customers reporting trainers and trainers reporting customers
+ *     tags: [Mentor Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: trainerId
+ *         schema:
+ *           type: string
+ *         description: Optional - filter to one specific assigned trainer
+ *       - in: query
+ *         name: reportType
+ *         schema:
+ *           type: string
+ *           enum: [CUSTOMER_REPORTED_TRAINER, TRAINER_REPORTED_CUSTOMER]
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, RESOLVED, REJECTED]
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Reports fetched successfully
+ */
+mentorRouter.get("/all-reports", authMiddleware, getAllReportsForMentorHandler);
+
+export { mentorRouter };
 export default router;

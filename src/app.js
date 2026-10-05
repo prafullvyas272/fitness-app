@@ -63,7 +63,7 @@ import trainerReportRoutes from "./routes/trainer-report.routes.js";
 import trainerCustomerReportRoutes from "./routes/trainer-customer-report.routes.js";
 import adminDashboardRoutes from "./routes/admin-dashboard.routes.js";
 import cancelledSessionRoutes from "./routes/cancelled-session.routes.js";
-import combinedReportRoutes from "./routes/combined-report.routes.js";
+import combinedReportRoutes, { mentorRouter as combinedMentorReportRoutes } from "./routes/combined-report.routes.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -167,6 +167,7 @@ app.use("/api/customer-reports", trainerCustomerReportRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/cancelled-sessions", cancelledSessionRoutes);
 app.use("/api/admin", combinedReportRoutes);
+app.use("/api/mentor", combinedMentorReportRoutes);
 
 app.use(errorHandler);
 

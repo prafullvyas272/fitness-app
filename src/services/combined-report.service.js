@@ -77,23 +77,20 @@ const formatTrainerCustomerReport = (r) => ({
   mentor: r.mentor || null,
 });
 
-/**
- * Admin: unified list of every report filed by a customer against a trainer
- * (TrainerReport) and every report filed by a trainer against a customer
- * (TrainerCustomerReport), merged and sorted by createdAt desc. Pagination
- * is applied to the merged, sorted set.
- */
-export const getAllReportsForAdmin = async ({ page = 1, pageSize = 10, status = null, reportType = null } = {}) => {
+const fetchMergedReports = async ({ trainerFilter = null, status = null, reportType = null, page = 1, pageSize = 10 } = {}) => {
   const safePage = Math.max(parseInt(page) || 1, 1);
   const safePageSize = Math.min(Math.max(parseInt(pageSize) || 10, 1), 100);
 
-  const statusFilter = status ? { status } : {};
+  const where = {
+    ...(status ? { status } : {}),
+    ...(trainerFilter ? { trainerId: trainerFilter } : {}),
+  };
 
   const [trainerReports, trainerCustomerReports] = await Promise.all([
     reportType === "TRAINER_REPORTED_CUSTOMER"
       ? []
       : prisma.trainerReport.findMany({
-          where: statusFilter,
+          where,
           include: {
             customer: { select: customerSelect },
             trainer: { select: trainerSelect },
@@ -104,7 +101,7 @@ export const getAllReportsForAdmin = async ({ page = 1, pageSize = 10, status = 
     reportType === "CUSTOMER_REPORTED_TRAINER"
       ? []
       : prisma.trainerCustomerReport.findMany({
-          where: statusFilter,
+          where,
           include: {
             customer: { select: customerSelect },
             trainer: { select: trainerSelect },
@@ -132,4 +129,49 @@ export const getAllReportsForAdmin = async ({ page = 1, pageSize = 10, status = 
       totalPages: Math.ceil(total / safePageSize),
     },
   };
+};
+
+/**
+ * Admin: unified list of every report filed by a customer against a trainer
+ * (TrainerReport) and every report filed by a trainer against a customer
+ * (TrainerCustomerReport), merged and sorted by createdAt desc. Pagination
+ * is applied to the merged, sorted set.
+ */
+export const getAllReportsForAdmin = async ({ page = 1, pageSize = 10, status = null, reportType = null } = {}) => {
+  return fetchMergedReports({ status, reportType, page, pageSize });
+};
+
+/**
+ * Mentor: same unified report list, scoped to trainers assigned to this
+ * mentor. trainerId, if given, must be one of the mentor's own assigned
+ * trainers.
+ */
+export const getAllReportsForMentor = async (
+  mentorId,
+  { trainerId = null, page = 1, pageSize = 10, status = null, reportType = null } = {}
+) => {
+  const assignedTrainers = await prisma.mentorTrainerAssignment.findMany({
+    where: { mentorId },
+    select: { trainerId: true },
+  });
+  const assignedTrainerIds = assignedTrainers.map((a) => a.trainerId);
+
+  if (assignedTrainerIds.length === 0) {
+    return {
+      reports: [],
+      pagination: { total: 0, page: Number(page) || 1, pageSize: Number(pageSize) || 10, totalPages: 0 },
+    };
+  }
+
+  if (trainerId && !assignedTrainerIds.includes(trainerId)) {
+    throw new Error("Unauthorized - this trainer is not assigned to you");
+  }
+
+  return fetchMergedReports({
+    trainerFilter: trainerId ? trainerId : { in: assignedTrainerIds },
+    status,
+    reportType,
+    page,
+    pageSize,
+  });
 };
