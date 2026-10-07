@@ -64,6 +64,7 @@ import trainerCustomerReportRoutes from "./routes/trainer-customer-report.routes
 import adminDashboardRoutes from "./routes/admin-dashboard.routes.js";
 import cancelledSessionRoutes from "./routes/cancelled-session.routes.js";
 import combinedReportRoutes, { mentorRouter as combinedMentorReportRoutes } from "./routes/combined-report.routes.js";
+import legalDocumentRoutes from "./routes/legal-document.routes.js";
 
 import { startReminderCron } from "../cron/reminder.cron.js";
 
@@ -120,6 +121,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api", healthRoutes);
 app.use("/api/user", userSpecialityRoutes);
 app.use("/api/user", userAvailabilityRoutes);
+app.use("/api/legal-documents", legalDocumentRoutes);
 app.use("/api", userRoutes);
 app.use("/api", timeSlotRoutes);
 app.use("/api", bookingRoutes);
@@ -168,7 +170,6 @@ app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/cancelled-sessions", cancelledSessionRoutes);
 app.use("/api/admin", combinedReportRoutes);
 app.use("/api/mentor", combinedMentorReportRoutes);
-
 app.use(errorHandler);
 
 

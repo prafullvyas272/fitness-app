@@ -133,6 +133,8 @@ model User {
   gymRent           GymRent?  @relation("TrainerGymRent")
   gymRentsCreated   GymRent[] @relation("AdminGymRentCreated")
 
+  legalDocumentsUpdated LegalDocument[] @relation("LegalDocumentUpdatedBy")
+
   customerReviews     SessionReview[]  @relation("CustomerReviews")
   trainerReviews      SessionReview[]  @relation("TrainerReviews")
 
@@ -1369,4 +1371,29 @@ model OperationalLog {
   @@index([mentorId])
   @@index([trainerId])
   @@index([date])
+}
+
+enum LegalDocAudience {
+  CUSTOMER
+  TRAINER
+}
+
+enum LegalDocType {
+  PRIVACY_POLICY
+  TERMS_AND_CONDITIONS
+}
+
+model LegalDocument {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  audience    LegalDocAudience
+  type        LegalDocType
+  title       String?
+  content     String
+  updatedBy   String           @db.ObjectId
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  admin User @relation("LegalDocumentUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction)
+
+  @@unique([audience, type])
 }
