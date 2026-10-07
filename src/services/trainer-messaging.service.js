@@ -11,10 +11,19 @@ export const getMentorConversations = async (trainerId) => {
       mentor: {
         include: {
           userProfileDetails: true,
+          mentorProfile: true,
         },
       },
     },
   });
+
+  // Deterministic fallback avatar index (stable per mentor), so the
+  // placeholder doesn't change on every request when no avatarUrl is set.
+  const stableAvatarIndex = (id) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+    return hash % 50;
+  };
 
   const conversations = await Promise.all(
     assignments.map(async (assignment) => {
@@ -31,7 +40,8 @@ export const getMentorConversations = async (trainerId) => {
         id: conversationId,
         mentorId: mentor.id,
         mentorName: `${mentor.firstName || ''} ${mentor.lastName || ''}`.trim(),
-        mentorAvatar: mentor.userProfileDetails?.[0]?.avatarUrl || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 50)}`,
+        mentorTitle: mentor.mentorProfile?.title || null,
+        mentorAvatar: mentor.userProfileDetails?.[0]?.avatarUrl || `https://i.pravatar.cc/150?img=${stableAvatarIndex(mentor.id)}`,
         lastMessage: lastMessage?.message || "No messages yet",
         lastMessageTime: lastMessage?.createdAt?.toISOString() || mentor.createdAt.toISOString(),
         status: mentor.isActive ? "online" : "offline",
