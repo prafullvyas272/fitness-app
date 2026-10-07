@@ -8,6 +8,7 @@ import {
   getAllSubscriptions,
   getMyTrainerPlan,
   confirmSubscriptionPayment,
+  getPaymentHistoryForCustomer,
 } from "../services/subscription.service.js";
 
 export const createCheckoutHandler = async (req, res) => {
@@ -125,6 +126,30 @@ export const getAllSubscriptionsHandler = async (req, res) => {
       status,
     });
     res.status(200).json({ success: true, message: "Subscriptions fetched successfully", data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Customer: own payment history (Stripe invoices). Scoped to
+ * req.user.userId, never a param.
+ */
+export const getPaymentHistoryHandler = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { limit = 10, startingAfter } = req.query;
+
+    const result = await getPaymentHistoryForCustomer(userId, {
+      limit: Number(limit),
+      startingAfter: startingAfter || null,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Payment history fetched successfully",
+      data: result,
+    });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }

@@ -7,6 +7,7 @@ import {
   getAllSubscriptionsHandler,
   getMyTrainerPlanHandler,
   confirmSubscriptionPaymentHandler,
+  getPaymentHistoryHandler,
 } from "../controllers/subscription.controller.js";
 import {
   getActiveSubscriptionsCountHandler,
@@ -176,6 +177,32 @@ router.get("/subscriptions/me", authMiddleware, getMySubscriptionHandler);
  *         description: Subscription scheduled for cancellation
  */
 router.delete("/subscriptions/me", authMiddleware, cancelMySubscriptionHandler);
+
+/**
+ * @swagger
+ * /api/subscriptions/payments/history:
+ *   get:
+ *     summary: Get current customer's payment history (Stripe invoices)
+ *     tags:
+ *       - Subscriptions
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: startingAfter
+ *         schema:
+ *           type: string
+ *         description: Stripe invoice id cursor - pass the previous page's last invoiceId to get the next page
+ *     responses:
+ *       200:
+ *         description: Payment history fetched successfully
+ */
+router.get("/subscriptions/payments/history", authMiddleware, getPaymentHistoryHandler);
 
 /**
  * @swagger

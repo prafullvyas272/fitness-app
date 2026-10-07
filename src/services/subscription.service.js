@@ -337,3 +337,58 @@ export const getAllSubscriptions = async ({ page = 1, pageSize = 10, status } = 
     pagination: { total, page, pageSize, totalPages: Math.ceil(total / pageSize) },
   };
 };
+
+/**
+ * Customer: payment history, sourced directly from Stripe invoices
+ * (no local Payment table exists — Stripe is the source of truth).
+ * Cursor-based pagination, matching Stripe's own invoices.list API.
+ */
+export const getPaymentHistoryForCustomer = async (userId, { limit = 10, startingAfter = null } = {}) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error("User not found");
+
+  if (!user.stripeCustomerId) {
+    return { payments: [], hasMore: false, nextCursor: null };
+  }
+
+  const safeLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
+
+  const invoiceList = await stripe.invoices.list({
+    customer: user.stripeCustomerId,
+    limit: safeLimit,
+    ...(startingAfter ? { starting_after: startingAfter } : {}),
+  });
+
+  const stripeSubscriptionIds = [
+    ...new Set(invoiceList.data.map((inv) => inv.subscription).filter(Boolean)),
+  ];
+
+  const localSubscriptions = stripeSubscriptionIds.length > 0
+    ? await prisma.subscription.findMany({
+        where: { stripeSubscriptionId: { in: stripeSubscriptionIds } },
+        include: { plan: { select: { id: true, name: true } } },
+      })
+    : [];
+  const planBySubscriptionId = new Map(
+    localSubscriptions.map((sub) => [sub.stripeSubscriptionId, sub.plan])
+  );
+
+  const payments = invoiceList.data.map((invoice) => ({
+    invoiceId: invoice.id,
+    plan: invoice.subscription ? planBySubscriptionId.get(invoice.subscription) || null : null,
+    amount: (invoice.amount_paid ?? invoice.amount_due ?? 0) / 100,
+    currency: invoice.currency,
+    status: invoice.status,
+    paid: invoice.paid,
+    invoiceNumber: invoice.number,
+    invoicePdfUrl: invoice.invoice_pdf,
+    hostedInvoiceUrl: invoice.hosted_invoice_url,
+    createdAt: new Date(invoice.created * 1000).toISOString(),
+  }));
+
+  return {
+    payments,
+    hasMore: invoiceList.has_more,
+    nextCursor: payments.length > 0 ? invoiceList.data[invoiceList.data.length - 1].id : null,
+  };
+};
