@@ -86,6 +86,11 @@ app.post("/api/webhooks/stripe", express.raw({ type: "*/*" }), stripeWebhookHand
 
 app.use(express.json());
 
+// Static pages (e.g. the account-deletion web page for app store compliance).
+// Served before any /api router so it can never be caught by a router's
+// own global middleware.
+app.use(express.static(path.join(process.cwd(), "public")));
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "*" }

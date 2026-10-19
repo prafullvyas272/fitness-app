@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Delete Account - Fitness App</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --text: #1a1d23;
+    --muted: #6b7280;
+    --border: #e2e5ea;
+    --primary: #d64545;
+    --primary-hover: #b93838;
+    --accent: #3b6fd6;
+    --success-bg: #e8f6ee;
+    --success-text: #1e7a43;
+    --error-bg: #fdecec;
+    --error-text: #b4232b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171c;
+      --card: #1e2128;
+      --text: #eceef1;
+      --muted: #9aa1ac;
+      --border: #30343d;
+      --primary: #e35b5b;
+      --primary-hover: #ef7272;
+      --accent: #6c93e8;
+      --success-bg: #163726;
+      --success-text: #6fd99a;
+      --error-bg: #3a1c1e;
+      --error-text: #f08b90;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 24px 16px;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 14px; margin: 0 0 20px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 { font-size: 15px; margin: 0 0 12px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  input, textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  button {
+    margin-top: 14px;
+    width: 100%;
+    padding: 11px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-danger { background: var(--primary); color: #fff; }
+  .btn-danger:hover { background: var(--primary-hover); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .msg {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: none;
+  }
+  .msg.show { display: block; }
+  .msg.success { background: var(--success-bg); color: var(--success-text); }
+  .msg.error { background: var(--error-bg); color: var(--error-text); }
+  .user-info { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .hidden { display: none !important; }
+  .status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Delete Account</h1>
+  <p class="subtitle">For trainers and customers of the Fitness App. Deletion requests are reviewed by an admin before your account and data are removed.</p>
+
+  <div class="card" id="login-card">
+    <h2>1. Sign in</h2>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Your password" />
+    <button class="btn-primary" id="login-btn">Sign In</button>
+    <div class="msg" id="login-msg"></div>
+  </div>
+
+  <div class="card hidden" id="delete-card">
+    <h2>2. Request account deletion</h2>
+    <p class="user-info" id="signed-in-as"></p>
+    <label for="reason">Reason (optional)</label>
+    <textarea id="reason" placeholder="Let us know why you're leaving (optional)"></textarea>
+    <button class="btn-danger" id="delete-btn">Submit Deletion Request</button>
+    <div class="msg" id="delete-msg"></div>
+  </div>
+
+  <div class="card hidden" id="status-card">
+    <h2>Your deletion request</h2>
+    <p id="status-text"></p>
+    <button class="btn-primary" id="refresh-status-btn">Refresh Status</button>
+  </div>
+</div>
+
+<script>
+  const API_BASE = "https://fitness-app-seven-beryl.vercel.app/api";
+  let accessToken = null;
+
+  const el = (id) => document.getElementById(id);
+  const showMsg = (id, text, type) => {
+    const node = el(id);
+    node.textContent = text;
+    node.className = "msg show " + type;
+  };
+  const hideMsg = (id) => { el(id).className = "msg"; };
+
+  const setButtonLoading = (btn, loading, idleLabel) => {
+    btn.disabled = loading;
+    btn.textContent = loading ? "Please wait..." : idleLabel;
+  };
+
+  el("login-btn").addEventListener("click", async () => {
+    const email = el("email").value.trim();
+    const password = el("password").value;
+    hideMsg("login-msg");
+
+    if (!email || !password) {
+      showMsg("login-msg", "Please enter both email and password.", "error");
+      return;
+    }
+
+    const btn = el("login-btn");
+    setButtonLoading(btn, true, "Sign In");
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || "Login failed. Please check your credentials.");
+      }
+
+      accessToken = json.data.access_token;
+      const user = json.data.user;
+      el("signed-in-as").textContent = `Signed in as ${user.firstName || ""} ${user.lastName || ""} (${user.email})`.trim();
+
+      el("login-card").classList.add("hidden");
+      el("delete-card").classList.remove("hidden");
+
+      await checkExistingRequest();
+    } catch (err) {
+      showMsg("login-msg", err.message, "error");
+    } finally {
+      setButtonLoading(btn, false, "Sign In");
+    }
+  });
+
+  el("delete-btn").addEventListener("click", async () => {
+    hideMsg("delete-msg");
+    const reason = el("reason").value.trim();
+    const btn = el("delete-btn");
+
+    const confirmed = window.confirm(
+      "Are you sure you want to request deletion of your account? This cannot be undone once an admin approves it."
+    );
+    if (!confirmed) return;
+
+    setButtonLoading(btn, true, "Submit Deletion Request");
+
+    try {
+      const res = await fetch(`${API_BASE}/account-deletion-requests`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(reason ? { reason } : {}),
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || "Failed to submit deletion request.");
+      }
+
+      showMsg("delete-msg", json.message || "Your deletion request has been submitted.", "success");
+      await checkExistingRequest();
+    } catch (err) {
+      showMsg("delete-msg", err.message, "error");
+    } finally {
+      setButtonLoading(btn, false, "Submit Deletion Request");
+    }
+  });
+
+  el("refresh-status-btn").addEventListener("click", checkExistingRequest);
+
+  async function checkExistingRequest() {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`${API_BASE}/account-deletion-requests/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.success || !json.data) {
+        el("status-card").classList.add("hidden");
+        return;
+      }
+
+      const request = json.data;
+      el("status-card").classList.remove("hidden");
+      el("status-text").innerHTML =
+        `Status: <span class="status-pill">${request.status}</span>` +
+        (request.reason ? `<br><br>Reason: ${request.reason}` : "");
+    } catch {
+      // No existing request or network issue - silently keep status card hidden
+    }
+  }
+</script>
+</body>
+</html>
